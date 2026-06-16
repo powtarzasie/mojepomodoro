@@ -29,13 +29,13 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <style>
     :root {
       --bg0:#120d0c; --bgA:#15100e; --bgB:#1d1714;
-      --ink:#f4ece8; --muted:#b9aaa2; --dim:#8c7f78; --faint:#6f655f;
-      --accent:#e0613a; --accent-soft:#e8704a; --warm:#f4a261;
+      --ink:#f6efeb; --muted:#c8b9b0; --dim:#8c7f78; --faint:#6f655f;
+      --accent:#e0613a; --accent-soft:#ef7a4e; --warm:#f4a261;
       --green:#3f9c6a; --green-l:#5fc78c; --blue:#5b8fd6; --red:#d65454;
       --line:rgba(255,255,255,.08); --line-soft:rgba(255,255,255,.05);
       --mono:"Consolas","SF Mono",ui-monospace,monospace;
@@ -43,56 +43,99 @@
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
     body {
-      margin:0; color:var(--ink); background:var(--bg0);
+      margin:0; min-height:100vh; color:var(--ink);
       font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
       font-size:16px; line-height:1.5; -webkit-font-smoothing:antialiased;
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 80% 14%, rgba(224,97,58,.30), transparent 30%),
+        radial-gradient(circle at 26% 72%, rgba(244,162,97,.13), transparent 34%),
+        linear-gradient(152deg, #120d0c 0%, #1a120e 46%, #241712 100%);
     }
     a { color:inherit; }
     img { max-width:100%; display:block; }
 
-    .wrap { max-width:1120px; margin:0 auto; padding:0 28px; }
-    .sec { padding:clamp(48px,7vw,92px) 0; }
-    .bgA { background:var(--bgA); }
-    .bgB { background:var(--bgB); }
+    /* ─────────── HERO (jeden ekran) ─────────── */
+    .page {
+      position:relative; z-index:1;
+      display:grid;
+      grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+      align-items:center;
+      gap: clamp(30px, 4vw, 68px);
+      max-width:1300px; margin:0 auto;
+      padding: clamp(30px,4vw,54px) clamp(22px,4vw,60px) clamp(24px,3vw,40px);
+    }
 
-    .kicker { color:var(--accent-soft); font-size:13px; letter-spacing:.18em; text-transform:uppercase; font-weight:600; margin:0 0 14px; }
-    h2 { font-size:clamp(26px,3.4vw,40px); font-weight:600; letter-spacing:-.025em; line-height:1.08; margin:0 0 14px; }
-    .lead { color:var(--muted); font-size:clamp(16px,1.5vw,19px); line-height:1.55; max-width:640px; margin:0 0 38px; }
-    .lead b, .hl { color:var(--warm); font-weight:600; }
+    .copy { display:flex; flex-direction:column; justify-content:center; min-width:0; }
 
-    /* ── NAV ── */
-    .nav { position:sticky; top:0; z-index:40; background:rgba(18,13,12,.72); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid var(--line-soft); }
-    .nav-in { display:flex; align-items:center; justify-content:space-between; height:64px; }
-    .logo { display:flex; align-items:center; gap:10px; font-weight:600; font-size:18px; letter-spacing:-.01em; }
-    .logo .tom { font-size:22px; }
-    .logo span { color:var(--accent-soft); }
-    .nav-cta { display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#fff; border:0; cursor:pointer; font:inherit; font-weight:600; font-size:15px; padding:10px 18px; border-radius:11px; text-decoration:none; transition:filter .15s, transform .15s; }
-    .nav-cta:hover { filter:brightness(1.07); transform:translateY(-1px); }
-    .nav-cta svg { width:18px; height:18px; }
+    .brand { display:inline-flex; align-items:center; gap:9px; font-weight:700; font-size:18px; letter-spacing:-.01em; margin:0 0 clamp(18px,2vw,26px); }
+    .brand .tom { font-size:23px; }
+    .brand b { color:var(--accent-soft); font-weight:800; }
 
-    /* ── HERO ── */
-    .hero { background:radial-gradient(ellipse at 80% -10%, rgba(224,97,58,.22), transparent 50%), linear-gradient(180deg,#1a1310 0%, var(--bgA) 100%); padding:clamp(46px,6vw,80px) 0 clamp(40px,5vw,64px); }
-    .hero h1 { font-size:clamp(36px,5.4vw,62px); font-weight:700; letter-spacing:-.04em; line-height:1.02; margin:0 0 18px; max-width:780px; }
-    .hero h1 .a { color:var(--accent-soft); }
-    .hero-sub { color:var(--muted); font-size:clamp(17px,1.7vw,22px); line-height:1.5; max-width:560px; margin:0 0 18px; }
-    .infonote { display:flex; flex-direction:column; gap:10px; margin:0 0 28px; max-width:560px; }
-    .infonote .item { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:12px; padding:11px 15px; color:var(--muted); font-size:14px; line-height:1.42; }
-    .infonote .item svg { width:20px; height:20px; flex-shrink:0; }
-    .infonote .item .i-win { color:var(--accent-soft); }
-    .infonote .item .i-el { color:#7fb6e6; }
-    .infonote .item b { color:var(--ink); font-weight:600; }
-    .cta-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
-    .btn-dl { display:inline-flex; align-items:center; gap:12px; background:var(--accent); color:#fff; border:0; cursor:pointer; font:inherit; font-weight:600; font-size:19px; padding:16px 28px; border-radius:15px; text-decoration:none; box-shadow:0 12px 30px rgba(224,97,58,.32); transition:filter .15s, transform .15s, box-shadow .15s; }
-    .btn-dl:hover { filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 16px 38px rgba(224,97,58,.42); }
-    .btn-dl svg { width:23px; height:23px; }
-    .cta-meta { color:var(--dim); font-size:14px; }
-    .cta-meta strong { color:var(--warm); font-weight:600; }
+    .headline {
+      margin:0 0 18px; font-weight:900;
+      font-size:clamp(38px,4.8vw,72px); line-height:1.0; letter-spacing:-.045em;
+      text-shadow:0 6px 26px rgba(0,0,0,.34);
+    }
+    .headline span { display:block; color:var(--accent-soft); text-shadow:0 0 28px rgba(224,97,58,.42); }
 
-    /* ── WINDOWS SCENE ── */
-    .scene-wrap { margin-top:clamp(34px,4.5vw,56px); }
+    .subhead { margin:0 0 26px; max-width:560px; color:var(--muted); font-size:clamp(17px,1.55vw,22px); line-height:1.4; font-weight:500; }
+    .subhead strong { color:var(--warm); font-weight:700; }
+
+    .compatibility-note {
+      width:min(560px,100%); margin:0 0 26px;
+      display:grid; grid-template-columns:46px 1fr; align-items:center; gap:14px;
+      padding:14px 18px; border-radius:16px;
+      border:1px solid rgba(224,97,58,.26);
+      background:linear-gradient(145deg, rgba(224,97,58,.10), rgba(244,162,97,.05));
+      box-shadow:inset 0 0 26px rgba(224,97,58,.06);
+      color:rgba(238,224,216,.92); font-size:clamp(13px,1.02vw,16px); line-height:1.4; font-weight:500;
+    }
+    .compatibility-note svg { width:38px; height:38px; color:var(--accent-soft); filter:drop-shadow(0 0 10px rgba(224,97,58,.4)); }
+    .compatibility-note strong { color:var(--warm); font-weight:700; }
+    .compatibility-note p { margin:0; }
+
+    .features { width:min(580px,100%); margin:0 0 28px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 18px; }
+    .feature { display:grid; grid-template-columns:54px 1fr; align-items:center; gap:14px; min-height:64px; padding:8px 0; border-bottom:1px solid var(--line); }
+    .icon-circle {
+      width:50px; height:50px; display:grid; place-items:center; border-radius:50%; color:#fff;
+      background:radial-gradient(circle at 35% 25%, rgba(255,255,255,.30), transparent 36%), linear-gradient(145deg, #f6a566, #e0613a);
+      box-shadow:inset 0 0 0 2px rgba(255,205,170,.34), 0 0 20px rgba(224,97,58,.4);
+    }
+    .feature svg { width:26px; height:26px; stroke-width:2.4; }
+    .feature p { margin:0; font-size:clamp(15px,1.15vw,19px); line-height:1.12; font-weight:700; letter-spacing:-.02em; }
+
+    .actions { width:min(560px,100%); }
+    .download-btn {
+      appearance:none; border:0; cursor:pointer; width:100%;
+      display:grid; grid-template-columns:64px 1fr; align-items:center; gap:14px;
+      min-height:84px; padding:14px 26px; border-radius:20px; font:inherit; text-decoration:none;
+      background:linear-gradient(180deg, #f6a865 0%, #ec7440 52%, #db5a30 100%); color:#2c1308;
+      box-shadow:0 0 0 2px rgba(255,214,178,.45) inset, 0 0 30px rgba(224,97,58,.42), 0 16px 32px rgba(0,0,0,.3);
+      transition:transform .18s ease, filter .18s ease, box-shadow .18s ease;
+    }
+    .download-btn:hover, .download-btn:focus-visible {
+      transform:translateY(-2px); filter:brightness(1.04); outline:none;
+      box-shadow:0 0 0 2px rgba(255,224,194,.7) inset, 0 0 44px rgba(224,97,58,.6), 0 20px 40px rgba(0,0,0,.34);
+    }
+    .download-btn svg { width:44px; height:44px; stroke-width:2.4; }
+    .download-btn-inner { display:flex; flex-direction:column; gap:3px; text-align:left; }
+    .download-btn-inner b { font-size:clamp(24px,2.4vw,34px); font-weight:900; letter-spacing:-.035em; line-height:1; }
+    .download-btn-sub { font-size:clamp(11px,.85vw,13.5px); font-weight:700; letter-spacing:.01em; color:rgba(44,19,8,.72); }
+    .download-stats { margin:14px 0 0; color:rgba(200,185,176,.9); font-size:clamp(13px,1vw,16px); font-weight:600; text-align:center; }
+    .download-stats strong { color:var(--warm); font-weight:800; }
+
+    /* ─────────── WINDOWS SCENE (wizual hero) ─────────── */
+    .visual { position:relative; display:flex; align-items:center; min-width:0; }
+    .scene-wrap { position:relative; width:100%; isolation:isolate; }
+    .scene-wrap::before {
+      content:""; position:absolute; inset:14% 6% 8% 4%;
+      background:radial-gradient(ellipse at 52% 50%, rgba(224,97,58,.34), transparent 66%);
+      filter:blur(16px); z-index:-1;
+    }
     .scene {
       position:relative; width:100%; aspect-ratio:880/430; border-radius:16px; overflow:hidden;
-      border:1px solid var(--line); box-shadow:0 30px 70px rgba(0,0,0,.5);
+      border:1px solid var(--line); box-shadow:0 32px 74px rgba(0,0,0,.55), 0 0 0 1px rgba(255,180,140,.08);
       container-type:inline-size;
       background:radial-gradient(circle at 28% 24%, rgba(120,150,200,.38), transparent 55%), linear-gradient(140deg,#2c3a52 0%,#1d2738 60%,#161d2b 100%);
     }
@@ -147,146 +190,154 @@
 
     .scene-cap { text-align:center; color:var(--faint); font-size:13px; margin:16px 0 0; }
 
-    /* ── METHOD ── */
-    .rhythm { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:40px; }
-    .pill { font-size:14px; font-weight:600; padding:9px 18px; border-radius:11px; }
-    .pill.work { background:var(--accent); color:#fff; }
-    .pill.brk { color:var(--green-l); border:1px solid rgba(63,156,106,.4); }
-    .pill.long { color:var(--blue); border:1px solid rgba(91,143,214,.4); }
-    .rhythm .x { color:var(--dim); font-size:14px; }
-    .rhythm svg { width:18px; height:18px; color:var(--faint); }
-    .reasons { display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(20px,3vw,40px); }
-    .reason svg { width:26px; height:26px; color:var(--accent-soft); margin-bottom:14px; }
-    .reason h3 { font-size:18px; font-weight:600; margin:0 0 6px; letter-spacing:-.01em; }
-    .reason p { color:var(--muted); font-size:15px; margin:0; line-height:1.55; }
+    /* ─────────── BENEFITS STRIP ─────────── */
+    .benefits {
+      position:relative; z-index:2;
+      display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); align-items:center;
+      max-width:1300px; margin:0 auto; padding:6px clamp(22px,4vw,60px) 30px; color:var(--ink);
+    }
+    .benefit { min-height:64px; display:grid; grid-template-columns:48px 1fr; align-items:center; gap:16px; padding:0 clamp(12px,1.8vw,30px); border-left:1px solid var(--line); font-size:clamp(14px,1.05vw,18px); line-height:1.18; font-weight:600; }
+    .benefit:first-child { border-left:0; }
+    .benefit svg { width:40px; height:40px; color:var(--accent-soft); stroke-width:2.2; filter:drop-shadow(0 0 9px rgba(224,97,58,.32)); }
 
-    /* ── IMPORT ── */
-    .sources { display:flex; flex-wrap:wrap; gap:16px 30px; }
-    .source { display:inline-flex; align-items:center; gap:10px; color:#cabdb5; font-size:16px; font-weight:500; }
-    .source svg { width:20px; height:20px; color:var(--accent-soft); }
+    /* ─────────── INFO GRID ─────────── */
+    .info-section { position:relative; z-index:2; max-width:1300px; margin:0 auto; padding:clamp(30px,4vw,58px) clamp(22px,4vw,60px) clamp(26px,3vw,48px); }
+    .info-section::before { content:""; display:block; width:min(720px,100%); height:1px; margin:0 auto clamp(26px,3vw,44px); background:linear-gradient(90deg,transparent,rgba(224,97,58,.4),transparent); }
+    .info-kicker { text-align:center; color:var(--accent-soft); font-size:13px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; margin:0 0 12px; }
+    .info-heading { text-align:center; margin:0 0 clamp(26px,2.6vw,42px); font-size:clamp(26px,2.9vw,44px); font-weight:900; letter-spacing:-.04em; }
+    .info-heading span { color:var(--accent-soft); text-shadow:0 0 22px rgba(224,97,58,.4); }
+    .info-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(14px,1.8vw,22px); }
+    .info-card {
+      padding:clamp(20px,1.9vw,28px); border-radius:20px;
+      border:1px solid rgba(224,97,58,.16); background:linear-gradient(150deg, rgba(40,26,20,.72), rgba(24,16,13,.82));
+      box-shadow:inset 0 0 28px rgba(224,97,58,.04);
+      display:grid; grid-template-columns:52px 1fr; gap:16px; align-items:start;
+    }
+    .info-card-icon {
+      width:52px; height:52px; display:grid; place-items:center; border-radius:14px; color:#fff; flex-shrink:0;
+      background:radial-gradient(circle at 35% 25%, rgba(255,255,255,.22), transparent 36%), linear-gradient(145deg, #f4a261, #e0613a);
+      box-shadow:inset 0 0 0 2px rgba(255,205,170,.3), 0 0 18px rgba(224,97,58,.34);
+    }
+    .info-card-icon svg { width:26px; height:26px; stroke-width:2.4; }
+    .info-card-title { margin:0 0 6px; font-size:clamp(16px,1.2vw,20px); font-weight:800; letter-spacing:-.02em; line-height:1.1; }
+    .info-card-desc { margin:0; font-size:clamp(13px,.96vw,15.5px); color:var(--muted); line-height:1.5; }
+    .info-card-desc strong { color:var(--warm); font-weight:700; }
+    .info-card-desc .mono { font-family:var(--mono); color:var(--accent-soft); font-size:.92em; }
 
-    /* ── TABLE ── */
-    .logtbl { border:1px solid var(--line); border-radius:14px; overflow:hidden; max-width:560px; }
-    .logrow { display:grid; grid-template-columns:1fr 60px 60px 92px; padding:13px 18px; font-size:14.5px; }
-    .logrow.head { color:var(--dim); font-size:12.5px; font-weight:600; }
-    .logrow:not(.head) { border-top:1px solid var(--line-soft); color:#e7ddd6; }
-    .logrow .r { text-align:right; }
-    .c-plan { color:var(--muted); } .c-over { color:var(--accent-soft); } .c-ok { color:var(--green); } .c-skip { color:var(--dim); }
-    .logfile { color:var(--dim); font-size:13px; margin:14px 0 0; display:flex; align-items:center; gap:7px; }
-    .logfile svg { width:16px; height:16px; }
-
-    /* ── PHASE ── */
-    .phases { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; max-width:620px; }
-    .phase { border-radius:14px; padding:26px 16px; text-align:center; }
-    .phase .pl { font-size:11px; font-weight:600; letter-spacing:.14em; }
-    .phase .pt { font-family:var(--mono); font-size:34px; font-weight:600; margin-top:10px; }
-    .phase.b { border:1px solid rgba(63,156,106,.28); background:rgba(63,156,106,.07); } .phase.b .pl { color:var(--green); } .phase.b .pt { color:var(--green-l); }
-    .phase.w { border:1px solid rgba(224,97,58,.28); background:rgba(224,97,58,.07); } .phase.w .pl { color:var(--accent-soft); } .phase.w .pt { color:#f0936e; }
-    .phase.e { border:1px solid rgba(214,84,84,.32); background:rgba(214,84,84,.07); } .phase.e .pl { color:var(--red); } .phase.e .pt { color:#e87878; }
-    .phase .pc { color:var(--dim); font-size:12.5px; margin-top:10px; }
-
-    /* ── MINI BAR DEMO ── */
-    .minidemo { max-width:440px; }
-    .minibar { background:#0f1116; border:1px solid var(--line); border-radius:9px; padding:11px 14px; display:flex; align-items:center; gap:12px; }
-    .minibar .m { font-size:15px; } .minibar .sep { width:1px; height:20px; background:var(--line); }
-    .minibar .t { flex:1; color:rgba(255,255,255,.82); font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .minibar .v { font-family:var(--mono); font-size:25px; color:#fff; font-weight:600; }
-    .minibar .p { width:26px; height:26px; border-radius:7px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; }
-    .minibar .p svg { width:12px; height:12px; }
-    .minicap { text-align:center; color:var(--faint); font-size:12.5px; margin:9px 0 0; }
-    .extras { display:flex; flex-wrap:wrap; gap:14px 26px; margin-top:34px; }
-    .extra { display:inline-flex; align-items:center; gap:9px; color:var(--muted); font-size:15px; }
-    .extra svg { width:19px; height:19px; color:var(--accent-soft); }
-
-    /* ── FACTS ── */
-    .facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:18px; }
-    .fact { display:flex; gap:13px; align-items:flex-start; }
-    .fact svg { width:22px; height:22px; color:var(--accent-soft); flex-shrink:0; margin-top:2px; }
-    .fact h3 { font-size:15.5px; font-weight:600; margin:0 0 4px; }
-    .fact p { color:var(--muted); font-size:14px; margin:0; line-height:1.5; }
-
-    /* ── FOOTER ── */
-    .foot { background:var(--bg0); padding:46px 0; text-align:center; border-top:1px solid var(--line-soft); }
-    .foot .logo { justify-content:center; margin-bottom:14px; }
+    /* ─────────── FOOTER ─────────── */
+    .foot { position:relative; z-index:2; background:var(--bg0); padding:42px 0 48px; text-align:center; border-top:1px solid var(--line-soft); }
+    .foot .brand { justify-content:center; margin-bottom:14px; }
     .foot p { margin:0 0 7px; }
     .foot .a { color:var(--muted); font-size:14.5px; } .foot .a a { color:var(--accent-soft); text-decoration:none; } .foot .a a:hover { text-decoration:underline; }
     .foot .lic { color:var(--dim); font-size:13px; }
-    .foot .tm { color:var(--faint); font-size:11.5px; max-width:540px; margin:14px auto 0; line-height:1.5; }
+    .foot .tm { color:var(--faint); font-size:11.5px; max-width:560px; margin:14px auto 0; line-height:1.5; }
 
-    /* ── MODAL ── */
-    .ov { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(10,7,6,.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); opacity:0; pointer-events:none; transition:opacity .26s ease; }
+    /* ─────────── RESPONSIVE ─────────── */
+    @media (max-width:980px) {
+      .page { grid-template-columns:1fr; gap:clamp(30px,5vw,48px); padding-top:clamp(28px,5vw,44px); }
+      .copy { align-items:center; text-align:center; }
+      .features, .actions, .compatibility-note { margin-left:auto; margin-right:auto; }
+      .feature { text-align:left; }
+      .visual { order:2; }
+      .scene-wrap { max-width:680px; margin:0 auto; }
+      .benefits { grid-template-columns:repeat(2,minmax(0,1fr)); row-gap:18px; }
+      .benefit:nth-child(3) { border-left:0; }
+      .info-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width:560px) {
+      .headline { font-size:clamp(34px,9vw,46px); }
+      .features { grid-template-columns:1fr; }
+      .benefits { grid-template-columns:1fr; }
+      .benefit, .benefit:nth-child(3) { border-left:0; border-top:1px solid var(--line-soft); grid-template-columns:42px 1fr; padding:10px 0; }
+      .benefit:first-child { border-top:0; }
+      .info-grid { grid-template-columns:1fr; }
+    }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+
+    /* ─────────── MODAL ─────────── */
+    .ov { position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(10,7,6,.82); backdrop-filter:blur(13px); -webkit-backdrop-filter:blur(13px); opacity:0; pointer-events:none; transition:opacity .26s ease; }
     .ov.open { opacity:1; pointer-events:auto; }
-    .modal { position:relative; width:min(560px,100%); background:linear-gradient(160deg,#211915,#181210); border:1px solid var(--line); border-radius:22px; padding:clamp(26px,4vw,40px); box-shadow:0 40px 90px rgba(0,0,0,.6); transform:translateY(18px) scale(.98); transition:transform .3s cubic-bezier(.2,.8,.3,1.05); }
+    .modal { position:relative; width:min(560px,100%); background:linear-gradient(160deg,#211915,#181210); border:1px solid rgba(224,97,58,.22); border-radius:22px; padding:clamp(26px,4vw,40px); box-shadow:0 40px 90px rgba(0,0,0,.6), 0 0 50px rgba(224,97,58,.12); transform:translateY(18px) scale(.98); transition:transform .3s cubic-bezier(.2,.8,.3,1.05); }
     .ov.open .modal { transform:none; }
     .mclose { position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--muted); cursor:pointer; display:grid; place-items:center; transition:background .15s,color .15s; }
-    .mclose:hover { background:rgba(255,255,255,.1); color:#fff; }
+    .mclose:hover { background:rgba(224,97,58,.16); color:#fff; }
     .mclose svg { width:18px; height:18px; }
     .mhead { display:flex; align-items:center; gap:15px; margin-bottom:24px; }
     .mhead .tom { font-size:34px; }
-    .mhead h2 { font-size:24px; margin:0 0 2px; font-weight:600; }
+    .mhead h2 { font-size:24px; margin:0 0 2px; font-weight:800; letter-spacing:-.02em; }
     .mhead p { margin:0; color:var(--muted); font-size:14px; }
-    .frow { display:grid; grid-template-columns:48px 1fr auto; gap:15px; align-items:center; padding:16px 18px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.03); margin-bottom:18px; }
+    .mtags { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+    .mtag { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:30px; font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .mtag.new { background:linear-gradient(90deg, rgba(224,97,58,.22), rgba(244,162,97,.16)); border:1px solid rgba(224,97,58,.5); color:var(--warm); }
+    .mtag.rec { background:rgba(63,156,106,.12); border:1px solid rgba(63,156,106,.4); color:var(--green-l); }
+    .frow { display:grid; grid-template-columns:48px 1fr auto; gap:15px; align-items:center; padding:16px 18px; border:1px solid rgba(224,97,58,.3); border-radius:14px; background:rgba(224,97,58,.06); margin-bottom:18px; }
     .fico { width:48px; height:52px; border-radius:8px; background:linear-gradient(145deg,#e0613a,#a8401f); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:#fff; font-size:10px; font-weight:700; }
     .fico svg { width:20px; height:20px; }
-    .fname { font-size:15.5px; font-weight:600; margin:0 0 3px; }
+    .fname { font-size:15.5px; font-weight:700; margin:0 0 3px; }
     .fmeta { font-size:12.5px; color:var(--dim); margin:0; }
-    .fbadge { padding:5px 12px; border-radius:20px; background:rgba(224,97,58,.14); border:1px solid rgba(224,97,58,.34); color:var(--accent-soft); font-size:12.5px; font-weight:600; white-space:nowrap; }
-    .mbtn { display:flex; align-items:center; justify-content:center; gap:11px; width:100%; padding:16px; border-radius:14px; background:var(--accent); color:#fff; border:0; cursor:pointer; font:inherit; font-weight:600; font-size:18px; text-decoration:none; box-shadow:0 12px 28px rgba(224,97,58,.3); transition:filter .15s,transform .15s; }
+    .fbadge { padding:5px 12px; border-radius:20px; background:rgba(224,97,58,.14); border:1px solid rgba(224,97,58,.34); color:var(--accent-soft); font-size:12.5px; font-weight:700; white-space:nowrap; }
+    .mbtn { display:flex; align-items:center; justify-content:center; gap:11px; width:100%; padding:16px; border-radius:14px; background:linear-gradient(180deg,#f0824f,#db5a30); color:#fff; border:0; cursor:pointer; font:inherit; font-weight:800; font-size:18px; text-decoration:none; box-shadow:0 12px 28px rgba(224,97,58,.34); transition:filter .15s,transform .15s; }
     .mbtn:hover { filter:brightness(1.06); transform:translateY(-2px); }
     .mbtn svg { width:22px; height:22px; }
     .mstats { text-align:center; color:var(--dim); font-size:13.5px; margin:13px 0 0; }
-    .mstats strong { color:var(--warm); font-weight:600; }
+    .mstats strong { color:var(--warm); font-weight:700; }
     .mnote { margin:18px 0 0; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--line-soft); color:var(--muted); font-size:12.5px; line-height:1.55; }
-    .mnote b { color:var(--ink); font-weight:600; }
-
-    @media (max-width:860px) {
-      .reasons { grid-template-columns:1fr; gap:24px; }
-      .phases { grid-template-columns:1fr; }
-      .nav-cta { padding:9px 14px; font-size:14px; }
-    }
-    @media (max-width:560px) {
-      .wrap { padding:0 18px; }
-      .hero h1 { font-size:34px; }
-      .logrow { grid-template-columns:1fr 46px 46px 76px; font-size:13px; padding:11px 12px; }
-    }
-    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+    .mnote b { color:var(--ink); font-weight:700; }
   </style>
 </head>
 <body>
 
-  <nav class="nav">
-    <div class="wrap nav-in">
-      <div class="logo"><span class="tom">🍅</span>Moje<span>Pomodoro</span></div>
-      <button class="nav-cta" type="button" data-open-modal>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-        Pobierz za darmo
-      </button>
-    </div>
-  </nav>
+  <!-- ─────────── HERO ─────────── -->
+  <main class="page">
+    <section class="copy">
+      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b></p>
 
-  <!-- HERO -->
-  <header class="hero">
-    <div class="wrap">
-      <h1>Skup się na zadaniu, <span class="a">a&nbsp;czas&nbsp;pilnuje&nbsp;się&nbsp;sam.</span></h1>
-      <p class="hero-sub">Pomodoro zawsze na wierzchu okien — z listą zadań, budżetem czasu i rejestrem ile <span class="hl">naprawdę</span> zajęła Ci każda rzecz.</p>
-      <div class="infonote">
-        <div class="item">
-          <svg class="i-win" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span><b>Tylko Windows 10/11</b> · aplikacja na komputer — nie działa na telefonie ani tablecie</span>
+      <h1 class="headline">
+        Skup się na zadaniu,
+        <span>a czas pilnuje się sam.</span>
+      </h1>
+
+      <p class="subhead">
+        Timer <strong>Pomodoro</strong> zawsze na wierzchu okien — z listą zadań i rejestrem, ile <strong>naprawdę</strong> zajęła Ci każda rzecz.
+      </p>
+
+      <div class="compatibility-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <p>Tylko <strong>Windows 10/11</strong> — aplikacja na komputer, nie na telefon. Natywny desktop w <strong>Electron</strong>, instalator ma wszystko w środku.</p>
+      </div>
+
+      <div class="features">
+        <div class="feature">
+          <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8H7.5a2.5 2.5 0 1 1 2.2-3.7C10.8 5.1 12 8 12 8zM12 8h4.5a2.5 2.5 0 1 0-2.2-3.7C13.2 5.1 12 8 12 8z"/></svg></div>
+          <p>100% za darmo</p>
         </div>
-        <div class="item">
-          <svg class="i-el" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.7"/><ellipse cx="12" cy="12" rx="10" ry="4.3"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(120 12 12)"/></svg>
-          <span>Natywna apka desktop w technologii <b>Electron</b> — jak VS Code czy Slack. Instalator ma wszystko w środku.</span>
+        <div class="feature">
+          <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m12 3 8 4.5-8 4.5-8-4.5z"/><path d="M12 12v9"/></svg></div>
+          <p>Zawsze na wierzchu</p>
+        </div>
+        <div class="feature">
+          <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.4 1.4L7 4.6M4 12h.01M4 18h.01"/></svg></div>
+          <p>Lista zadań<br />+ import CSV</p>
+        </div>
+        <div class="feature">
+          <div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a4 4 0 0 1 .6-7.9 6 6 0 0 1 11.2-1.6A4.5 4.5 0 0 1 18 18z"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
+          <p>Działa offline</p>
         </div>
       </div>
-      <div class="cta-row">
-        <button class="btn-dl" type="button" data-open-modal>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-          Pobierz za darmo
+
+      <div class="actions">
+        <button class="download-btn" type="button" data-open-modal>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+          <span class="download-btn-inner">
+            <b>Pobierz za darmo</b>
+            <small class="download-btn-sub">✦ Wersja v1.1 · aktualizacja 16.06 · open source (MIT)</small>
+          </span>
         </button>
-        <span class="cta-meta">Za darmo · Open source (MIT) · Offline · v1.1<br><span id="heroStats">Pobrań: —</span></span>
+        <p class="download-stats" id="heroStats">Pobrań: —</p>
       </div>
+    </section>
 
+    <section class="visual" aria-label="Podgląd działania programu na pulpicie Windows">
       <div class="scene-wrap">
         <div class="scene" role="img" aria-label="Pulpit Windows: okno Notatnika, widżet Pomodoro na wierzchu z timerem, oraz pasek zadań, na którym mini-widżet zasłania zegar. Co kilka sekund ekran przełącza się na zieloną przerwę.">
           <div class="sc-win">
@@ -341,140 +392,85 @@
         </div>
         <p class="scene-cap">Widżet zostaje na wierzchu · mini-pasek zasłania zegar systemowy · zmiana fazy przejmuje cały ekran</p>
       </div>
-    </div>
-  </header>
+    </section>
+  </main>
 
-  <!-- METHOD -->
-  <section class="sec bgB">
-    <div class="wrap">
-      <p class="kicker">Dlaczego to działa</p>
-      <h2>Metoda Pomodoro w skrócie.</h2>
-      <p class="lead">Pracujesz w krótkich, w pełni skupionych blokach oddzielonych przerwami — rytm opracowany przez Francesco Cirillo, który rozbraja prokrastynację i chroni przed wypaleniem.</p>
-      <div class="rhythm">
-        <span class="pill work">25 min pracy</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-        <span class="pill brk">5 min przerwy</span>
-        <span class="x">× 4</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-        <span class="pill long">15–30 min dłuższa przerwa</span>
-      </div>
-      <div class="reasons">
-        <div class="reason">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5 3 21l4.5-1.5"/><path d="M14 6.5C16 4 20 3 21 3c0 1-1 5-3.5 7L13 14l-3-3z"/><path d="M10 11 7 8c-2 .5-3 2-3.5 3.5L7 13"/><path d="M13 14l1.5 3.5C16 17 17.5 16 18 14l-3-3"/></svg>
-          <h3>Łatwy start</h3>
-          <p>„Tylko 25 minut" pokonuje opór — a najtrudniejszy zawsze jest pierwszy krok.</p>
-        </div>
-        <div class="reason">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="16" height="10" rx="2"/><path d="M22 11v2"/><path d="m9 9-2 3h3l-2 3"/></svg>
-          <h3>Mniej zmęczenia</h3>
-          <p>Regularne przerwy odświeżają głowę i utrzymują koncentrację przez cały dzień.</p>
-        </div>
-        <div class="reason">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-          <h3>Jedno zadanie</h3>
-          <p>Tykający budżet trzyma Cię przy jednej rzeczy i odcina ciągłe przełączanie kontekstu.</p>
+  <!-- ─────────── BENEFITS ─────────── -->
+  <section class="benefits" aria-label="Najważniejsze zalety">
+    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg><span>Dane zostają<br />u Ciebie</span></div>
+    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a4 4 0 0 1 .6-7.9 6 6 0 0 1 11.2-1.6A4.5 4.5 0 0 1 18 18z"/><line x1="2" y1="2" x2="22" y2="22"/></svg><span>Działa<br />offline</span></div>
+    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg><span>Open source<br />(MIT)</span></div>
+    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span>Bez admina<br />i Node.js</span></div>
+  </section>
+
+  <!-- ─────────── CO WARTO WIEDZIEĆ ─────────── -->
+  <section class="info-section" aria-label="Co warto wiedzieć">
+    <p class="info-kicker">Wszystko w jednym widżecie</p>
+    <h2 class="info-heading">Co dostajesz <span>w środku</span></h2>
+    <div class="info-grid">
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9"/><path d="M9 2h6"/><path d="m19 5 1.5-1.5"/></svg></div>
+        <div>
+          <p class="info-card-title">Metoda Pomodoro</p>
+          <p class="info-card-desc"><strong>25 min pracy</strong>, 5 min przerwy ×4, potem dłuższa. Rytm opracowany przez Francesco Cirillo rozbraja prokrastynację i chroni przed wypaleniem.</p>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- IMPORT -->
-  <section class="sec bgA">
-    <div class="wrap">
-      <p class="kicker">Import &amp; eksport</p>
-      <h2>Masz już listę? Wrzuć ją w sekundę.</h2>
-      <p class="lead">Eksportuj do CSV z dowolnej aplikacji — <b>MojePomodoro samo rozpozna kolumny</b> z nazwą zadania i czasem (po polsku i angielsku). Eksport z powrotem do formatu <span class="hl">nazwa;minuty</span> — kopia zapasowa i przenoszenie między komputerami.</p>
-      <div class="sources">
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>Arkusze Google</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>Excel</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 9 2 2 4-4"/><path d="M8 16h8"/></svg>Todoist</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5h10M11 12h10M11 19h10"/><path d="m3 5 1.5 1.5L7 4M3 12l1.5 1.5L7 11M3 19l1.5 1.5L7 18"/></svg>TickTick</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 4v16M8 8h8M8 12h8"/></svg>Notion</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="3" height="9"/><rect x="14" y="7" width="3" height="6"/></svg>Trello</span>
-        <span class="source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h6"/></svg>plik .txt</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- PLAN VS FAKT -->
-  <section class="sec bgB">
-    <div class="wrap">
-      <p class="kicker">Plan kontra rzeczywistość</p>
-      <h2>Zobacz, ile zadanie zajęło naprawdę.</h2>
-      <p class="lead">Każde ukończone i pominięte zadanie ląduje w logu z czasem <b>zaplanowanym</b> i <b>faktycznym</b> — licznik jest odporny na uśpienie komputera i pauzy, zapisuje co minutę. Po tygodniu wiesz, co realnie zjada Twój dzień.</p>
-      <div class="logtbl">
-        <div class="logrow head"><span>Zadanie</span><span class="r">Plan</span><span class="r">Fakt</span><span class="r">Status</span></div>
-        <div class="logrow"><span>Raport kwartalny</span><span class="r c-plan">25</span><span class="r c-over">38</span><span class="r c-ok">ukończone</span></div>
-        <div class="logrow"><span>Mejle do klientów</span><span class="r c-plan">15</span><span class="r c-ok">12</span><span class="r c-ok">ukończone</span></div>
-        <div class="logrow"><span>Przegląd kodu</span><span class="r c-plan">30</span><span class="r c-over">52</span><span class="r c-skip">pominięte</span></div>
-      </div>
-      <p class="logfile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>Dokumenty\PomodoroOverlay\pomodoro-log.csv — otwierasz w Excelu</p>
-    </div>
-  </section>
-
-  <!-- PHASE SIGNAL -->
-  <section class="sec bgA">
-    <div class="wrap">
-      <p class="kicker">Nie przegapisz zmiany fazy</p>
-      <h2>Cały ekran daje sygnał.</h2>
-      <p class="lead">Koniec pracy albo przerwy? Monitor na chwilę przejmuje pełny ekran z wielkim timerem — <b>zielono</b> przy przerwie i starcie pracy, <b>czerwono</b>, gdy budżet zadania dobiega końca. Sygnału nie da się przeoczyć, nawet patrząc w inne okno.</p>
-      <div class="phases">
-        <div class="phase b"><div class="pl">PRZERWA</div><div class="pt">04:32</div><div class="pc">Krótka przerwa — zielono</div></div>
-        <div class="phase w"><div class="pl">PRACA</div><div class="pt">25:00</div><div class="pc">Start pracy — pulsuje zielenią</div></div>
-        <div class="phase e"><div class="pl">KOŃCZY SIĘ</div><div class="pt">00:38</div><div class="pc">Mało czasu — czerwony timer</div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SIZES + MINI + AUTOSTART -->
-  <section class="sec bgB">
-    <div class="wrap">
-      <p class="kicker">Dopasuj — albo zniknij</p>
-      <h2>Zwiń na pasek i zasłoń zegar systemowy.</h2>
-      <p class="lead">Trzy rozmiary widżetu (S / M / L), suwak przezroczystości i <b>autostart z Windows</b>. A gdy chcesz odciąć rozpraszacze — <b>tryb mini siada na pasku zadań w miejscu zegara Windows</b>. Zamiast godziny patrzysz na czas do końca zadania.</p>
-      <div class="minidemo">
-        <div class="minibar">
-          <span class="m">🍅</span><span class="sep"></span>
-          <span class="t">Raport kwartalny</span>
-          <span class="v">16:47</span>
-          <span class="p"><svg viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m12 3 8 4.5-8 4.5-8-4.5z"/><path d="M12 12v9"/></svg></div>
+        <div>
+          <p class="info-card-title">Zawsze na wierzchu · 3 rozmiary</p>
+          <p class="info-card-desc">Widżet <strong>S / M / L</strong> z suwakiem przezroczystości zostaje nad wszystkimi oknami. Tryb <strong>mini</strong> siada na pasku zadań w miejscu zegara — patrzysz na czas do końca zadania.</p>
         </div>
-        <p class="minicap">↑ pasek zadań Windows — tu normalnie tyka zegar</p>
       </div>
-      <div class="extras">
-        <span class="extra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>Autostart z Windows</span>
-        <span class="extra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg>Rozmiary S / M / L</span>
-        <span class="extra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z"/></svg>Przezroczystość 20–100%</span>
-        <span class="extra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-2 3 2 3"/><path d="M9 5l3-2 3 2"/><path d="M19 9l2 3-2 3"/><path d="M9 19l3 2 3-2"/><path d="M12 8v8M8 12h8"/></svg>Przeciągnij gdziekolwiek</span>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></div>
+        <div>
+          <p class="info-card-title">Import &amp; eksport CSV</p>
+          <p class="info-card-desc">Wrzuć listę z <strong>Arkuszy Google, Excela, Todoist, Notion</strong>… — aplikacja sama rozpozna kolumny. Eksport z powrotem do formatu <span class="mono">nazwa;minuty</span>.</p>
+        </div>
       </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-4 3 3 5-7"/></svg></div>
+        <div>
+          <p class="info-card-title">Plan kontra fakt</p>
+          <p class="info-card-desc">Każde zadanie ląduje w logu z czasem <strong>zaplanowanym</strong> i <strong>faktycznym</strong> — licznik odporny na uśpienie i pauzy. Po tygodniu wiesz, co realnie zjada Twój dzień.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/></svg></div>
+        <div>
+          <p class="info-card-title">Sygnał na cały ekran</p>
+          <p class="info-card-desc">Zmiana fazy przejmuje cały ekran z wielkim timerem — <strong>zielono</strong> przy przerwie i starcie pracy, <strong>czerwono</strong>, gdy czas zadania dobiega końca. Nie da się przeoczyć.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg></div>
+        <div>
+          <p class="info-card-title">Prywatność i licencja</p>
+          <p class="info-card-desc">Zero telemetrii i kont — zadania i log zapisują się <strong>wyłącznie lokalnie</strong> na Twoim dysku. Open source na licencji <strong>MIT</strong>, wolne też do użytku komercyjnego.</p>
+        </div>
+      </div>
+
     </div>
   </section>
 
-  <!-- FACTS -->
-  <section class="sec bgA">
-    <div class="wrap">
-      <p class="kicker">Dobrze wiedzieć</p>
-      <h2>Bez haczyków.</h2>
-      <div class="facts">
-        <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg><div><h3>Dane zostają u Ciebie</h3><p>Zero telemetrii i kont. Zadania i log zapisują się wyłącznie lokalnie na Twoim dysku.</p></div></div>
-        <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div><h3>Działa offline</h3><p>Po instalacji internet nie jest potrzebny — żadnych logowań ani synchronizacji w chmurze.</p></div></div>
-        <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg><div><h3>Open source (MIT)</h3><p>Wolne do użytku prywatnego, komercyjnego, modyfikacji i dalszej dystrybucji.</p></div></div>
-        <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><div><h3>Bez admina i Node.js</h3><p>Instalator EXE ma wszystko w środku. Wymaga tylko Windows 10/11 (64-bit) na komputerze.</p></div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
+  <!-- ─────────── FOOTER ─────────── -->
   <footer class="foot">
-    <div class="wrap">
-      <div class="logo"><span class="tom">🍅</span>Moje<span>Pomodoro</span> <span style="color:var(--dim);font-weight:500;margin-left:6px">v1.1.0</span></div>
+    <div class="page" style="display:block; padding-top:0; padding-bottom:0;">
+      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b> <span style="color:var(--dim);font-weight:600;margin-left:6px">v1.1.0</span></p>
       <p class="a">Autor: Mariusz Świerguła — <a href="mailto:mariusz.swiergula@gmail.com">mariusz.swiergula@gmail.com</a></p>
       <p class="lic">© 2026 Mariusz Świerguła · Licencja MIT · Zbudowano w Electron · Wyłącznie na Windows 10/11 (komputer)</p>
       <p class="tm">„Pomodoro®" i „Pomodoro Technique®" to znaki towarowe Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta wyłącznie opisowo.</p>
     </div>
   </footer>
 
-  <!-- DOWNLOAD MODAL -->
+  <!-- ─────────── DOWNLOAD MODAL ─────────── -->
   <div class="ov" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
     <div class="modal">
       <button class="mclose" id="mClose" aria-label="Zamknij">
@@ -486,6 +482,10 @@
           <h2 id="mTitle">Pobierz MojePomodoro</h2>
           <p>Darmowy timer Pomodoro na Windows — w pełni offline</p>
         </div>
+      </div>
+      <div class="mtags">
+        <span class="mtag new">✦ Najnowsza</span>
+        <span class="mtag rec">✓ Zalecana</span>
       </div>
       <div class="frow">
         <div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>EXE</div>
