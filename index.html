@@ -75,8 +75,12 @@
     .hero h1 { font-size:clamp(36px,5.4vw,62px); font-weight:700; letter-spacing:-.04em; line-height:1.02; margin:0 0 18px; max-width:780px; }
     .hero h1 .a { color:var(--accent-soft); }
     .hero-sub { color:var(--muted); font-size:clamp(17px,1.7vw,22px); line-height:1.5; max-width:560px; margin:0 0 18px; }
-    .compat { display:inline-flex; align-items:center; gap:9px; color:var(--dim); font-size:14px; margin-bottom:28px; }
-    .compat svg { width:18px; height:18px; color:var(--accent-soft); }
+    .infonote { display:flex; flex-direction:column; gap:10px; margin:0 0 28px; max-width:560px; }
+    .infonote .item { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.04); border:1px solid var(--line); border-radius:12px; padding:11px 15px; color:var(--muted); font-size:14px; line-height:1.42; }
+    .infonote .item svg { width:20px; height:20px; flex-shrink:0; }
+    .infonote .item .i-win { color:var(--accent-soft); }
+    .infonote .item .i-el { color:#7fb6e6; }
+    .infonote .item b { color:var(--ink); font-weight:600; }
     .cta-row { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
     .btn-dl { display:inline-flex; align-items:center; gap:12px; background:var(--accent); color:#fff; border:0; cursor:pointer; font:inherit; font-weight:600; font-size:19px; padding:16px 28px; border-radius:15px; text-decoration:none; box-shadow:0 12px 30px rgba(224,97,58,.32); transition:filter .15s, transform .15s, box-shadow .15s; }
     .btn-dl:hover { filter:brightness(1.06); transform:translateY(-2px); box-shadow:0 16px 38px rgba(224,97,58,.42); }
@@ -265,10 +269,16 @@
     <div class="wrap">
       <h1>Skup się na zadaniu, <span class="a">a&nbsp;czas&nbsp;pilnuje&nbsp;się&nbsp;sam.</span></h1>
       <p class="hero-sub">Pomodoro zawsze na wierzchu okien — z listą zadań, budżetem czasu i rejestrem ile <span class="hl">naprawdę</span> zajęła Ci każda rzecz.</p>
-      <p class="compat">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        Aplikacja desktopowa na Windows 10/11 · zbudowana w Electron · nie działa na telefonie ani tablecie
-      </p>
+      <div class="infonote">
+        <div class="item">
+          <svg class="i-win" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span><b>Tylko Windows 10/11</b> · aplikacja na komputer — nie działa na telefonie ani tablecie</span>
+        </div>
+        <div class="item">
+          <svg class="i-el" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.7"/><ellipse cx="12" cy="12" rx="10" ry="4.3"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.3" transform="rotate(120 12 12)"/></svg>
+          <span>Natywna apka desktop w technologii <b>Electron</b> — jak VS Code czy Slack. Instalator ma wszystko w środku.</span>
+        </div>
+      </div>
       <div class="cta-row">
         <button class="btn-dl" type="button" data-open-modal>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
