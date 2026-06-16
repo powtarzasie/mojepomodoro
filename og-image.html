@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1200px; height:630px; overflow:hidden; }
+  body {
+    font-family:"Segoe UI",system-ui,sans-serif;
+    position:relative;
+    background:
+      radial-gradient(circle at 28% 22%, rgba(120,150,200,.40), transparent 55%),
+      linear-gradient(140deg,#2c3a52 0%,#1d2738 60%,#161d2b 100%);
+  }
+  .brand { position:absolute; top:42px; left:54px; display:flex; align-items:center; gap:16px; z-index:5; }
+  .brand .tomato { font-size:52px; line-height:1; filter:drop-shadow(0 4px 12px rgba(0,0,0,.4)); }
+  .brand h1 { font-size:46px; font-weight:600; color:#f4ece8; letter-spacing:-.02em; text-shadow:0 2px 14px rgba(0,0,0,.45); }
+  .brand h1 span { color:#ff7a52; }
+  .brand p { margin-top:6px; font-size:21px; color:#cdd6e0; font-weight:500; text-shadow:0 1px 8px rgba(0,0,0,.5); }
+
+  .win {
+    position:absolute; left:60px; top:208px; width:540px;
+    background:#f4f4f5; border-radius:14px; overflow:hidden;
+    box-shadow:0 30px 60px rgba(0,0,0,.45);
+  }
+  .win .bar { height:52px; background:#e9e9eb; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+  .win .bar .t { display:flex; align-items:center; gap:12px; color:#3a3a3c; font-size:19px; font-weight:600; }
+  .win .bar .t .ic { width:22px; height:22px; border:2px solid #8a8a8e; border-radius:3px; }
+  .win .bar .ctrls { display:flex; align-items:center; gap:24px; color:#6a6a6e; font-size:22px; }
+  .win .body { padding:28px 28px 40px; }
+  .win .line { height:12px; border-radius:6px; background:#e2e4e8; margin-bottom:16px; }
+  .win .line.a { width:88%; background:#d3d6da; }
+  .win .line.b { width:96%; }
+  .win .line.c { width:78%; }
+  .win .line.d { width:90%; }
+  .win .line.e { width:55%; margin-bottom:0; }
+
+  .widget {
+    position:absolute; right:74px; top:228px; width:380px;
+    background:rgba(12,13,18,.97); border:1px solid rgba(255,255,255,.10);
+    border-radius:22px; box-shadow:0 30px 64px rgba(0,0,0,.55);
+    padding:24px 26px 22px;
+  }
+  .widget .top { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .widget .left { display:flex; align-items:center; gap:12px; }
+  .badge { background:#e0613a; color:#fff; font-size:16px; font-weight:600; letter-spacing:.08em; padding:5px 16px; border-radius:30px; }
+  .dots { display:flex; gap:6px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#e0613a; }
+  .dot.off { background:rgba(255,255,255,.16); }
+  .widget .size { color:rgba(255,255,255,.32); font-size:18px; }
+  .task { color:#fff; font-size:24px; font-weight:600; margin-bottom:18px; }
+  .row { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .timer { font-family:"Consolas","SF Mono",monospace; font-size:62px; font-weight:600; color:#fff; letter-spacing:-.02em; line-height:1; }
+  .timer .c { opacity:.55; }
+  .btns { display:flex; gap:10px; }
+  .btn { width:54px; height:54px; border-radius:15px; display:flex; align-items:center; justify-content:center; }
+  .btn.sec { background:rgba(255,255,255,.08); }
+  .btn.pri { background:#e0613a; }
+  .btn svg { width:22px; height:22px; }
+  .prog { height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
+  .prog .fill { height:100%; width:36%; background:linear-gradient(90deg,#e0613a,#f4a261); border-radius:3px; }
+
+  .taskbar { position:absolute; left:0; right:0; bottom:0; height:66px; background:rgba(20,22,28,.94); border-top:1px solid rgba(255,255,255,.08); display:flex; align-items:center; }
+  .tb-center { flex:1; display:flex; align-items:center; justify-content:center; gap:18px; }
+  .tb-ic { width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,.10); display:flex; align-items:center; justify-content:center; }
+  .tb-ic svg { width:20px; height:20px; color:#cdd6e0; }
+  .tb-start { display:grid; grid-template-columns:1fr 1fr; gap:3px; }
+  .tb-start span { width:9px; height:9px; background:#5b9bd5; border-radius:2px; }
+  .tb-mini { position:absolute; right:0; bottom:0; height:66px; display:flex; align-items:center; gap:14px; padding:0 26px 0 26px; background:linear-gradient(90deg,rgba(224,97,58,0),rgba(224,97,58,.20)); border-left:1px solid rgba(255,255,255,.08); }
+  .tb-mini .tm { font-size:24px; }
+  .tb-mini .tt { color:rgba(255,255,255,.85); font-size:18px; font-weight:600; max-width:170px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .tb-mini .tv { font-family:"Consolas",monospace; font-size:34px; font-weight:600; color:#fff; }
+  .tb-mini .tp { width:34px; height:34px; border-radius:9px; background:#e0613a; display:flex; align-items:center; justify-content:center; }
+  .tb-mini .tp svg { width:14px; height:14px; }
+  .hint { position:absolute; right:30px; bottom:74px; color:rgba(255,255,255,.6); font-size:15px; text-shadow:0 1px 6px rgba(0,0,0,.6); }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <span class="tomato">🍅</span>
+    <div>
+      <h1>Moje<span>Pomodoro</span></h1>
+      <p>Timer Pomodoro zawsze na wierzchu · Windows · za darmo</p>
+    </div>
+  </div>
+
+  <div class="win">
+    <div class="bar">
+      <div class="t"><span class="ic"></span>Notatnik</div>
+      <div class="ctrls"><span>&#8211;</span><span>&#9633;</span><span>&#10005;</span></div>
+    </div>
+    <div class="body">
+      <div class="line a"></div>
+      <div class="line b"></div>
+      <div class="line c"></div>
+      <div class="line d"></div>
+      <div class="line e"></div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <div class="top">
+      <div class="left">
+        <span class="badge">PRACA</span>
+        <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot off"></span></span>
+      </div>
+      <span class="size">M</span>
+    </div>
+    <div class="task">Raport kwartalny</div>
+    <div class="row">
+      <span class="timer">16<span class="c">:</span>03</span>
+      <span class="btns">
+        <span class="btn sec"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg></span>
+        <span class="btn pri"><svg viewBox="0 0 24 24" fill="#fff" stroke="#fff"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></span>
+      </span>
+    </div>
+    <div class="prog"><div class="fill"></div></div>
+  </div>
+
+  <div class="taskbar">
+    <div class="tb-center">
+      <span class="tb-ic"><span class="tb-start"><span></span><span></span><span></span><span></span></span></span>
+      <span class="tb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+      <span class="tb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></span>
+      <span class="tb-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle></svg></span>
+    </div>
+    <div class="tb-mini">
+      <span class="tm">🍅</span>
+      <span class="tt">Raport kwartalny</span>
+      <span class="tv">16:47</span>
+      <span class="tp"><svg viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></span>
+    </div>
+  </div>
+</body>
+</html>
