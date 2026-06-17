@@ -283,6 +283,21 @@
     .mstats strong { color:var(--warm); font-weight:700; }
     .mnote { margin:18px 0 0; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--line-soft); color:var(--muted); font-size:12.5px; line-height:1.55; }
     .mnote b { color:var(--ink); font-weight:700; }
+    /* ── Archiwum (poprzednie wersje) ── */
+    .arc-divider { text-align:center; color:var(--dim); font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin:20px 0 12px; position:relative; }
+    .arc-divider::before, .arc-divider::after { content:""; position:absolute; top:50%; width:26%; height:1px; background:var(--line-soft); }
+    .arc-divider::before { left:0; } .arc-divider::after { right:0; }
+    .arc-row { display:grid; grid-template-columns:38px 1fr auto; gap:12px; align-items:center; padding:11px 14px; border:1px solid var(--line-soft); border-radius:12px; background:rgba(255,255,255,.02); margin-bottom:10px; }
+    .arc-ico { width:38px; height:42px; border-radius:7px; background:rgba(255,255,255,.05); border:1px solid var(--line-soft); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:var(--muted); font-size:9px; font-weight:700; }
+    .arc-ico svg { width:16px; height:16px; }
+    .arc-name { font-size:13.5px; font-weight:700; margin:0 0 2px; color:var(--muted); }
+    .arc-meta { font-size:11.5px; color:var(--dim); margin:0; }
+    .arc-badge { padding:4px 10px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid var(--line-soft); color:var(--dim); font-size:11.5px; font-weight:700; white-space:nowrap; }
+    .arc-btn { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:11px; border-radius:12px; background:rgba(255,255,255,.04); color:var(--muted); border:1px solid var(--line-soft); cursor:pointer; font:inherit; font-weight:700; font-size:14px; text-decoration:none; transition:background .15s,color .15s; }
+    .arc-btn:hover { background:rgba(255,255,255,.08); color:var(--ink); }
+    .arc-btn svg { width:18px; height:18px; }
+    .arc-stats { text-align:center; color:var(--dim); font-size:12px; margin:8px 0 0; }
+    .arc-stats strong { color:var(--muted); font-weight:700; }
   </style>
 </head>
 <body>
@@ -500,6 +515,23 @@
         Pobierz instalator
       </a>
       <p class="mstats" id="modalStats">Pobrań: —</p>
+
+      <!-- ── Archiwum: poprzednia wersja ── -->
+      <div class="arc-divider">poprzednia wersja</div>
+      <div class="arc-row">
+        <div class="arc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>EXE</div>
+        <div>
+          <p class="arc-name">MojePomodoro_Setup_v1.1.exe</p>
+          <p class="arc-meta">Windows 10/11 (64-bit) · opublikowano 16.06.2026</p>
+        </div>
+        <span class="arc-badge">v1.1.0</span>
+      </div>
+      <a class="arc-btn" id="dlBtnV11" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.1/MojePomodoro_Setup_v1.1.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+        Pobierz v1.1 (.exe)
+      </a>
+      <p class="arc-stats" id="modalStatsV11">Pobrań: —</p>
+
       <p class="mnote">
         Instalator nie jest podpisany płatnym certyfikatem, więc Windows może pokazać <b>SmartScreen</b> („System Windows ochronił ten komputer") — kliknij <b>„Więcej informacji" → „Uruchom mimo to"</b>. Aplikacja jest <b>w 100% lokalna</b>: bez konta, bez telemetrii, kod otwarty na licencji MIT.
       </p>
@@ -535,6 +567,25 @@
           set(heroStats, a.download_count); set(modalStats, a.download_count);
         })
         .catch(function(e){ console.warn(e); set(heroStats,null); set(modalStats,null); });
+    })();
+
+    /* ── Licznik pobrań — archiwum v1.1 ── */
+    (function(){
+      var API = 'https://api.github.com/repos/powtarzasie/mojepomodoro/releases/tags/v1.1';
+      var ASSET = 'MojePomodoro_Setup_v1.1.exe';
+      var stats = document.getElementById('modalStatsV11');
+      var btn = document.getElementById('dlBtnV11');
+      function fmt(n){ return n.toLocaleString('pl-PL'); }
+      function set(el, n){ if(!el) return; el.innerHTML = (typeof n==='number') ? 'Pobrań: <strong>'+fmt(n)+'</strong>' : 'Pobrań: —'; }
+      fetch(API, { headers:{ 'Accept':'application/vnd.github+json' } })
+        .then(function(r){ if(!r.ok) throw new Error('GitHub '+r.status); return r.json(); })
+        .then(function(rel){
+          var a = (rel.assets||[]).find(function(x){ return x.name===ASSET; });
+          if(!a){ set(stats,null); return; }
+          if(btn) btn.href = a.browser_download_url;
+          set(stats, a.download_count);
+        })
+        .catch(function(e){ console.warn(e); set(stats,null); });
     })();
 
     /* ── Tykający timer w scenie hero ── */
