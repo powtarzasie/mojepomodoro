@@ -1,2 +1,17 @@
-_preview_*.png
+# Zależności — instalowane przez `npm install` / `npm ci` (w CI), nigdy do repo
+node_modules/
+
+# Artefakty buildu — instalator powstaje w CI i trafia do Releases, NIE do drzewa repo
+release/
+dist/
+out/
 *.exe
+
+# Logi i pliki tymczasowe
+*.log
+start-log.txt
+_preview_*.png
+
+# Systemowe
+.DS_Store
+Thumbs.db

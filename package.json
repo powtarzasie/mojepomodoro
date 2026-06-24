@@ -1,0 +1,62 @@
+{
+  "name": "pomodoro-overlay",
+  "version": "1.2.0",
+  "description": "Pomodoro timer zawsze na wierzchu z listą zadań",
+  "main": "main.js",
+  "author": "Mariusz Świerguła <Mariusz.swiergula@gmail.com>",
+  "license": "MIT",
+  "homepage": "",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "pl.swiergula.pomodoro-overlay",
+    "productName": "Pomodoro Overlay",
+    "copyright": "Copyright © 2026 Mariusz Świerguła",
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": true,
+      "shortcutName": "Pomodoro Overlay",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "license": "LICENSE",
+      "artifactName": "MojePomodoro_Setup_v${version}.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "manager.html",
+      "terms.html",
+      "build/icon.ico",
+      "build/icon.png",
+      "LICENSE",
+      "THIRD_PARTY_LICENSES.md"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "compression": "normal"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {}
+}

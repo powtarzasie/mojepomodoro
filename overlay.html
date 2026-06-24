@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent; overflow: hidden; -webkit-user-select: none; user-select: none; visibility: hidden; }
+
+/* ══ WIDGET + ROZMIARY ═══════════════════════════════════ */
+.widget {
+  position: fixed; left: 0; top: 0; cursor: move;   /* pozycjonowany w oknie pełnoekranowym; drag w JS */
+  background: rgba(8,10,20,0.90);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  padding: 11px 14px 10px; width: 330px;
+  --timer-sz:28px; --task-sz:14px; --badge-sz:10px; --dot-sz:6px;
+  --ibtn-sz:22px; --abtn-sz:30px; --abtn-f:11px; --play-f:14px;
+  --gap-hdr:7px; --gap-task:7px; --gap-timer:10px;
+  --done-msg-sz:12px; --done-btn-pad:11px;
+}
+.widget.size-s { padding:9px 12px 8px; width:260px; --timer-sz:28px; --task-sz:11px; --badge-sz:9px; --dot-sz:5px; --ibtn-sz:19px; --abtn-sz:25px; --abtn-f:10px; --play-f:12px; --gap-hdr:5px; --gap-task:5px; --gap-timer:7px; --done-msg-sz:11px; --done-btn-pad:8px; }
+.widget.size-l { padding:14px 17px 13px; width:420px; --timer-sz:52px; --task-sz:15px; --badge-sz:11px; --dot-sz:7px; --ibtn-sz:22px; --abtn-sz:36px; --abtn-f:12px; --play-f:17px; --gap-hdr:8px; --gap-task:9px; --gap-timer:12px; --done-msg-sz:14px; --done-btn-pad:14px; }
+
+.no-drag { -webkit-app-region: no-drag; }
+
+/* ══ HEADER ══════════════════════════════════════════════ */
+.row-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--gap-hdr); }
+.left-info  { display:flex; align-items:center; gap:6px; }
+
+.badge { font-size:var(--badge-sz); font-weight:800; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:20px; color:#fff; transition:background .4s; }
+.badge-work       { background:#e05c34; }
+.badge-shortBreak { background:#2a9d5c; }
+.badge-longBreak  { background:#2563eb; }
+.badge-idle, .badge-done { background:#3a3f52; }
+
+.dots { display:flex; gap:3px; align-items:center; }
+.dot  { width:var(--dot-sz); height:var(--dot-sz); border-radius:50%; background:rgba(255,255,255,0.12); transition:background .4s; }
+.dot.filled { background:#e05c34; }
+
+.hdr-btns { display:flex; gap:4px; }
+.icon-btn {
+  -webkit-app-region:no-drag;
+  background:rgba(255,255,255,0.06); border:none; color:rgba(255,255,255,0.45);
+  width:var(--ibtn-sz); height:var(--ibtn-sz); border-radius:5px; cursor:pointer;
+  font-size:10px; display:flex; align-items:center; justify-content:center;
+  transition:background .15s,color .15s; font-family:inherit; line-height:1;
+}
+.icon-btn:hover { background:rgba(255,255,255,0.15); color:#fff; }
+.icon-btn.active { background:rgba(255,255,255,0.18); color:#fff; }
+.size-btn { font-weight:800; font-size:9px; letter-spacing:.04em; }
+
+/* ══ PASEK PRZEZROCZYSTOŚCI ══════════════════════════════ */
+.opacity-row { display:none; align-items:center; gap:8px; margin-bottom:var(--gap-task); -webkit-app-region:no-drag; }
+.opacity-row.open { display:flex; }
+.opacity-icon { font-size:11px; color:rgba(255,255,255,0.3); }
+.opacity-slider { flex:1; height:3px; -webkit-appearance:none; appearance:none; background:rgba(255,255,255,0.15); border-radius:2px; outline:none; cursor:pointer; }
+.opacity-slider::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; cursor:pointer; }
+.opacity-val { font-size:10px; color:rgba(255,255,255,0.4); width:28px; text-align:right; font-variant-numeric:tabular-nums; }
+
+/* ══ ZADANIE: WIERSZ z przyciskiem ✓ ════════════════════ */
+.task-row { display:flex; align-items:center; gap:6px; margin-bottom:var(--gap-task); }
+.task-name { flex:1; color:#fff; font-size:var(--task-sz); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.task-name.muted { color:rgba(255,255,255,0.22); font-style:italic; }
+
+.btn-done {
+  -webkit-app-region:no-drag;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.22); width:var(--ibtn-sz); height:var(--ibtn-sz);
+  border-radius:5px; cursor:pointer; font-size:11px; display:flex; align-items:center;
+  justify-content:center; transition:background .15s,color .15s,border-color .15s; flex-shrink:0;
+}
+.btn-done:hover { background:rgba(42,157,92,0.2); border-color:rgba(42,157,92,0.35); color:#4ade80; }
+
+/* ══ PANEL WYBORU po wcześniejszym ukończeniu ════════════ */
+.done-panel { display:none; margin-bottom:var(--gap-task); }
+.done-panel.visible { display:block; }
+
+.done-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.done-msg { font-size:var(--done-msg-sz); color:rgba(255,255,255,0.55); font-weight:500; }
+
+.done-actions { display:flex; gap:6px; -webkit-app-region:no-drag; }
+.done-btn { flex:1; border:1px solid transparent; font-size:11px; font-weight:600; padding:var(--done-btn-pad) 8px; border-radius:8px; cursor:pointer; font-family:inherit; transition:background .15s,transform .1s; line-height:1; }
+.done-btn:active { transform:scale(.97); }
+.done-btn.break-opt { background:rgba(42,157,92,0.15); border-color:rgba(42,157,92,0.25); color:#4ade80; }
+.done-btn.break-opt:hover { background:rgba(42,157,92,0.28); }
+.done-btn.next-opt  { background:rgba(224,92,52,0.15); border-color:rgba(224,92,52,0.25); color:#f4a261; }
+.done-btn.next-opt:hover  { background:rgba(224,92,52,0.28); }
+
+/* ══ TIMER ═══════════════════════════════════════════════ */
+.row-timer { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--gap-timer); }
+.timer { font-size:var(--timer-sz); font-weight:700; font-variant-numeric:tabular-nums; color:#fff; letter-spacing:-.02em; font-family:'SF Mono','Consolas','Courier New',monospace; line-height:1; text-shadow:0 2px 12px rgba(0,0,0,0.7); }
+.timer.urgent { color:#ff6b6b; }
+.timer-right { -webkit-app-region:no-drag; display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
+.timer-btns { display:flex; flex-direction:row; gap:5px; }
+.action-btn { background:rgba(255,255,255,0.08); border:none; color:rgba(255,255,255,0.7); width:var(--abtn-sz); height:var(--abtn-sz); border-radius:8px; cursor:pointer; font-size:var(--abtn-f); display:flex; align-items:center; justify-content:center; transition:background .15s,transform .1s; }
+.action-btn:hover  { background:rgba(255,255,255,0.18); color:#fff; }
+.action-btn:active { transform:scale(.92); }
+.action-btn.primary            { background:#e05c34; color:#fff; font-size:var(--play-f); }
+.action-btn.primary:hover      { background:#c94e28; }
+.action-btn.primary.pause      { background:#3a3f52; }
+.action-btn.primary.pause:hover { background:#4a505f; }
+.action-btn.done-go { background:rgba(42,157,92,0.25); color:#4ade80; font-size:9px; font-weight:700; letter-spacing:-.02em; }
+.action-btn.done-go:hover { background:rgba(42,157,92,0.45); color:#fff; }
+
+/* ══ PROGRESS ════════════════════════════════════════════ */
+.prog-bar  { height:2px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; margin-bottom:4px; }
+.prog-fill { height:100%; background:linear-gradient(90deg,#e05c34,#f4a261); border-radius:2px; transition:width 1s linear; }
+.prog-label { font-size:10px; color:rgba(255,255,255,0.22); display:flex; justify-content:space-between; }
+
+/* ══ FULLSCREEN START PRACY ══════════════════════════════ */
+@keyframes work-pulse { 0%,100% { background:rgba(4,6,14,0.88); } 50% { background:rgba(42,157,92,0.28); } }
+.work-screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; animation:work-pulse 1.2s ease-in-out infinite; }
+.work-screen.hidden { display:none; animation:none; }
+.work-start-badge { font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; padding:6px 20px; border-radius:30px; color:#fff; background:#e05c34; }
+.work-start-timer { font-size:96px; font-weight:700; font-variant-numeric:tabular-nums; font-family:'SF Mono','Consolas','Courier New',monospace; letter-spacing:-.04em; line-height:1; color:#f4a261; }
+
+/* ══ COLLAPSED (mini) ════════════════════════════════════ */
+.collapsed-view { display:none; }
+.widget.collapsed { padding:11px 14px; width:175px; border-radius:10px; }
+.widget.collapsed .expanded-view  { display:none; }
+.widget.collapsed .collapsed-view { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.col-badge { font-size:16px; line-height:1; }
+.col-timer { font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; color:#fff; font-family:'SF Mono','Consolas','Courier New',monospace; text-shadow:0 2px 8px rgba(0,0,0,0.7); }
+
+/* ══ FULLSCREEN PRZERWA ══════════════════════════════════ */
+.break-screen { position:fixed; inset:0; background:rgba(4,6,14,0.84); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; }
+.break-screen.hidden { display:none; }
+.break-badge { font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; padding:6px 20px; border-radius:30px; color:#fff; }
+.break-badge.short { background:#2a9d5c; }
+.break-badge.long  { background:#2563eb; }
+.break-big-timer { font-size:96px; font-weight:700; font-variant-numeric:tabular-nums; font-family:'SF Mono','Consolas','Courier New',monospace; letter-spacing:-.04em; line-height:1; }
+.break-big-timer.short { color:#4ade80; }
+.break-big-timer.long  { color:#60a5fa; }
+.break-subtitle { font-size:22px; color:rgba(255,255,255,0.28); margin-top:-8px; }
+.break-next-task { font-size:14px; color:rgba(255,255,255,0.22); max-width:500px; }
+.break-next-task strong { color:rgba(255,255,255,0.45); font-weight:500; }
+.break-actions { display:flex; gap:14px; margin-top:6px; -webkit-app-region:no-drag; }
+.break-btn { border:none; font-size:13px; font-weight:600; padding:11px 22px; border-radius:10px; cursor:pointer; font-family:inherit; transition:background .15s,transform .1s; }
+.break-btn:active { transform:scale(.97); }
+.break-btn.skip   { background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.70); }
+.break-btn.skip:hover   { background:rgba(255,255,255,0.18); color:#fff; }
+.break-btn.shrink { background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.08); }
+.break-btn.shrink:hover { background:rgba(255,255,255,0.10); color:rgba(255,255,255,0.60); }
+.break-progress { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); width:min(480px,55vw); -webkit-app-region:no-drag; }
+.break-prog-bar  { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; margin-bottom:6px; }
+.break-prog-fill { height:100%; border-radius:2px; transition:width 1s linear; }
+.break-prog-fill.short { background:#2a9d5c; }
+.break-prog-fill.long  { background:#2563eb; }
+.break-prog-label { font-size:11px; color:rgba(255,255,255,0.18); text-align:center; }
+.break-pom-count { position:fixed; top:24px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
+
+/* ══ MINI TASKBAR (zwinięty) ═════════════════════════════════ */
+#taskbar-view {
+  position:fixed; right:0; bottom:0; display:none; align-items:center;  /* listwa na dole-prawej; szer./wys. ustawia JS */
+  padding:0 8px 0 12px; gap:8px;
+  background:rgba(8,10,20,0.96);
+  border-left:1px solid rgba(255,255,255,0.12);
+  border-top:1px solid rgba(255,255,255,0.06);
+  user-select:none;
+}
+.tb-emoji { font-size:14px; flex-shrink:0; line-height:1; }
+.tb-sep   { width:1px; height:18px; background:rgba(255,255,255,0.10); flex-shrink:0; }
+.tb-task  { flex:1; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:rgba(255,255,255,0.82); min-width:0; }
+.tb-timer { font-size:28px; line-height:1; font-weight:700; font-variant-numeric:tabular-nums; font-family:'SF Mono','Consolas','Courier New',monospace; color:#fff; flex-shrink:0; letter-spacing:-.03em; }
+.tb-btn {
+  -webkit-app-region:no-drag; background:rgba(255,255,255,0.07); border:none;
+  color:rgba(255,255,255,0.65); width:28px; height:28px; border-radius:6px;
+  cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center;
+  transition:background .15s,color .15s; flex-shrink:0; font-family:inherit;
+}
+.tb-btn:hover { background:rgba(255,255,255,0.16); color:#fff; }
+.tb-play { background:#e05c34; color:#fff; font-size:10px; }
+.tb-play:hover { background:#c94e28 !important; }
+.tb-play.paused { background:rgba(58,63,82,0.9); }
+.tb-play.paused:hover { background:rgba(74,80,95,0.9) !important; }
+.tb-done { background:rgba(42,157,92,0.25); color:#4ade80; font-size:10px; font-weight:700; letter-spacing:-.02em; }
+.tb-done:hover { background:rgba(42,157,92,0.45) !important; color:#fff; }
+.tb-quit { color:rgba(255,255,255,0.55); }
+.tb-quit:hover { background:rgba(255,80,80,0.25) !important; color:#ff6b6b; }
+</style>
+</head>
+<body>
+
+<!-- ═══ NORMALNY WIDGET ═══════════════════════════════════════ -->
+<div class="widget size-m clickzone" id="widget">
+  <div class="expanded-view">
+
+    <!-- Nagłówek -->
+    <div class="row-header">
+      <div class="left-info no-drag">
+        <span class="badge badge-idle" id="badge">GOTOWY</span>
+        <div class="dots" id="dots"></div>
+      </div>
+      <div class="hdr-btns">
+        <button class="icon-btn"          id="btn-settings" title="Manager zadań">⚙</button>
+        <button class="icon-btn size-btn" id="btn-size"     title="Rozmiar (S/M/L)">M</button>
+        <button class="icon-btn"          id="btn-opacity"  title="Przezroczystość">◐</button>
+        <button class="icon-btn"          id="btn-collapse" title="Zwiń">▾</button>
+        <button class="icon-btn"          id="btn-quit"     title="Zamknij">✕</button>
+      </div>
+    </div>
+
+    <!-- Suwak przezroczystości -->
+    <div class="opacity-row no-drag" id="opacity-row">
+      <span class="opacity-icon">◐</span>
+      <input class="opacity-slider" type="range" id="opacity-slider" min="20" max="100" step="5" value="90">
+      <span class="opacity-val" id="opacity-val">90%</span>
+    </div>
+
+    <!-- Nazwa zadania + przycisk ✓ (ukończ wcześniej) -->
+    <div class="task-row" id="task-row">
+      <div class="task-name muted" id="task-name">Kliknij ⚙ aby dodać zadania</div>
+      <button class="btn-done" id="btn-done" title="Ukończyłem to zadanie wcześniej" style="display:none">✓</button>
+    </div>
+
+    <!-- Panel wyboru po wcześniejszym ukończeniu -->
+    <div class="done-panel" id="done-panel">
+      <div class="done-top">
+        <span class="done-msg">✓ Ukończono! Co teraz?</span>
+        <button class="icon-btn" id="btn-cancel-done" title="Wróć do timera">←</button>
+      </div>
+      <div class="done-actions">
+        <button class="done-btn break-opt" id="btn-choose-break">☕ Przerwa</button>
+        <button class="done-btn next-opt"  id="btn-choose-next">▶ Następne →</button>
+      </div>
+    </div>
+
+    <!-- Timer + kontrolki -->
+    <div class="row-timer" id="timer-row">
+      <div class="timer" id="timer">--:--</div>
+      <div class="timer-right">
+        <div class="timer-btns">
+          <button class="action-btn"         id="btn-skip"      title="Pomiń fazę">⏭</button>
+          <button class="action-btn done-go" id="btn-done-keep" title="Ukończ zadanie (timer gra dalej)">✓→</button>
+          <button class="action-btn primary" id="btn-play"      title="Start/Pauza">▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Postęp zadania -->
+    <div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="prog-label">
+        <span id="prog-text">0 / 0 min</span>
+        <span id="task-num"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Mini (collapsed) -->
+  <div class="collapsed-view no-drag">
+    <span class="col-badge" id="col-badge">🍅</span>
+    <span class="col-timer" id="col-timer">--:--</span>
+    <button class="icon-btn" id="btn-expand" title="Rozwiń">▴</button>
+  </div>
+</div>
+
+<!-- ═══ FULLSCREEN START PRACY ═══════════════════════════════ -->
+<div class="work-screen hidden" id="work-screen">
+  <div class="break-pom-count" id="work-pom-count"></div>
+  <span class="work-start-badge">PRACA</span>
+  <div class="work-start-timer" id="work-start-timer">25:00</div>
+  <div class="break-next-task" id="work-start-task"></div>
+  <div class="break-actions clickzone">
+    <button class="break-btn skip"   id="btn-start-work">Zaczynam! ▶</button>
+    <button class="break-btn shrink" id="btn-shrink-work">Zmniejsz ↘</button>
+  </div>
+</div>
+
+<!-- ═══ FULLSCREEN PRZERWA ════════════════════════════════════ -->
+<div class="break-screen hidden" id="break-screen">
+  <div class="break-pom-count" id="break-pom-count"></div>
+  <span class="break-badge short" id="break-badge">PRZERWA</span>
+  <div class="break-big-timer short" id="break-big-timer">05:00</div>
+  <div class="break-subtitle">Odpoczywaj!</div>
+  <div class="break-next-task" id="break-next-task"></div>
+  <div class="break-actions clickzone">
+    <button class="break-btn skip"   id="btn-skip-break">Pomiń przerwę ⏭</button>
+    <button class="break-btn shrink" id="btn-shrink-break">Zmniejsz ↘</button>
+  </div>
+  <div class="break-progress">
+    <div class="break-prog-bar"><div class="break-prog-fill short" id="break-prog-fill" style="width:0%"></div></div>
+    <div class="break-prog-label" id="break-prog-label"></div>
+  </div>
+</div>
+
+<!-- ═══ MINI TASKBAR (zwinięty) ═══════════════════════════════ -->
+<div id="taskbar-view" class="clickzone">
+  <span class="tb-emoji" id="tb-badge">🍅</span>
+  <div class="tb-sep"></div>
+  <div class="tb-task"  id="tb-task">Brak zadań</div>
+  <div class="tb-timer" id="tb-timer">--:--</div>
+  <button class="tb-btn"         id="tb-skip"   title="Pomiń fazę">⏭</button>
+  <button class="tb-btn tb-done" id="tb-done"   title="Ukończ zadanie (timer gra dalej)">✓→</button>
+  <button class="tb-btn tb-play" id="tb-play"   title="Start/Pauza">▶</button>
+  <button class="tb-btn"         id="tb-expand" title="Rozwiń">▴</button>
+  <button class="tb-btn tb-quit" id="tb-quit"   title="Zamknij aplikację">✕</button>
+</div>
+
+<script>
+const api = window.bridge
+
+// Rola okna: 'tray' = małe okno zwiniętej listwy (rysuje TYLKO mini-pasek na całe okno);
+// 'overlay' (domyślnie) = duże okno (widget + kurtyna). Patrz main.js / preload.
+const ROLE = (api && api.role) || 'overlay'
+
+// Cache referencji DOM — unikamy dziesiątek getElementById na każdy render.
+const _cache = {}
+const el = id => _cache[id] || (_cache[id] = document.getElementById(id))
+
+const pad2 = n => String(n).padStart(2,'0')
+const fmt  = s => `${pad2(Math.floor(s/60))}:${pad2(s%60)}`
+// Pisz tylko gdy treść faktycznie się zmienia (mniej recalc/repaint).
+function setText(node, v) { if (node && node.textContent !== v) node.textContent = v }
+
+const PHASE_LABEL = { work:'PRACA', shortBreak:'PRZERWA', longBreak:'DŁ. PRZERWA', idle:'GOTOWY', done:'KONIEC' }
+const PHASE_CLASS = { work:'badge-work', shortBreak:'badge-shortBreak', longBreak:'badge-longBreak', idle:'badge-idle', done:'badge-idle' }
+const PHASE_EMOJI = { work:'🍅', shortBreak:'☕', longBreak:'🌿', idle:'◉', done:'✓' }
+const SIZE_CYCLE  = ['S','M','L']
+const ACTIVE_PHASES = ['work','shortBreak','longBreak']
+
+let currentSize  = 'M'
+let opacityOpen  = false
+let initialized  = false
+let lastState    = null
+let prevPhase    = null
+
+// ── Dźwięk przy zmianie faz (WebAudio, bez plików audio) ─────────
+let audioCtx = null
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    if (audioCtx.state === 'suspended') audioCtx.resume()
+  } catch (_) {}
+}
+// Odblokuj kontekst audio przy pierwszym geście użytkownika (polityka autoplay).
+window.addEventListener('click', ensureAudio)
+function chime(work) {
+  ensureAudio()
+  if (!audioCtx) return
+  const base  = audioCtx.currentTime
+  const notes = work ? [660, 880] : [523, 392]   // praca: w górę (pobudka), przerwa: w dół (wyciszenie)
+  notes.forEach((freq, i) => {
+    const t = base + i * 0.18
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain()
+    o.type = 'sine'; o.frequency.value = freq
+    o.connect(g); g.connect(audioCtx.destination)
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.02)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16)
+    o.start(t); o.stop(t + 0.2)
+  })
+}
+
+// ── Kropki pomodoro — przebudowa TYLKO gdy zmienia się stan ──────
+const _dotsSig = new WeakMap()
+function renderDots(node, done, total) {
+  total = Math.max(1, total | 0)
+  const sig = (done % total) + '/' + total
+  if (_dotsSig.get(node) === sig) return
+  _dotsSig.set(node, sig)
+  node.innerHTML = ''
+  const f = done % total
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div')
+    d.className = 'dot' + (i < f ? ' filled' : '')
+    node.appendChild(d)
+  }
+}
+
+// Bezpieczne "Etykieta: <strong>nazwa</strong>" — bez innerHTML (zapobiega wstrzyknięciu HTML).
+function setLabelTask(node, label, name) {
+  node.textContent = ''
+  if (!name) return
+  node.appendChild(document.createTextNode(label + ' '))
+  const strong = document.createElement('strong')
+  strong.textContent = name
+  node.appendChild(strong)
+}
+
+function applySize(sz) {
+  currentSize = sz
+  const w = el('widget')
+  w.classList.remove('size-s','size-m','size-l')
+  w.classList.add(`size-${sz.toLowerCase()}`)
+  setText(el('btn-size'), sz)
+}
+
+// Zwijanie/rozwijanie steruje main; render podąża za s.collapsedMode (bez spekulacji).
+function setCollapsed(val) { api.cmd(val ? 'collapseWidget' : 'expandWidget') }
+
+// ── Render: normalny widget ──────────────────────────────────────
+function renderWidget(s) {
+  const task      = s.tasks[s.currentIdx]
+  const earlyDone = s.taskEarlyDone
+  const isWork    = s.phase === 'work'
+
+  // Badge + dots
+  const badge = el('badge')
+  setText(badge, PHASE_LABEL[s.phase] || s.phase)
+  badge.className = 'badge ' + (PHASE_CLASS[s.phase] || 'badge-idle')
+  renderDots(el('dots'), s.pomsDone, s.settings.longBreakAfter)
+
+  // Przełącz: normalny widok vs panel ukończenia
+  el('task-row').style.display  = earlyDone ? 'none' : 'flex'
+  el('timer-row').style.display = earlyDone ? 'none' : ''
+  el('done-panel').classList.toggle('visible', earlyDone)
+
+  // Przycisk ✓ — widoczny tylko podczas fazy pracy z aktywnym zadaniem
+  el('btn-done').style.display = (isWork && task && !earlyDone && !opacityOpen) ? '' : 'none'
+
+  if (!earlyDone) {
+    // Nazwa zadania
+    const nameEl = el('task-name')
+    if (task)                       { setText(nameEl, task.name); nameEl.className = 'task-name' }
+    else if (s.phase === 'done')    { setText(nameEl, '✓ Wszystkie zadania ukończone!'); nameEl.className = 'task-name' }
+    else if (s.isRunning || isWork) { setText(nameEl, 'Sesja Pomodoro'); nameEl.className = 'task-name' }
+    else                            { setText(nameEl, 'Kliknij ⚙ aby dodać zadania'); nameEl.className = 'task-name muted' }
+    nameEl.style.display = opacityOpen ? 'none' : ''
+    el('btn-done').style.display = (isWork && task && !opacityOpen) ? '' : 'none'
+    el('btn-done-keep').style.display = (isWork && !!task) ? '' : 'none'
+
+    // Timer
+    const timeText = s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--'
+    const timerEl  = el('timer')
+    setText(timerEl, timeText)
+    timerEl.className = 'timer' + (s.isRunning && s.phaseLeft <= 60 ? ' urgent' : '')
+    setText(el('col-timer'), timeText)
+
+    // Play button
+    const play = el('btn-play')
+    if (s.isRunning) { setText(play, '⏸'); play.className = 'action-btn primary pause' }
+    else             { setText(play, '▶'); play.className = 'action-btn primary' }
+  }
+
+  setText(el('col-badge'), PHASE_EMOJI[s.phase] || '◉')
+
+  // Progress bar (zawsze)
+  if (task) {
+    const total    = (task.totalMinutes || 0) * 60
+    const spent    = s.taskSpent
+    const overtime = total > 0 && spent > total
+    const pct      = total > 0 ? Math.min(100, (spent / total * 100)).toFixed(1) : 0
+    const fill     = el('prog-fill')
+    fill.style.width      = pct + '%'
+    fill.style.background = overtime
+      ? 'linear-gradient(90deg,#e05c34,#ff6b6b)'
+      : 'linear-gradient(90deg,#e05c34,#f4a261)'
+    const spentMin = Math.floor(spent / 60)
+    setText(el('prog-text'), overtime
+      ? `+${spentMin - task.totalMinutes} min (plan: ${task.totalMinutes} min)`
+      : `${spentMin} / ${task.totalMinutes} min`)
+    setText(el('task-num'), `zadanie ${s.currentIdx + 1}/${s.tasks.length}`)
+  } else {
+    el('prog-fill').style.width = '0%'
+    setText(el('prog-text'), '0 / 0 min')
+    setText(el('task-num'), '')
+  }
+}
+
+// ── Render: fullscreen start pracy ──────────────────────────────
+function renderWorkScreen(s) {
+  const task = s.tasks[s.currentIdx]
+  setText(el('work-start-timer'), s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--')
+  setLabelTask(el('work-start-task'), 'Zadanie:', task ? task.name : '')
+  renderDots(el('work-pom-count'), s.pomsDone, s.settings.longBreakAfter)
+}
+
+// ── Render: fullscreen przerwa ───────────────────────────────────
+function renderBreakScreen(s) {
+  const isLong   = s.phase === 'longBreak'
+  const cls      = isLong ? 'long' : 'short'
+  const totalSec = isLong ? s.settings.longBreakMinutes * 60 : s.settings.shortBreakMinutes * 60
+
+  const badge = el('break-badge')
+  setText(badge, isLong ? 'DŁUGA PRZERWA' : 'PRZERWA')
+  badge.className = `break-badge ${cls}`
+
+  const timerEl = el('break-big-timer')
+  setText(timerEl, s.phaseLeft > 0 ? fmt(s.phaseLeft) : '00:00')
+  timerEl.className = `break-big-timer ${cls}`
+
+  const task = s.tasks[s.currentIdx]
+  setLabelTask(el('break-next-task'), 'Dalej:', task ? task.name : '')
+
+  renderDots(el('break-pom-count'), s.pomsDone, s.settings.longBreakAfter)
+
+  const elapsed = totalSec - s.phaseLeft
+  const pct     = totalSec > 0 ? (elapsed / totalSec * 100).toFixed(1) : 0
+  const fill    = el('break-prog-fill')
+  fill.style.width = pct + '%'; fill.className = `break-prog-fill ${cls}`
+  setText(el('break-prog-label'), `${fmt(Math.max(0, elapsed))} / ${fmt(totalSec)}`)
+}
+
+// ── Render: mini taskbar ────────────────────────────────────────
+function renderTaskbar(s) {
+  const task   = s.tasks[s.currentIdx]
+  const isWork = s.phase === 'work'
+  setText(el('tb-badge'), PHASE_EMOJI[s.phase] || '◉')
+  const taskEl = el('tb-task')
+  setText(taskEl, task ? task.name : (s.phase === 'done' ? '✓ Ukończono!' : 'Brak zadań'))
+  taskEl.style.opacity = task ? '1' : '0.45'
+  setText(el('tb-timer'), s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--')
+  // ⏭ pomiń — gdy faza jest aktywna; ✓→ ukończ — tylko podczas pracy z zadaniem
+  el('tb-skip').style.display = (s.phase !== 'idle' && s.phase !== 'done') ? '' : 'none'
+  el('tb-done').style.display = (isWork && !!task) ? '' : 'none'
+  const play = el('tb-play')
+  setText(play, s.isRunning ? '⏸' : '▶')
+  play.className = 'tb-btn tb-play' + (s.isRunning ? ' paused' : '')
+}
+
+// ── Główny render ────────────────────────────────────────────────
+function render(s) {
+  try {
+    if (!initialized) {
+      initialized = true
+      if (s.size) applySize(s.size)
+      if (s.opacity !== undefined) {
+        const pct = Math.round(s.opacity * 100)
+        el('opacity-slider').value = pct
+        setText(el('opacity-val'), pct + '%')
+      }
+    }
+
+    // Dźwięk na przejściu praca↔przerwa — tylko w dużym oknie (tray dublowałby).
+    if (ROLE === 'overlay' && prevPhase && prevPhase !== s.phase &&
+        ACTIVE_PHASES.includes(s.phase) && ACTIVE_PHASES.includes(prevPhase)) {
+      chime(s.phase === 'work')
+    }
+    prevPhase = s.phase
+
+    // Okno-listwa (tray): rysuje WYŁĄCZNIE mini-pasek na całe okno. Jego pokazywaniem/
+    // chowaniem steruje main (tylko gdy zwinięte). Tu zawsze renderujemy pasek.
+    if (ROLE === 'tray') {
+      const tb = el('taskbar-view')
+      tb.style.inset = '0'; tb.style.width = 'auto'; tb.style.height = 'auto'; tb.style.display = 'flex'
+      el('widget').style.display = 'none'
+      el('break-screen').classList.add('hidden')
+      el('work-screen').classList.add('hidden')
+      renderTaskbar(s)
+      return
+    }
+
+    // Duże okno: wszystkie tryby to przełączenie widoczności warstw (CSS), bez operacji na
+    // oknie → nic nie miga. Mini-pasek (zwinięcie) obsługuje OSOBNE okno tray, więc tu przy
+    // zwinięciu nie pokazujemy nic (okno przezroczyste).
+    el('taskbar-view').style.display = 'none'
+    if (s.collapsedMode) {
+      el('break-screen').classList.add('hidden')
+      el('work-screen').classList.add('hidden')
+      el('widget').style.display = 'none'
+      return
+    }
+
+    const showBreak     = s.breakExpanded && (s.phase === 'shortBreak' || s.phase === 'longBreak')
+    const showWorkStart = s.workStartExpanded && s.phase === 'work'
+    el('break-screen').classList.toggle('hidden', !showBreak)
+    el('work-screen').classList.toggle('hidden', !showWorkStart)
+
+    if (showBreak || showWorkStart) {
+      el('widget').style.display = 'none'
+      if (showBreak) renderBreakScreen(s)
+      else           renderWorkScreen(s)
+    } else {
+      el('widget').style.display = ''
+      placeWidget()                  // pozycja małego widgetu (CSS) z zapisanego S.pos
+      renderWidget(s)
+    }
+  } catch (err) {
+    console.error('render error', err)
+  } finally {
+    // Odsłoń UI dopiero po pierwszym renderze — bez flash of unstyled content.
+    document.body.style.visibility = 'visible'
+  }
+}
+
+// ── Kontrolki ────────────────────────────────────────────────────
+el('btn-play').addEventListener('click',     () => api.cmd('toggle'))
+el('btn-skip').addEventListener('click',      () => api.cmd('skipPhase'))
+el('btn-done-keep').addEventListener('click', () => api.cmd('doneKeepTimer'))
+el('btn-settings').addEventListener('click', () => api.cmd('openManager'))
+el('btn-quit').addEventListener('click',     () => api.cmd('quit'))
+el('btn-collapse').addEventListener('click', () => setCollapsed(true))
+el('btn-expand').addEventListener('click',   () => setCollapsed(false))
+el('tb-quit').addEventListener('click',      () => api.cmd('quit'))
+
+// Rozmiar S/M/L
+el('btn-size').addEventListener('click', () => {
+  const next = SIZE_CYCLE[(SIZE_CYCLE.indexOf(currentSize) + 1) % SIZE_CYCLE.length]
+  applySize(next); api.cmd('setSize', { size: next })
+})
+
+// Przezroczystość
+el('btn-opacity').addEventListener('click', () => {
+  opacityOpen = !opacityOpen
+  el('opacity-row').classList.toggle('open', opacityOpen)
+  el('btn-opacity').classList.toggle('active', opacityOpen)
+  const nameEl = el('task-name')
+  if (nameEl) nameEl.style.display = opacityOpen ? 'none' : ''
+  const doneBtn = el('btn-done')
+  if (doneBtn) doneBtn.style.display = opacityOpen ? 'none' : ''
+})
+el('opacity-slider').addEventListener('input', e => {
+  const pct = parseInt(e.target.value)
+  setText(el('opacity-val'), pct + '%')
+  api.cmd('setOpacity', { value: pct / 100 })
+})
+
+// Wczesne ukończenie zadania
+el('btn-done').addEventListener('click',          () => api.cmd('completeEarly'))
+el('btn-cancel-done').addEventListener('click',   () => api.cmd('cancelEarly'))
+el('btn-choose-break').addEventListener('click',  () => api.cmd('chooseBreak'))
+el('btn-choose-next').addEventListener('click',   () => api.cmd('chooseNext'))
+
+// Fullscreen przerwa
+el('btn-skip-break').addEventListener('click',   () => api.cmd('skipPhase'))
+el('btn-shrink-break').addEventListener('click', () => api.cmd('shrinkManual'))
+
+// Fullscreen start pracy
+el('btn-start-work').addEventListener('click',  () => api.cmd('shrinkWork'))
+el('btn-shrink-work').addEventListener('click', () => api.cmd('shrinkWork'))
+
+el('tb-skip').addEventListener('click',   () => api.cmd('skipPhase'))
+el('tb-done').addEventListener('click',   () => api.cmd('doneKeepTimer'))
+el('tb-play').addEventListener('click',   () => api.cmd('toggle'))
+el('tb-expand').addEventListener('click', () => setCollapsed(false))
+
+api.onState(s => { lastState = s; render(s) })
+api.getState()
+  .then(s => { if (s) { lastState = s; render(s) } })
+  .catch(err => { console.error('getState failed', err); document.body.style.visibility = 'visible' })
+
+// ════════════════════════════════════════════════════════════════════════
+//  POZYCJONOWANIE / PRZECIĄGANIE / KLIKALNOŚĆ — TYLKO duże okno ('overlay').
+//  Okno-listwa (tray) jest małe i w pełni klikalne — nie potrzebuje hit-testu ani dragu,
+//  a jego mousemove NIE może przełączać klikalności dużego okna. Stąd cała sekcja w if().
+// ════════════════════════════════════════════════════════════════════════
+let dragging = false, dragDX = 0, dragDY = 0
+let ignoringLocal = true
+
+// S.pos = współrzędne EKRANU; okno stoi w origin ekranu, więc lokalne = pos − screenX/Y.
+// Brak zapisanej pozycji → prawy dolny róg NAD paskiem zadań. W trakcie dragu nie nadpisujemy.
+function placeWidget() {
+  if (dragging) return
+  const w = el('widget')
+  const ww = w.offsetWidth || 330, wh = w.offsetHeight || 170
+  const maxX = Math.max(0, window.innerWidth  - ww)
+  const maxY = Math.max(0, window.innerHeight - wh)
+  const pos = lastState && lastState.pos
+  let lx, ly
+  if (pos && typeof pos.x === 'number') { lx = pos.x - (window.screenX || 0); ly = pos.y - (window.screenY || 0) }
+  else { lx = maxX - 16; ly = (screen.availHeight || window.innerHeight) - wh - 16 }
+  w.style.left = Math.max(0, Math.min(lx, maxX)) + 'px'
+  w.style.top  = Math.max(0, Math.min(ly, maxY)) + 'px'
+}
+
+if (ROLE === 'overlay') {
+  // Przeciąganie widgetu (klik poza kontrolkami = chwyt).
+  el('widget').addEventListener('mousedown', e => {
+    if (e.button !== 0) return
+    if (e.target.closest('button, input, .icon-btn, .action-btn, .done-btn, .btn-done, .opacity-slider')) return
+    dragging = true
+    dragDX = e.clientX - el('widget').offsetLeft
+    dragDY = e.clientY - el('widget').offsetTop
+    e.preventDefault()
+  })
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return
+    const w = el('widget')
+    const lx = Math.max(0, Math.min(e.clientX - dragDX, window.innerWidth  - w.offsetWidth))
+    const ly = Math.max(0, Math.min(e.clientY - dragDY, window.innerHeight - w.offsetHeight))
+    w.style.left = lx + 'px'; w.style.top = ly + 'px'
+  })
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return
+    dragging = false
+    const sx = (window.screenX || 0) + parseInt(el('widget').style.left || '0', 10)
+    const sy = (window.screenY || 0) + parseInt(el('widget').style.top  || '0', 10)
+    api.cmd('saveWidgetPos', { x: sx, y: sy })
+  })
+
+  // Klikalność: gdy kursor nad .clickzone (widget / przyciski przerwy) → włącz klik;
+  // nad obszarem przezroczystym → przepuszczaj (pulpit znów klikalny).
+  const setClickThrough = (passThrough) => {
+    if (passThrough === ignoringLocal) return
+    ignoringLocal = passThrough
+    if (passThrough) api.mouseLeave(); else api.mouseEnter()
+  }
+  window.addEventListener('mousemove', e => {
+    if (dragging) return                                  // przy przeciąganiu okno zostaje klikalne
+    const node = document.elementFromPoint(e.clientX, e.clientY)
+    setClickThrough(!(node && node.closest('.clickzone')))
+  })
+  document.documentElement.addEventListener('mouseleave', () => { if (!dragging) setClickThrough(true) })
+}
+</script>
+</body>
+</html>

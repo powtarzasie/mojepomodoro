@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>🍅 Pomodoro — Zadania</title>
+<style>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b27;
+  --surface2: #1e2535;
+  --border:   rgba(255,255,255,0.07);
+  --accent:   #e05c34;
+  --accent2:  #f4a261;
+  --green:    #2a9d5c;
+  --blue:     #2563eb;
+  --text:     rgba(255,255,255,0.88);
+  --text2:    rgba(255,255,255,0.48);
+  --text3:    rgba(255,255,255,0.22);
+  --radius:   10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-y: auto;
+}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.app { max-width: 520px; margin: 0 auto; padding: 24px 20px 40px; }
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.app-subtitle {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* ── STATUS CARD ──────────────────────────────────────────── */
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.status-left { flex: 1; min-width: 0; }
+.status-phase {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.status-phase.green  { color: var(--green); }
+.status-phase.blue   { color: var(--blue); }
+.status-phase.muted  { color: var(--text2); }
+.status-task-name {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-task-name.muted { color: var(--text2); font-style: italic; font-weight: 400; }
+.status-meta {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+.status-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.status-timer {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+  color: var(--text);
+  letter-spacing: -.02em;
+  line-height: 1;
+}
+.status-running {
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+.status-running.running { color: var(--green); }
+
+/* ── SECTION ──────────────────────────────────────────────── */
+.section { margin-bottom: 24px; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text2);
+}
+
+.btn-add {
+  background: rgba(224,92,52,0.15);
+  border: 1px solid rgba(224,92,52,0.3);
+  color: var(--accent2);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.btn-add:hover {
+  background: rgba(224,92,52,0.25);
+  border-color: rgba(224,92,52,0.5);
+  color: #fff;
+}
+
+/* ── TASK LIST ────────────────────────────────────────────── */
+#task-list { display: flex; flex-direction: column; gap: 6px; }
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  transition: border-color .15s;
+}
+.task-row:hover  { border-color: rgba(255,255,255,0.14); }
+.task-row.active { border-color: rgba(224,92,52,0.45); background: rgba(224,92,52,0.06); }
+
+.task-idx {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.task-row.active .task-idx { color: var(--accent); }
+
+.task-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+.task-name-input::placeholder { color: var(--text3); }
+
+.task-dur-input {
+  width: 52px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  outline: none;
+  flex-shrink: 0;
+  transition: border-color .15s;
+}
+.task-dur-input:focus { border-color: rgba(255,255,255,0.25); }
+
+/* Remove number input arrows */
+.task-dur-input::-webkit-inner-spin-button,
+.task-dur-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.task-dur-input { -moz-appearance: textfield; }
+
+.dur-unit {
+  font-size: 11px;
+  color: var(--text3);
+  flex-shrink: 0;
+  margin-left: -4px;
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--text3);
+  font-size: 15px;
+  padding: 0 2px;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+  transition: color .15s;
+}
+.drag-handle:hover { color: var(--text2); }
+.drag-handle:active { cursor: grabbing; }
+.task-row.dragging  { opacity: 0.35; }
+.task-row.drag-over { border-color: rgba(224,92,52,0.55); background: rgba(224,92,52,0.09); }
+
+.btn-remove {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 13px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.btn-remove:hover { background: rgba(255,80,80,0.15); color: #ff6b6b; }
+
+.empty-list {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text3);
+  font-size: 13px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+.empty-list strong { display: block; font-size: 15px; margin-bottom: 6px; color: var(--text2); }
+
+/* ── TOTAL TIME ───────────────────────────────────────────── */
+.total-time {
+  font-size: 11px;
+  color: var(--text3);
+  text-align: right;
+  margin-top: 8px;
+  padding-right: 2px;
+}
+.total-time span { color: var(--text2); font-weight: 600; }
+
+/* ── SETTINGS GRID ────────────────────────────────────────── */
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 12px;
+  align-items: center;
+}
+.settings-label {
+  font-size: 13px;
+  color: var(--text2);
+}
+.settings-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-input {
+  width: 60px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  padding: 5px 6px;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color .15s;
+}
+.settings-input:focus { border-color: rgba(255,255,255,0.3); }
+.settings-input::-webkit-inner-spin-button,
+.settings-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.settings-input { -moz-appearance: textfield; }
+.settings-unit { font-size: 11px; color: var(--text3); }
+
+/* ── ACTIONS ──────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+.btn-primary {
+  flex: 1;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  font-family: inherit;
+}
+.btn-primary:hover  { background: #c94e28; }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary.saved  { background: var(--green); }
+
+.btn-secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+/* ── TOGGLE SWITCH ────────────────────────────────────────── */
+.toggle { position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0; }
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-track {
+  position:absolute; inset:0; border-radius:20px; cursor:pointer;
+  background:var(--surface2); border:1px solid var(--border);
+  transition:background .2s, border-color .2s;
+}
+.toggle-track::before {
+  content:''; position:absolute; width:14px; height:14px; border-radius:50%;
+  background:#fff; top:2px; left:2px; transition:transform .2s;
+}
+.toggle input:checked + .toggle-track { background:var(--green); border-color:var(--green); }
+.toggle input:checked + .toggle-track::before { transform:translateX(16px); }
+
+/* ── POMOC / INSTRUKCJA ───────────────────────────────────── */
+.help-btn {
+  margin-left: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.help-btn:hover  { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.18); }
+.help-btn.active { background: rgba(224,92,52,0.15); border-color: rgba(224,92,52,0.4); color: var(--accent2); }
+
+.help-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.help-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 16px; cursor: pointer; user-select: none;
+  transition: background .15s;
+}
+.help-head:hover { background: var(--surface2); }
+.help-head-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.help-chevron { color: var(--text3); font-size: 12px; transition: transform .2s; }
+.help-card.open .help-chevron { transform: rotate(180deg); }
+
+.help-body { display: none; padding: 2px 18px 18px; border-top: 1px solid var(--border); }
+.help-card.open .help-body { display: block; }
+
+.help-h {
+  font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--accent2); margin: 18px 0 8px;
+}
+.help-h:first-child { margin-top: 14px; }
+.help-body p { font-size: 13px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+.help-body ul { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 4px 0; }
+.help-body li { font-size: 13px; color: var(--text2); display: flex; gap: 9px; align-items: baseline; line-height: 1.45; }
+.help-body li .ic {
+  flex-shrink: 0; min-width: 26px; height: 22px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; color: var(--text); font-weight: 600; transform: translateY(2px);
+}
+.help-body li b { color: var(--text); font-weight: 600; }
+.help-body kbd {
+  display: inline-block; padding: 2px 7px; border-radius: 5px;
+  background: var(--surface2); border: 1px solid var(--border); border-bottom-width: 2px;
+  font-family: 'SF Mono','Consolas',monospace; font-size: 11px; color: var(--text);
+}
+.help-tip {
+  margin-top: 16px; padding: 10px 12px; border-radius: 8px;
+  background: rgba(224,92,52,0.08); border: 1px solid rgba(224,92,52,0.2);
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+}
+
+/* ── HEADER ACTIONS (grupowanie przycisków w nagłówku sekcji) ─ */
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── HISTORIA (plan vs. fakt) ─────────────────────────────── */
+.history-scroll {
+  max-height: 280px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface);
+}
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.history-table th {
+  position: sticky; top: 0; z-index: 1; background: var(--surface2);
+  text-align: left; color: var(--text2); font-weight: 700;
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+}
+.history-table th.num, .history-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.history-table td {
+  padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text2);
+}
+.history-table tbody tr:last-child td { border-bottom: none; }
+.history-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+.history-table .h-date { color: var(--text3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.history-table .h-name {
+  color: var(--text); max-width: 180px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.delta-pos  { color: var(--accent2); font-weight: 600; }   /* dłużej niż plan */
+.delta-neg  { color: var(--green);   font-weight: 600; }   /* szybciej niż plan */
+.delta-zero { color: var(--text3); }
+.h-status   { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.h-status.skipped { color: var(--text3); }
+.h-status.completed { color: var(--green); }
+
+/* ── SCROLLBAR ────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div>
+      <div class="app-title">🍅 Pomodoro Manager</div>
+      <div class="app-subtitle">Zadania i ustawienia timera</div>
+    </div>
+    <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji">❓ Jak to działa</button>
+  </div>
+
+  <!-- Status aktywnego timera -->
+  <div class="status-card">
+    <div class="status-left">
+      <div class="status-phase muted" id="status-phase">GOTOWY</div>
+      <div class="status-task-name muted" id="status-task">Brak aktywnych zadań</div>
+      <div class="status-meta" id="status-meta"></div>
+    </div>
+    <div class="status-right">
+      <div class="status-timer" id="status-timer">--:--</div>
+      <div class="status-running" id="status-running">zatrzymany</div>
+    </div>
+  </div>
+
+  <!-- Przyciski akcji -->
+  <div class="actions">
+    <button class="btn-primary" id="save-btn">💾 Zapisz i zastosuj</button>
+    <button class="btn-secondary" id="reset-btn">🔄 Resetuj timer</button>
+  </div>
+
+  <!-- Lista zadań -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Lista zadań</span>
+      <div class="header-actions">
+        <button class="btn-add" id="import-csv-btn" title="Importuj zadania z pliku CSV (Excel / Todoist / Google → Zapisz jako CSV)">📥 Importuj CSV</button>
+        <button class="btn-add" id="export-csv-btn" title="Zapisz bieżącą listę zadań do pliku CSV (nazwa;minuty)">📤 Eksportuj CSV</button>
+        <button class="btn-add" id="add-task-btn">+ Dodaj zadanie</button>
+      </div>
+    </div>
+    <div id="task-list"></div>
+    <div class="total-time" id="total-time" style="display:none">
+      Łącznie: <span id="total-min">0</span> min
+    </div>
+  </div>
+
+  <!-- Ustawienia Pomodoro -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Pomodoro</span>
+    </div>
+    <div class="settings-card">
+      <div class="settings-grid">
+        <span class="settings-label">Czas pracy</span>
+        <div class="settings-input-wrap">
+          <input class="settings-input" type="number" id="s-work"  min="1" max="120" value="25">
+          <span class="settings-unit">min</span>
+        </div>
+
+        <span class="settings-label">Krótka przerwa</span>
+        <div class="settings-input-wrap">
+          <input class="settings-input" type="number" id="s-short" min="1" max="60"  value="5">
+          <span class="settings-unit">min</span>
+        </div>
+
+        <span class="settings-label">Długa przerwa</span>
+        <div class="settings-input-wrap">
+          <input class="settings-input" type="number" id="s-long"  min="1" max="120" value="15">
+          <span class="settings-unit">min</span>
+        </div>
+
+        <span class="settings-label">Długa przerwa co</span>
+        <div class="settings-input-wrap">
+          <input class="settings-input" type="number" id="s-count" min="2" max="10"  value="4">
+          <span class="settings-unit">sesje</span>
+        </div>
+
+        <span class="settings-label">Autostart z Windows</span>
+        <div class="settings-input-wrap">
+          <label class="toggle" title="Uruchamiaj automatycznie po starcie systemu">
+            <input type="checkbox" id="s-autostart">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historia ukończonych zadań (plan vs. fakt) -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Historia · plan vs. fakt</span>
+      <div class="header-actions">
+        <button class="btn-add" id="refresh-log-btn" title="Odśwież historię z pliku CSV">🔄 Odśwież</button>
+        <button class="btn-add" id="open-log-btn" title="Otwórz folder z plikiem pomodoro-log.csv">📂 Folder logów</button>
+      </div>
+    </div>
+    <div id="history-wrap"></div>
+  </div>
+
+  <!-- Pomoc / instrukcja obsługi -->
+  <div class="help-card" id="help-card">
+    <div class="help-head" id="help-head">
+      <span class="help-head-title">❓ Jak korzystać z aplikacji</span>
+      <span class="help-chevron">▾</span>
+    </div>
+    <div class="help-body">
+
+      <div class="help-h">Czym jest ta aplikacja</div>
+      <p>Pomodoro Overlay to mały licznik czasu (nakładka), który „pływa" zawsze na wierzchu innych okien. Pomaga pracować <b>metodą Pomodoro</b>: bloki skupionej pracy przeplatane krótkimi przerwami. To okno (<b>Manager</b>) służy do zarządzania zadaniami i ustawieniami — sam licznik widać jako widżet w rogu ekranu.</p>
+
+      <div class="help-h">Widżet — ikony w nagłówku</div>
+      <ul>
+        <li><span class="ic">⚙</span> Otwiera to okno (Manager zadań i ustawień).</li>
+        <li><span class="ic">S/M/L</span> Zmienia rozmiar widżetu — klikaj, aby przełączać mały / średni / duży.</li>
+        <li><span class="ic">◐</span> Suwak przezroczystości widżetu.</li>
+        <li><span class="ic">▾</span> Zwija widżet do wąskiego mini-paska.</li>
+        <li><span class="ic">✕</span> Zamyka całą aplikację.</li>
+      </ul>
+
+      <div class="help-h">Widżet — licznik i przyciski</div>
+      <ul>
+        <li><span class="ic">●●</span> Kolorowa plakietka pokazuje fazę (PRACA / PRZERWA / DŁ. PRZERWA), a kropki — ile sesji pracy zaliczono do następnej długiej przerwy.</li>
+        <li><span class="ic">25:00</span> Duża cyfra to czas pozostały do końca fazy (w ostatniej minucie robi się czerwona).</li>
+        <li><span class="ic">▶ ⏸</span> Start / pauza licznika.</li>
+        <li><span class="ic">⏭</span> Pomiń bieżącą fazę (np. od razu zacznij przerwę albo wróć do pracy).</li>
+        <li><span class="ic">✓→</span> Oznacz zadanie jako ukończone, ale <b>nie zatrzymuj</b> timera — przeskakuje do następnego zadania.</li>
+        <li><span class="ic">✓</span> „Skończyłem to zadanie wcześniej" — pojawia się wybór: <b>☕ Przerwa</b> albo <b>▶ Następne</b>.</li>
+      </ul>
+      <p>Pasek na dole widżetu pokazuje, ile minut już poświęciłeś na bieżące zadanie względem planu.</p>
+
+      <div class="help-h">Sterowanie myszą — ważne</div>
+      <ul>
+        <li><span class="ic">🖱</span> Widżet <b>przepuszcza kliknięcia</b>, dopóki nie najedziesz na niego myszą — dzięki temu nie zasłania tego, co pod nim. Najedź kursorem, aby przyciski stały się klikalne.</li>
+        <li><span class="ic">✥</span> Aby przesunąć widżet — złap go i przeciągnij (poza przyciskami). Pozycja zapisuje się automatycznie.</li>
+      </ul>
+
+      <div class="help-h">Tryby pełnoekranowe</div>
+      <ul>
+        <li><span class="ic">☕</span> Gdy zaczyna się przerwa, widżet rozwija się na cały ekran z dużym licznikiem (przypomnienie, by odpocząć). Tło przepuszcza kliknięcia — możesz dalej korzystać z pulpitu; klikalne są tylko „Pomiń przerwę" i „Zmniejsz".</li>
+        <li><span class="ic">🍅</span> Po przerwie pokazuje się ekran „PRACA" — kliknij „Zaczynam!" lub „Zmniejsz", aby wrócić do małego widżetu.</li>
+      </ul>
+
+      <div class="help-h">Mini-pasek (po zwinięciu ▾)</div>
+      <p>Widżet zwija się do wąskiego paska tuż nad paskiem zadań: emoji fazy, nazwa zadania, czas, ⏭ pomiń, ✓→ ukończ, start/pauza, <b>▴</b> (rozwiń z powrotem) oraz <b>✕</b> (zamknij aplikację).</p>
+
+      <div class="help-h">To okno — Manager</div>
+      <ul>
+        <li><span class="ic">+</span> <b>Dodaj zadanie</b> — wpisz nazwę i czas w minutach.</li>
+        <li><span class="ic">⠿</span> Uchwyt — przeciągnij, aby zmienić kolejność zadań.</li>
+        <li><span class="ic">✕</span> Usuwa dane zadanie z listy.</li>
+        <li><span class="ic">⏱</span> <b>Pomodoro</b> — ustaw długość pracy, krótkiej i długiej przerwy oraz co ile sesji wypada długa przerwa.</li>
+        <li><span class="ic">⏻</span> <b>Autostart z Windows</b> — uruchamia aplikację po starcie systemu. Timer nie rusza sam — czeka w pauzie, aż klikniesz <b>▶</b>.</li>
+        <li><span class="ic">💾</span> <b>Zapisz i zastosuj</b> — zapisuje zmiany. Sama zmiana nazw nie kasuje bieżącego postępu; zmiana liczby lub kolejności zadań startuje plan od nowa.</li>
+        <li><span class="ic">🔄</span> <b>Resetuj timer</b> — wraca do pierwszego zadania i zeruje postęp.</li>
+      </ul>
+      <p>Karta na górze tego okna pokazuje <b>na żywo</b>, co dzieje się w liczniku.</p>
+
+      <div class="help-h">Import i eksport zadań (CSV)</div>
+      <ul>
+        <li><span class="ic">📥</span> <b>Importuj CSV</b> — wczytuje listę zadań z pliku <b>.csv</b>, <b>.tsv</b> lub <b>.txt</b> (np. wyeksportowanego z Excela, Arkuszy Google, Todoist itp. → „Zapisz jako CSV").</li>
+        <li><span class="ic">📤</span> <b>Eksportuj CSV</b> — zapisuje bieżącą listę zadań do pliku <b>.csv</b> (format <i>nazwa;minuty</i>). Taki plik można otworzyć w Excelu albo zaimportować z powrotem — np. na innym komputerze lub jako kopię zapasową planu.</li>
+        <li>Program <b>sam rozpoznaje kolumny</b>: nazwę zadania szuka w kolumnie typu <i>nazwa / zadanie / task / name / title / todo</i>, a czas w kolumnie typu <i>minuty / min / czas / time / duration / estimate</i>.</li>
+        <li>Jeśli plik nie ma nagłówków, brana jest <b>1. kolumna jako nazwa</b>, a <b>2. jako minuty</b>. Gdy minut brak — zadanie dostaje domyślne <b>25 min</b> (zakres 1–480).</li>
+        <li>Zaimportowane zadania <b>dopisują się</b> do listy (niczego nie kasują). To dopiero podgląd — możesz je poprawić, a potem kliknij <b>💾 Zapisz i zastosuj</b>.</li>
+      </ul>
+
+      <div class="help-h">Historia · plan vs. fakt (log CSV)</div>
+      <ul>
+        <li>Każde zadanie oznaczone jako <b>ukończone</b> lub <b>pominięte</b> zapisuje się automatycznie do pliku <b>pomodoro-log.csv</b> w folderze <b>Dokumenty\PomodoroOverlay</b>.</li>
+        <li>Tabela „Historia" pokazuje: <b>datę</b>, <b>nazwę</b> zadania, <b>plan</b> (ile minut założyłeś), <b>fakt</b> (ile realnie zajęło), <b>różnicę</b> (+/−) oraz <b>status</b>. Dzięki temu widzisz, jak Twoje szacunki mają się do rzeczywistości.</li>
+        <li><span class="ic">🔄</span> <b>Odśwież</b> — wczytuje historię z pliku na nowo.</li>
+        <li><span class="ic">📂</span> <b>Folder logów</b> — otwiera folder z plikiem CSV. Plik możesz otworzyć w Excelu i analizować dalej.</li>
+      </ul>
+
+      <div class="help-h">Skróty klawiszowe (działają w całym systemie)</div>
+      <ul>
+        <li><span class="ic"><kbd>Ctrl+Alt+P</kbd></span> Start / pauza.</li>
+        <li><span class="ic"><kbd>Ctrl+Alt+K</kbd></span> Pomiń bieżącą fazę.</li>
+        <li><span class="ic"><kbd>Ctrl+Alt+M</kbd></span> Zwiń / rozwiń widżet (działa też prawy <kbd>AltGr+M</kbd>).</li>
+      </ul>
+      <p style="font-size:12px;color:var(--text3)">Jeśli inny program zajmuje już dany skrót, może on u nas nie zadziałać (to normalne ograniczenie systemu).</p>
+
+      <div class="help-h">Jak działa cykl Pomodoro</div>
+      <p>Pracujesz przez ustawiony czas (domyślnie 25 min) → krótka przerwa (5 min). Po kilku sesjach (domyślnie 4) wypada długa przerwa (15 min). Jeśli masz listę zadań, licznik prowadzi Cię przez nie po kolei; bez zadań działa jako zwykły licznik Pomodoro.</p>
+
+      <div class="help-tip">💡 Wskazówka: widżet zawsze jest na wierzchu. Jeśli przeszkadza — zwiń go (<b>▾</b>), zmniejsz przezroczystość (<b>◐</b>) albo przeciągnij w inne miejsce ekranu.</div>
+
+      <div class="help-h">Licencja</div>
+      <p>Pomodoro Overlay jest udostępniany na licencji <b>MIT</b> — możesz go bez opłat używać prywatnie i komercyjnie, kopiować, modyfikować oraz przekazywać dalej. Jedyny warunek: w kopiach należy zachować informację o autorze i treść licencji. Program jest dostarczany „tak jak jest", bez gwarancji.</p>
+      <p>© 2026 <b>Mariusz Świerguła</b> &lt;Mariusz.swiergula@gmail.com&gt;. Pełna treść licencji znajduje się w pliku <b>LICENSE</b> dołączonym do programu.</p>
+      <p style="font-size:12px;color:var(--text3)">Aplikacja korzysta z bibliotek open source: <b>Electron</b> i <b>electron-builder</b> (obie na licencji MIT). Pełna lista komponentów i atrybucji — plik <b>THIRD_PARTY_LICENSES.md</b> dołączony do programu.</p>
+      <p style="font-size:12px;color:var(--text3)">„Pomodoro Technique®" i „Pomodoro®" są znakami towarowymi Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta wyłącznie opisowo.</p>
+
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:10px; color:rgba(255,255,255,0.10); margin-top:20px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.04); letter-spacing:.03em;">
+    Pomodoro Overlay v1.1 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
+  </div>
+
+</div>
+
+<script>
+const api = window.bridge
+
+// ── Lokalny stan edycji ───────────────────────────────────────────
+let localTasks    = []
+let localSettings = {}
+let liveState     = null
+let dragSrcIdx    = null
+let dirty         = false   // czy bufor edycji ma niezapisane zmiany
+
+// ── Helpers ───────────────────────────────────────────────────────
+function pad2(n) { return String(n).padStart(2, '0') }
+function fmtTime(s) { return `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}` }
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+// ── Renderowanie listy zadań ──────────────────────────────────────
+function renderTaskList() {
+  const list = document.getElementById('task-list')
+  list.innerHTML = ''
+
+  if (localTasks.length === 0) {
+    list.innerHTML = `
+      <div class="empty-list">
+        <strong>Brak zadań</strong>
+        Kliknij <em>"+ Dodaj zadanie"</em> i wpisz co chcesz zrobić
+      </div>`
+    document.getElementById('total-time').style.display = 'none'
+    return
+  }
+
+  const activeIdx = liveState?.currentIdx ?? -1
+
+  localTasks.forEach((task, i) => {
+    const row = document.createElement('div')
+    row.className = 'task-row' + (i === activeIdx ? ' active' : '')
+    row.dataset.idx = i
+    row.draggable = true
+
+    row.innerHTML = `
+      <span class="drag-handle" title="Przeciągnij aby zmienić kolejność">⠿</span>
+      <span class="task-idx">${i + 1}</span>
+      <input
+        class="task-name-input"
+        type="text"
+        value="${escHtml(task.name)}"
+        placeholder="Nazwa zadania…"
+        data-field="name"
+        data-idx="${i}"
+      >
+      <input
+        class="task-dur-input"
+        type="number"
+        value="${task.totalMinutes}"
+        min="1"
+        max="480"
+        data-field="dur"
+        data-idx="${i}"
+      >
+      <span class="dur-unit">min</span>
+      <button class="btn-remove" data-idx="${i}" title="Usuń zadanie">✕</button>
+    `
+
+    // Nasłuchiwanie zmian
+    row.querySelector('[data-field="name"]').addEventListener('input', e => {
+      localTasks[i].name = e.target.value
+      dirty = true
+    })
+    row.querySelector('[data-field="dur"]').addEventListener('input', e => {
+      const v = parseInt(e.target.value)
+      localTasks[i].totalMinutes = isNaN(v) ? 1 : Math.max(1, Math.min(v, 480))
+      dirty = true
+      updateTotalTime()
+    })
+    row.querySelector('.btn-remove').addEventListener('click', () => {
+      localTasks.splice(i, 1)
+      dirty = true
+      renderTaskList()
+      updateTotalTime()
+    })
+
+    // Drag-and-drop reorder
+    row.addEventListener('dragstart', e => {
+      // Nie startuj dragu z inputa
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') { e.preventDefault(); return }
+      dragSrcIdx = i
+      e.dataTransfer.effectAllowed = 'move'
+      setTimeout(() => row.classList.add('dragging'), 0)
+    })
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging')
+      document.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over'))
+    })
+    row.addEventListener('dragover', e => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        document.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over'))
+        row.classList.add('drag-over')
+      }
+    })
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'))
+    row.addEventListener('drop', e => {
+      e.preventDefault()
+      row.classList.remove('drag-over')
+      if (dragSrcIdx !== null && dragSrcIdx !== i) {
+        const moved = localTasks.splice(dragSrcIdx, 1)[0]
+        localTasks.splice(i, 0, moved)
+        dragSrcIdx = null
+        dirty = true
+        renderTaskList()
+        updateTotalTime()
+      }
+    })
+
+    list.appendChild(row)
+  })
+
+  updateTotalTime()
+}
+
+function updateTotalTime() {
+  const total = localTasks.reduce((s, t) => s + (parseInt(t.totalMinutes) || 0), 0)
+  const wrap  = document.getElementById('total-time')
+  if (localTasks.length > 0) {
+    wrap.style.display = 'block'
+    document.getElementById('total-min').textContent =
+      total >= 60
+        ? `${Math.floor(total/60)}h ${total%60}min`
+        : `${total} min`
+  } else {
+    wrap.style.display = 'none'
+  }
+}
+
+// ── Renderowanie ustawień ─────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('s-work').value  = localSettings.workMinutes       || 25
+  document.getElementById('s-short').value = localSettings.shortBreakMinutes || 5
+  document.getElementById('s-long').value  = localSettings.longBreakMinutes  || 15
+  document.getElementById('s-count').value = localSettings.longBreakAfter    || 4
+}
+
+// ── Renderowanie statusu aktywnego timera ─────────────────────────
+const PHASE_LABELS = {
+  work: 'PRACA 🍅', shortBreak: 'PRZERWA ☕', longBreak: 'DŁUGA PRZERWA 🌿',
+  idle: 'GOTOWY', done: 'UKOŃCZONO ✓',
+}
+const PHASE_COLOR  = {
+  work: '', shortBreak: 'green', longBreak: 'blue',
+  idle: 'muted', done: 'muted',
+}
+
+function renderStatus() {
+  if (!liveState) return
+  const s    = liveState
+  const task = s.tasks[s.currentIdx]
+
+  const phaseEl = document.getElementById('status-phase')
+  phaseEl.textContent = PHASE_LABELS[s.phase] || s.phase
+  phaseEl.className   = 'status-phase ' + (PHASE_COLOR[s.phase] || '')
+
+  const nameEl = document.getElementById('status-task')
+  if (task) {
+    nameEl.textContent = task.name
+    nameEl.className   = 'status-task-name'
+  } else {
+    nameEl.textContent = s.phase === 'done' ? 'Wszystkie zadania ukończone!' : 'Brak aktywnych zadań'
+    nameEl.className   = 'status-task-name muted'
+  }
+
+  const metaEl = document.getElementById('status-meta')
+  if (task) {
+    const spent = Math.floor(s.taskSpent / 60)
+    metaEl.textContent = `Zadanie ${s.currentIdx + 1}/${s.tasks.length}  ·  ${spent} / ${task.totalMinutes} min  ·  🍅 ${s.pomsDone} pomodoro`
+  } else {
+    metaEl.textContent = ''
+  }
+
+  document.getElementById('status-timer').textContent =
+    s.phaseLeft > 0 ? fmtTime(s.phaseLeft) : '--:--'
+
+  const runEl = document.getElementById('status-running')
+  runEl.textContent = s.isRunning ? '▶ Działa' : '⏸ Zatrzymany'
+  runEl.className   = 'status-running' + (s.isRunning ? ' running' : '')
+
+  // Podświetl aktywne zadanie na liście
+  document.querySelectorAll('.task-row').forEach((row, i) => {
+    row.classList.toggle('active', i === s.currentIdx)
+  })
+}
+
+// ── Historia ukończonych zadań (plan vs. fakt) ────────────────────
+function shortDate(s) { return (s || '').slice(0, 16) }   // "RRRR-MM-DD GG:MM"
+
+function renderDelta(raw) {
+  const d = parseInt(raw)
+  if (isNaN(d)) return `<td class="num delta-zero">–</td>`
+  if (d === 0)  return `<td class="num delta-zero">0</td>`
+  const cls = d > 0 ? 'delta-pos' : 'delta-neg'
+  const txt = (d > 0 ? '+' : '') + d
+  return `<td class="num ${cls}">${txt} min</td>`
+}
+
+async function renderHistory() {
+  const wrap = document.getElementById('history-wrap')
+  if (!wrap) return
+  let res
+  try { res = await api.getLog() } catch (_) { res = null }
+  const rows = (res?.rows || []).slice().reverse()   // najnowsze u góry
+
+  if (!rows.length) {
+    wrap.innerHTML = `
+      <div class="empty-list">
+        <strong>Brak historii</strong>
+        Oznacz zadanie jako ukończone — zapisze się tu i w pliku CSV
+      </div>`
+    return
+  }
+
+  const head = `
+    <tr>
+      <th>Data</th>
+      <th>Zadanie</th>
+      <th class="num">Plan</th>
+      <th class="num">Fakt</th>
+      <th class="num">Δ</th>
+      <th class="num">🍅</th>
+      <th>Status</th>
+    </tr>`
+
+  const body = rows.map(r => {
+    const skipped = String(r.status || '').trim() === 'skipped'
+    return `
+      <tr>
+        <td class="h-date">${escHtml(shortDate(r.completedAt))}</td>
+        <td class="h-name" title="${escHtml(r.taskName)}">${escHtml(r.taskName)}</td>
+        <td class="num">${escHtml(r.plannedMin)}</td>
+        <td class="num">${escHtml(r.actualMin)}</td>
+        ${renderDelta(r.deltaMin)}
+        <td class="num">${escHtml(r.pomodoros)}</td>
+        <td class="h-status ${skipped ? 'skipped' : 'completed'}">${skipped ? 'pominięte' : 'ukończone'}</td>
+      </tr>`
+  }).join('')
+
+  wrap.innerHTML = `<div class="history-scroll"><table class="history-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`
+}
+
+// ── Inicjalizacja ─────────────────────────────────────────────────
+async function init() {
+  const s = await api.getState()
+  if (!s) return
+
+  liveState     = s
+  localTasks    = s.tasks.map(t => ({ ...t }))
+  localSettings = { ...s.settings }
+
+  renderTaskList()
+  renderSettings()
+  renderStatus()
+  renderHistory()
+
+  // Autostart
+  const autostartOn = await api.getAutostart()
+  document.getElementById('s-autostart').checked = !!autostartOn
+}
+
+document.getElementById('s-autostart').addEventListener('change', e => {
+  api.cmd('setAutostart', { enabled: e.target.checked })
+})
+
+// Edycja ustawień też oznacza bufor jako „brudny" (focus-refresh ich nie nadpisze)
+;['s-work','s-short','s-long','s-count'].forEach(id =>
+  document.getElementById(id).addEventListener('input', () => { dirty = true }))
+
+// ── Pomoc / instrukcja (zwijana sekcja) ───────────────────────────
+const helpCard = document.getElementById('help-card')
+const helpBtn  = document.getElementById('help-btn')
+function toggleHelp() {
+  const open = !helpCard.classList.contains('open')
+  helpCard.classList.toggle('open', open)
+  helpBtn.classList.toggle('active', open)
+  if (open) helpCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+document.getElementById('help-head').addEventListener('click', toggleHelp)
+helpBtn.addEventListener('click', toggleHelp)
+
+// ── Live updates ──────────────────────────────────────────────────
+function tasksSignature(arr) {
+  return (arr || []).map(t => `${t.id}:${t.totalMinutes}`).join('|')
+}
+// Wczytaj świeży stan z procesu głównego do bufora edycji (tylko gdy nic nie edytowano).
+function refreshFromLive() {
+  if (dirty || !liveState) return
+  localTasks    = liveState.tasks.map(t => ({ ...t }))
+  localSettings = { ...liveState.settings }
+  renderTaskList()
+  renderSettings()
+}
+// Klucz wykrywający ukończenie/przejście zadania — odświeża historię tylko przy
+// realnej zmianie (nie co sekundę): zmiana zadania, liczby zadań albo fazy.
+let lastHistKey = null
+function maybeRefreshHistory(s) {
+  const key = `${s.currentIdx}|${s.tasks.length}|${s.phase}`
+  if (key !== lastHistKey) { lastHistKey = key; renderHistory() }
+}
+api.onState(s => {
+  liveState = s
+  renderStatus()
+  // Bez niezapisanych zmian trzymaj listę zsynchronizowaną z mainem
+  // (np. gdy timer usunął zadanie przez „Ukończ"), żeby Zapisz nie przywróciło starej listy.
+  if (!dirty && tasksSignature(s.tasks) !== tasksSignature(localTasks)) refreshFromLive()
+  maybeRefreshHistory(s)
+})
+// Po powrocie do okna odśwież bufor i historię (jeśli brak niezapisanych zmian).
+window.addEventListener('focus', () => { refreshFromLive(); renderHistory() })
+
+// ── Dodaj zadanie ─────────────────────────────────────────────────
+document.getElementById('add-task-btn').addEventListener('click', () => {
+  localTasks.push({ id: Date.now(), name: '', totalMinutes: 25 })
+  dirty = true
+  renderTaskList()
+  updateTotalTime()
+  // Fokus na nowe pole
+  const inputs = document.querySelectorAll('.task-name-input')
+  if (inputs.length) inputs[inputs.length - 1].focus()
+})
+
+// ── Import zadań z CSV ────────────────────────────────────────────
+// Dołącza zaimportowane pozycje do listy (nie zastępuje). Trafiają do bufora
+// edycji jako podgląd — użytkownik może je poprawić i klika „Zapisz i zastosuj".
+document.getElementById('import-csv-btn').addEventListener('click', async () => {
+  let res
+  try { res = await api.importTasks() } catch (e) { alert('Import nie powiódł się:\n' + e); return }
+  if (!res || res.canceled) return
+  if (res.error)         { alert('Nie udało się odczytać pliku:\n' + res.error); return }
+  const imported = res.tasks || []
+  if (!imported.length)  { alert('W pliku nie znaleziono żadnych zadań.\nSprawdź, czy jest kolumna z nazwą zadania.'); return }
+
+  imported.forEach(t => localTasks.push({
+    id: Date.now() + Math.floor(Math.random() * 1e6),
+    name: t.name,
+    totalMinutes: t.totalMinutes,
+  }))
+  dirty = true
+  renderTaskList()
+  updateTotalTime()
+  alert(`Zaimportowano ${imported.length} zadań z pliku „${res.file}".\n\n` +
+        `Sprawdź i ewentualnie popraw listę, a następnie kliknij „💾 Zapisz i zastosuj".`)
+})
+
+// ── Eksport zadań do CSV ──────────────────────────────────────────
+// Eksportuje bufor edycji (to, co widać na liście — także niezapisane zmiany),
+// w formacie zgodnym z importem (nazwa;minuty) → pełny round-trip.
+document.getElementById('export-csv-btn').addEventListener('click', async () => {
+  const tasks = localTasks.filter(t => t.name.trim() && t.totalMinutes > 0)
+  if (!tasks.length) { alert('Lista zadań jest pusta — nie ma czego eksportować.'); return }
+  let res
+  try { res = await api.exportTasks(tasks.map(t => ({ name: t.name, totalMinutes: t.totalMinutes }))) }
+  catch (e) { alert('Eksport nie powiódł się:\n' + e); return }
+  if (!res || res.canceled) return
+  if (res.error) { alert('Nie udało się zapisać pliku:\n' + res.error); return }
+  alert(`Wyeksportowano ${res.count} zadań do pliku:\n${res.file}`)
+})
+
+// ── Historia: folder logów / odświeżanie ──────────────────────────
+document.getElementById('open-log-btn').addEventListener('click', () => api.cmd('openLogFolder'))
+document.getElementById('refresh-log-btn').addEventListener('click', renderHistory)
+
+// ── Zapisz i zastosuj ─────────────────────────────────────────────
+document.getElementById('save-btn').addEventListener('click', () => {
+  // Odczytaj ustawienia z pól
+  localSettings = {
+    workMinutes:        Math.max(1, parseInt(document.getElementById('s-work').value)  || 25),
+    shortBreakMinutes:  Math.max(1, parseInt(document.getElementById('s-short').value) || 5),
+    longBreakMinutes:   Math.max(1, parseInt(document.getElementById('s-long').value)  || 15),
+    longBreakAfter:     Math.max(2, parseInt(document.getElementById('s-count').value) || 4),
+  }
+
+  // Filtruj puste zadania (brak nazwy lub 0 minut)
+  const validTasks = localTasks.filter(t => t.name.trim() && t.totalMinutes > 0)
+  localTasks = validTasks
+
+  api.cmd('saveTasks', { tasks: localTasks, settings: localSettings })
+  dirty = false
+
+  renderTaskList()
+
+  // Wizualne potwierdzenie zapisu
+  const btn = document.getElementById('save-btn')
+  btn.textContent = '✓ Zapisano!'
+  btn.classList.add('saved')
+  setTimeout(() => {
+    btn.textContent = '💾 Zapisz i zastosuj'
+    btn.classList.remove('saved')
+  }, 2000)
+})
+
+// ── Resetuj timer ─────────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Zresetować timer do początku? Postęp bieżącego zadania zostanie utracony.')) {
+    api.cmd('resetTimer')
+  }
+})
+
+init()
+</script>
+</body>
+</html>

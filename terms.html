@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Pomodoro Overlay — Warunki korzystania</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  background: #0d1117; color: rgba(255,255,255,0.88);
+  font-size: 14px; line-height: 1.55;
+  display: flex; flex-direction: column; height: 100vh; padding: 22px 24px 18px;
+  user-select: none;
+}
+h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.sub { font-size: 12px; color: rgba(255,255,255,0.48); margin-bottom: 14px; }
+.terms-box {
+  flex: 1; overflow-y: auto; user-select: text;
+  background: #161b27; border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+}
+.terms-box h2 {
+  font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: #f4a261; margin: 14px 0 6px;
+}
+.terms-box h2:first-child { margin-top: 0; }
+.terms-box p { font-size: 13px; color: rgba(255,255,255,0.62); margin-bottom: 8px; }
+.terms-box b { color: rgba(255,255,255,0.85); }
+.accept-row {
+  display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;
+  font-size: 13px; cursor: pointer;
+}
+.accept-row input { margin-top: 3px; width: 16px; height: 16px; accent-color: #2a9d5c; cursor: pointer; }
+.btns { display: flex; gap: 10px; }
+.btn {
+  flex: 1; border: none; border-radius: 10px; padding: 12px 16px;
+  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.btn-accept { background: #2a9d5c; color: #fff; }
+.btn-accept:hover:not(:disabled) { background: #238a4f; }
+.btn-accept:disabled { opacity: .35; cursor: not-allowed; }
+.btn-quit { background: #161b27; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.55); flex: 0 0 auto; font-weight: 600; }
+.btn-quit:hover { background: #1e2535; color: rgba(255,255,255,0.85); }
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>🍅 Pomodoro Overlay — warunki korzystania</h1>
+<div class="sub">Przeczytaj i zaakceptuj poniższe warunki, aby korzystać z aplikacji. Ten ekran pojawia się tylko raz.</div>
+
+<div class="terms-box">
+  <h2>1. Licencja</h2>
+  <p>Pomodoro Overlay jest udostępniany <b>bezpłatnie</b> na licencji <b>MIT</b> — © 2026 Mariusz Świerguła.
+  Możesz program używać prywatnie i komercyjnie, kopiować, modyfikować i przekazywać dalej; w kopiach
+  zachowaj informację o autorze i treść licencji. Pełna treść — plik <b>LICENSE</b>; lista komponentów
+  zewnętrznych i atrybucje — plik <b>THIRD_PARTY_LICENSES.md</b> (oba dołączone do programu).</p>
+
+  <h2>2. Brak gwarancji („AS IS”)</h2>
+  <p>Program jest dostarczany <b>„tak jak jest”</b>, bez jakiejkolwiek gwarancji — wyraźnej lub dorozumianej.
+  Autor nie ponosi odpowiedzialności za jakiekolwiek szkody, utratę danych ani skutki decyzji podjętych
+  na podstawie danych z aplikacji. Statystyki czasu (plan vs. fakt) mają charakter wyłącznie pomocniczy
+  i <b>użytkownik samodzielnie weryfikuje</b> ich poprawność.</p>
+
+  <h2>3. Dane i prywatność</h2>
+  <p>Aplikacja działa <b>w 100% lokalnie</b> i nie wysyła żadnych danych do internetu. Zadania i ustawienia
+  zapisują się w <b>%APPDATA%\pomodoro-overlay</b>, a historia w <b>Dokumenty\PomodoroOverlay</b>.
+  Dane pozostają na komputerze także po odinstalowaniu programu.</p>
+
+  <h2>4. Znaki towarowe</h2>
+  <p>„Pomodoro Technique®” i „Pomodoro®” są znakami towarowymi <b>Francesco Cirillo</b>. Ta aplikacja nie jest
+  z nim powiązana ani przez niego sponsorowana — nazwa użyta wyłącznie opisowo, jako odniesienie do metody pracy.</p>
+
+  <h2>5. Pozostałe</h2>
+  <p>Niniejsze warunki nie stanowią porady prawnej ani podatkowej. Pełna treść warunków jest dostępna
+  także później — w oknie Manager, sekcja <b>„❓ Jak to działa” → Licencja</b>, oraz w instrukcji
+  (INSTRUKCJA.md) i README.</p>
+</div>
+
+<label class="accept-row">
+  <input type="checkbox" id="accept-check">
+  <span>Przeczytałem(-am) i <b>akceptuję</b> powyższe warunki korzystania z aplikacji.</span>
+</label>
+
+<div class="btns">
+  <button class="btn btn-accept" id="btn-accept" disabled>Akceptuję i kontynuuję ▶</button>
+  <button class="btn btn-quit" id="btn-quit">Zamknij</button>
+</div>
+
+<script>
+const check  = document.getElementById('accept-check')
+const accept = document.getElementById('btn-accept')
+check.addEventListener('change', () => { accept.disabled = !check.checked })
+accept.addEventListener('click', () => { if (check.checked) window.bridge.termsAccept() })
+document.getElementById('btn-quit').addEventListener('click', () => window.bridge.termsDecline())
+</script>
+</body>
+</html>

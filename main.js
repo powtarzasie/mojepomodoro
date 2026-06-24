@@ -1,0 +1,792 @@
+// Pomodoro Overlay Timer v1.2
+// Copyright (c) 2026 Mariusz Świerguła <Mariusz.swiergula@gmail.com>
+// MIT License — https://opensource.org/licenses/MIT
+//
+// main.js — Electron main process: timer logic, window management
+const { app, BrowserWindow, ipcMain, screen, globalShortcut, powerMonitor, shell, dialog } = require('electron')
+const path = require('path')
+const fs   = require('fs')
+
+// UWAGA: NIE wyłączać akceleracji sprzętowej (app.disableHardwareAcceleration()).
+// Okno nakładki jest transparent:true — na Windows przezroczystość polega na
+// kompozytorze GPU. Bez akceleracji okno przestaje się odrysowywać (zamarza /
+// czernieje): timer liczy w tle, ale ekran stoi — wygląda jakby „się nie odpalał".
+// Migotanie przy zmianie praca↔przerwa rozwiązane architektonicznie: jedno okno stałe
+// na cały ekran, nigdy nieskalowane/niechowane — patrz komentarz przy createOverlay.
+
+const DATA_FILE = path.join(app.getPath('userData'), 'pomodoro.json')
+
+// ── Log ukończonych zadań (plan vs. fakt) ─────────────────────────────
+// CSV w Dokumenty\PomodoroOverlay — otwieralny w Excelu, źródło prawdy dla
+// zakładki „Historia". Separator ';' (przyjazny polskiemu Excelowi), BOM dla UTF-8.
+const LOG_DIR    = path.join(app.getPath('documents'), 'PomodoroOverlay')
+const LOG_FILE   = path.join(LOG_DIR, 'pomodoro-log.csv')
+const LOG_DELIM  = ';'
+const LOG_COLS   = ['completedAt', 'taskName', 'plannedMin', 'actualMin', 'actualSec', 'pomodoros', 'deltaMin', 'status']
+const LOG_HEADER = '﻿' + LOG_COLS.join(LOG_DELIM) + '\n'
+
+let logReady = false
+// Zapewnia istnienie folderu i nagłówka — jednorazowo, asynchronicznie (nie blokuje).
+function ensureLogReady(cb) {
+  if (logReady) { cb && cb(); return }
+  fs.mkdir(LOG_DIR, { recursive: true }, () => {
+    fs.access(LOG_FILE, fs.constants.F_OK, err => {
+      if (err) fs.writeFile(LOG_FILE, LOG_HEADER, () => { logReady = true; cb && cb() })
+      else     { logReady = true; cb && cb() }
+    })
+  })
+}
+
+function pad2n(n) { return String(n).padStart(2, '0') }
+function fmtLocalDateTime(d) {
+  return `${d.getFullYear()}-${pad2n(d.getMonth() + 1)}-${pad2n(d.getDate())} ` +
+         `${pad2n(d.getHours())}:${pad2n(d.getMinutes())}:${pad2n(d.getSeconds())}`
+}
+// Escapowanie pola CSV: cudzysłów, gdy zawiera separator / cudzysłów / nową linię.
+function csvField(v) {
+  const s = String(v == null ? '' : v)
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+}
+
+// Dopisuje wiersz logu dla ukończonego/pominiętego zadania. taskSpent = realne sekundy pracy.
+function logTaskCompletion(task, status) {
+  if (!task) return
+  const plannedMin = task.totalMinutes || 0
+  const actualSec  = S.taskSpent || 0
+  const actualMin  = Math.round(actualSec / 60)
+  const deltaMin   = actualMin - plannedMin
+  const row = [
+    fmtLocalDateTime(new Date()),
+    csvField(task.name),
+    plannedMin, actualMin, actualSec, S.pomsDone || 0,
+    (deltaMin > 0 ? '+' : '') + deltaMin,
+    status,
+  ].join(LOG_DELIM) + '\n'
+  ensureLogReady(() => fs.appendFile(LOG_FILE, row, () => {}))
+}
+
+// ── Parser CSV (na potrzeby odczytu logu i importu zadań) ─────────────
+// Obsługuje pola w cudzysłowach, escapowane "" oraz konfigurowalny separator.
+function parseCSV(text, delim) {
+  const rows = []
+  let row = [], field = '', i = 0, inQ = false
+  while (i < text.length) {
+    const c = text[i]
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue }
+        inQ = false; i++; continue
+      }
+      field += c; i++; continue
+    }
+    if (c === '"') { inQ = true; i++; continue }
+    if (c === delim) { row.push(field); field = ''; i++; continue }
+    if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue }
+    if (c === '\r') { i++; continue }
+    field += c; i++
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row) }
+  return rows
+}
+// Wykrycie separatora z pierwszej linii (polski Excel = ';', inne = ',' lub tab).
+function detectDelim(firstLine) {
+  const counts = { ';': 0, ',': 0, '\t': 0 }
+  for (const ch of firstLine) if (ch in counts) counts[ch]++
+  let best = ',', max = -1
+  for (const d of [';', ',', '\t']) if (counts[d] > max) { max = counts[d]; best = d }
+  return best
+}
+
+const NAME_KEYS = ['name', 'task', 'content', 'zadanie', 'nazwa', 'title', 'todo', 'opis']
+const MIN_KEYS  = ['min', 'minutes', 'minuty', 'duration', 'estimate', 'czas', 'time', 'długość', 'dlugosc']
+function matchCol(header, keys) {
+  for (let i = 0; i < header.length; i++) {
+    const h = String(header[i] || '').trim().toLowerCase()
+    if (keys.some(k => h === k)) return i                    // dokładna etykieta — zawsze nagłówek
+    if (h.length > 24 || h.split(/\s+/).length > 2) continue // zdanie = treść zadania, nie etykieta
+    if (keys.some(k => h.includes(k))) return i              // np. „nazwa zadania", „czas (min)"
+  }
+  return -1
+}
+// Z surowego CSV → lista {name, totalMinutes}. Auto-mapowanie kolumn, domyślnie 25 min.
+function parseTasksFromCSV(text) {
+  const firstLine = text.split(/\r?\n/, 1)[0] || ''
+  const delim = detectDelim(firstLine)
+  const rows = parseCSV(text, delim).filter(r => r.some(c => String(c).trim() !== ''))
+  if (!rows.length) return []
+
+  // Wiersz z czysto liczbową komórką to dane, nie nagłówek — chroni pliki bez
+  // nagłówka, których pierwsze zadanie zawiera słowo-klucz (np. „Przygotować zadanie…;30").
+  const isNum = c => /^\s*-?\d+([.,]\d+)?\s*$/.test(String(c))
+  const headerCandidate = !rows[0].some(isNum)
+  let nameIdx = headerCandidate ? matchCol(rows[0], NAME_KEYS) : -1
+  let minIdx  = headerCandidate ? matchCol(rows[0], MIN_KEYS)  : -1
+  let dataRows = rows
+  if (nameIdx >= 0 || minIdx >= 0) {
+    dataRows = rows.slice(1)               // pierwszy wiersz to nagłówek
+  } else {
+    nameIdx = 0                            // brak nagłówka: kol. 0 = nazwa, kol. 1 = minuty
+    minIdx  = rows[0].length > 1 ? 1 : -1
+  }
+  if (nameIdx < 0) nameIdx = 0
+
+  const out = []
+  for (const r of dataRows) {
+    const name = String(r[nameIdx] == null ? '' : r[nameIdx]).trim()
+    if (!name) continue
+    let mins = 25
+    if (minIdx >= 0) {
+      // parseFloat + zamiana przecinka: „1,5" / „1.5" → 2 min (nie 15)
+      const m = parseFloat(String(r[minIdx]).trim().replace(',', '.').replace(/[^\d.\-]/g, ''))
+      if (!isNaN(m)) mins = Math.round(m)
+    }
+    mins = Math.max(1, Math.min(480, mins))
+    out.push({ name: name.slice(0, 200), totalMinutes: mins })
+  }
+  return out
+}
+
+// ── Pojedyncza instancja (drugie uruchomienie tylko pokazuje managera) ──
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) app.quit()
+
+function readSaved() {
+  try { if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) }
+  catch (_) {}
+  return null
+}
+
+// Zapis stanu: debounced + asynchroniczny — nie blokuje pętli main / timera.
+let saveTimer = null
+let lastSavedSpentMin = 0   // ostatnia zapisana pełna minuta taskSpent (zapis postępu co minutę)
+function snapshot() {
+  return JSON.stringify({
+    tasks: S.tasks, settings: S.settings, size: S.size, opacity: S.opacity, pos: S.pos,
+    // Postęp bieżącej sesji — pozwala wznowić ostatnie zadanie z odłożonym czasem.
+    currentIdx: S.currentIdx, taskSpent: S.taskSpent, pomsDone: S.pomsDone,
+    termsVersion: S.termsVersion,
+  }, null, 2)
+}
+function writeSaved() {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => { fs.writeFile(DATA_FILE, snapshot(), () => {}) }, 400)
+}
+function flushSaved() {
+  clearTimeout(saveTimer)
+  try { fs.writeFileSync(DATA_FILE, snapshot()) } catch (_) {}
+}
+
+// Wersja warunków korzystania — podbij przy zmianie treści terms.html,
+// żeby wymusić ponowną akceptację przy następnym uruchomieniu.
+const TERMS_VERSION = 1
+
+const DEFAULT_SETTINGS = { workMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 15, longBreakAfter: 4 }
+const SIZE_DIMS = { S: { w: 260, h: 130 }, M: { w: 330, h: 170 }, L: { w: 420, h: 210 } }
+
+// ── Sanityzacja wczytanych danych (plik można edytować ręcznie) ──
+function clampInt(v, min, max, dflt) {
+  const n = parseInt(v)
+  return isNaN(n) ? dflt : Math.max(min, Math.min(max, n))
+}
+function sanitizeTask(t) {
+  return {
+    id: (t && t.id != null) ? t.id : Date.now() + Math.floor(Math.random() * 1e6),
+    name: String((t && t.name) || ''),
+    totalMinutes: clampInt(t && t.totalMinutes, 1, 480, 25),
+  }
+}
+function sanitizeSettings(raw) {
+  const s = { ...DEFAULT_SETTINGS, ...(raw || {}) }
+  return {
+    workMinutes:       clampInt(s.workMinutes, 1, 120, 25),
+    shortBreakMinutes: clampInt(s.shortBreakMinutes, 1, 60, 5),
+    longBreakMinutes:  clampInt(s.longBreakMinutes, 1, 120, 15),
+    longBreakAfter:    clampInt(s.longBreakAfter, 2, 10, 4),
+  }
+}
+
+const saved = readSaved()
+const S = {
+  tasks:          Array.isArray(saved?.tasks) ? saved.tasks.map(sanitizeTask) : [],
+  settings:       sanitizeSettings(saved?.settings),
+  size:           SIZE_DIMS[saved?.size] ? saved.size : 'M',
+  opacity:        (typeof saved?.opacity === 'number') ? Math.max(0.2, Math.min(1, saved.opacity)) : 0.90,
+  currentIdx:     0,
+  phase:          'idle',
+  pomsDone:       0,
+  phaseLeft:      0,
+  phaseEndsAt:    0,       // znacznik czasu (ms) końca fazy — źródło prawdy dla odliczania
+  taskSpent:      0,
+  isRunning:      false,
+  breakExpanded:  false,
+  workStartExpanded: false, // fullscreen "PRACA" po zakończeniu przerwy
+  taskEarlyDone:  false,   // czeka na wybór po ręcznym ukończeniu zadania
+  pos:           (saved?.pos && typeof saved.pos.x === 'number') ? saved.pos : null,
+  collapsedMode: false,
+  termsVersion:  clampInt(saved?.termsVersion, 0, 9999, 0),   // 0 = warunki jeszcze niezaakceptowane
+}
+
+// Przywrócenie postępu z poprzedniej sesji (po sanityzacji listy zadań).
+// currentIdx może równać się długości listy = stan „wszystko ukończone".
+;(() => {
+  const idx = parseInt(saved?.currentIdx)
+  if (!isNaN(idx) && idx >= 0 && idx <= S.tasks.length) S.currentIdx = idx
+  const spent = parseInt(saved?.taskSpent)
+  if (!isNaN(spent) && spent >= 0) S.taskSpent = Math.min(spent, 480 * 60)
+  const poms = parseInt(saved?.pomsDone)
+  if (!isNaN(poms) && poms >= 0) S.pomsDone = Math.min(poms, 100)
+  lastSavedSpentMin = Math.floor(S.taskSpent / 60)
+})()
+
+// JEDNO, STAŁE okno nakładki: tworzone raz na cały ekran, przezroczyste i klikalne
+// „na wskroś". NIGDY nie jest skalowane ani chowane — wszystkie tryby (widget,
+// pełnoekranowa kurtyna przerwy/pracy, mini-pasek) to wyłącznie zmiany DOM/CSS w środku
+// (renderer w overlay.html). Powód: na Windows KAŻDA operacja na powierzchni przezroczystego
+// okna (resize ALBO hide/show) zostawia pustą warstwę (widać pulpit) aż do realnego
+// kliknięcia. Natomiast zwykłe odrysowanie DOM (jak tykający zegar) działa bez zarzutu —
+// więc zmieniamy tylko treść, nigdy okno. Klikalność steruje renderer (hit-test pod
+// kursorem), bo przy oknie pełnoekranowym nie da się tego rozstrzygnąć z prostokąta okna.
+// overlay = duże, stałe okno pełnoekranowe (widget + kurtyna PRZERWA/PRACA), transparent.
+// tray   = małe, NIEPRZEZROCZYSTE okno tylko na zwiniętą listwę, dokładnie nad paskiem zadań.
+//          Pełnoekranowe okno nie może rysować po pasku zadań, a małe okno 'screen-saver'
+//          tak — dlatego zwinięty pasek dostaje własne okno. Nieprzezroczyste = pokaż/ukryj
+//          NIE migocze (blank dotyczył tylko okien transparent).
+let overlay = null, manager = null, tray = null
+let tickHandle = null, watchdogHandle = null, topmostHandle = null
+let ignoring = true
+let movingUntil = 0   // rezerwa zgodności (drag widgetu obsługuje renderer)
+
+// Poziom warstwy zależny od trybu: pełnoekranowa kurtyna siedzi na 'floating' (niżej niż
+// okna systemowe — nie zasłania paska zadań / powiadomień), widget i mini-pasek na
+// 'screen-saver' (nad wszystkim). setAlwaysOnTop NIE rusza powierzchni → nie migocze.
+function applyWindowLevel() {
+  if (!overlay || overlay.isDestroyed()) return
+  if (S.breakExpanded || S.workStartExpanded) overlay.setAlwaysOnTop(true, 'floating')
+  else                                        overlay.setAlwaysOnTop(true, 'screen-saver', 1)
+}
+
+// Windows potrafi po cichu zdegradować transparentne okno alwaysOnTop z warstwy topmost
+// (pasek zadań, powiadomienia, przełączanie okien). Co sekundę przywracamy topmost na
+// poziomie właściwym dla bieżącego trybu — to nie operacja na powierzchni, więc bezpieczne.
+function reassertTopmost() {
+  if (Date.now() < movingUntil) return
+  applyWindowLevel()
+}
+
+function workInterval() {
+  return S.settings.workMinutes * 60
+}
+
+// ── Zegar oparty na realnym czasie (odporny na dryf setInterval i sen systemu) ──
+function armClock() { S.phaseEndsAt = Date.now() + S.phaseLeft * 1000 }
+function startPhase(seconds) { S.phaseLeft = seconds; armClock() }
+
+function initTask() {
+  S.pomsDone = 0; S.taskSpent = 0; S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false
+  if (S.tasks.length > 0 && S.currentIdx >= S.tasks.length) {
+    // Wszystkie zadania ukończone
+    S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; return
+  }
+  // Brak zadań: startuj jako prosty pomodoro (faza pracy bez zadania)
+  S.phase = 'work'; startPhase(workInterval())
+}
+
+// Start aplikacji: wznawiamy na ostatnim zadaniu z ODŁOŻONYM czasem (taskSpent/pomsDone
+// przywrócone z pliku). Odliczanie rusza świeżym blokiem pracy, na pauzie — użytkownik
+// jak zawsze naciska start. NIE zerujemy postępu (w odróżnieniu od initTask).
+function resumeSession() {
+  S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false
+  if (S.tasks.length > 0 && S.currentIdx >= S.tasks.length) {
+    S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; return
+  }
+  S.phase = 'work'; startPhase(workInterval())   // świeży blok 25 min
+  S.isRunning = false                            // na pauzie do naciśnięcia start
+}
+
+function _advancePhase() {
+  const { shortBreakMinutes, longBreakMinutes, longBreakAfter } = S.settings
+  if (S.phase === 'work') {
+    S.pomsDone++
+    // Brak zadania (prosty pomodoro) lub Opcja B — cyklicznie praca/przerwa
+    const isLong = S.pomsDone > 0 && S.pomsDone % longBreakAfter === 0
+    S.phase = isLong ? 'longBreak' : 'shortBreak'
+    startPhase(isLong ? longBreakMinutes * 60 : shortBreakMinutes * 60)
+    S.workStartExpanded = false
+  } else {
+    // Przerwa skończyła się → pokaż fullscreen "PRACA" przez kilka sekund
+    S.phase = 'work'; startPhase(workInterval())
+    S.workStartExpanded = true
+  }
+}
+
+function nextPhase() { _advancePhase(); _syncOverlaySize() }
+
+function _syncOverlaySize() {
+  const isBreak = S.phase === 'shortBreak' || S.phase === 'longBreak'
+  if (isBreak) {
+    S.breakExpanded = true; S.workStartExpanded = false; expandOverlay()
+  } else if (S.phase === 'work' && S.workStartExpanded) {
+    S.breakExpanded = false; expandOverlay()
+  } else {
+    S.breakExpanded = false; S.workStartExpanded = false; shrinkOverlay()
+  }
+}
+
+// ── Klikalność z deduplikacją (sterowana przez renderer: hit-test pod kursorem) ──
+// Renderer (overlay.html) na bieżąco sprawdza, czy kursor jest nad strefą klikalną
+// (.clickzone: widget, mini-pasek, przyciski przerwy) i woła mouse-enter/leave.
+function setIgnore(v) {
+  if (!overlay || overlay.isDestroyed() || v === ignoring) return
+  ignoring = v
+  if (v) overlay.setIgnoreMouseEvents(true, { forward: true })
+  else   overlay.setIgnoreMouseEvents(false)
+}
+
+// Prostokąt zwiniętej listwy: NA pasku zadań (od jego górnej krawędzi w dół), przy prawej
+// krawędzi ekranu — dokładnie jak w pierwotnej wersji, która nachodziła na zegar.
+function trayBounds() {
+  const { bounds, workArea } = screen.getPrimaryDisplay()
+  const taskbarH = Math.max(36, bounds.height - workArea.height - workArea.y)
+  const w = Math.max(340, Math.round(bounds.width * 0.28))
+  return { x: bounds.x + bounds.width - w, y: workArea.y + workArea.height, width: w, height: taskbarH }
+}
+// Pokaż/ukryj okno-listwę zgodnie z trybem. Nieprzezroczyste okno → pokaż/ukryj nie migocze.
+function syncTray() {
+  if (!tray || tray.isDestroyed()) return
+  if (S.collapsedMode) {
+    tray.setBounds(trayBounds())                 // odśwież pozycję (np. po zmianie rozdzielczości)
+    tray.setAlwaysOnTop(true, 'screen-saver', 1)
+    if (!tray.isVisible()) tray.showInactive()
+  } else if (tray.isVisible()) {
+    tray.hide()
+  }
+}
+
+// Tryby wyświetlania = TYLKO zmiana flag stanu + poziomu okna + pokaż/ukryj listwę. Widok
+// dużego okna przełącza renderer (broadcast → render w overlay.html); duże okno NIGDY nie
+// zmienia rozmiaru ani się nie chowa, więc nic nie miga.
+function expandOverlay() { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // wejście w kurtynę (przerwa/start pracy)
+function shrinkOverlay() { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // powrót do widgetu
+function doCollapse()    { S.collapsedMode = true;  applyWindowLevel(); syncTray() }   // zwiń → listwa na pasku zadań
+function doExpand()      { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // rozwiń → widget
+
+function tick() {
+  if (!S.isRunning || S.phase === 'idle' || S.phase === 'done') return
+  const left = Math.max(0, Math.round((S.phaseEndsAt - Date.now()) / 1000))
+  if (S.phase === 'work') {
+    S.taskSpent += Math.max(0, S.phaseLeft - left)  // realny przyrost (odporny na zawieszenie/sen)
+    const m = Math.floor(S.taskSpent / 60)
+    if (m !== lastSavedSpentMin) { lastSavedSpentMin = m; writeSaved() }  // zapis postępu co pełną minutę
+  }
+  S.phaseLeft = left
+  if (left === 0) nextPhase()
+  broadcast()
+}
+
+function broadcast() {
+  // webContents.send i tak robi structured clone — bez ręcznego JSON.parse(JSON.stringify)
+  if (overlay && !overlay.isDestroyed()) overlay.webContents.send('state', S)
+  if (tray && !tray.isDestroyed() && tray.isVisible()) tray.webContents.send('state', S)
+  if (manager && !manager.isDestroyed() && manager.isVisible()) manager.webContents.send('state', S)
+}
+
+if (gotTheLock) {
+  app.on('second-instance', () => {
+    if (manager && !manager.isDestroyed()) { manager.show(); manager.focus() }
+  })
+
+  // Bramka warunków: przy pierwszym uruchomieniu (lub po zmianie TERMS_VERSION)
+  // pokaż ekran „Akceptuję warunki" ZANIM wystartuje timer i nakładka.
+  app.whenReady().then(() => {
+    if (S.termsVersion === TERMS_VERSION) startApp()
+    else createTermsWindow()
+  })
+
+  function startApp() {
+    overlay = createOverlay(); tray = createTray(); manager = createManager()
+    ensureLogReady()   // utwórz folder Dokumenty\PomodoroOverlay + nagłówek CSV z wyprzedzeniem
+    tickHandle = setInterval(tick, 1000); resumeSession()
+
+    // Watchdog click-through: samonaprawa, gdy kursor opuści okno bez zdarzenia mouseleave
+    // (Alt+Tab, koniec dragu poza widgetem, przełączenie pulpitu, powiadomienia itp.)
+    watchdogHandle = setInterval(() => {
+      if (!overlay || overlay.isDestroyed()) return
+      if (Date.now() < movingUntil) return   // nie przerywaj trwającego przeciągania okna
+      const p = screen.getCursorScreenPoint()
+      const b = overlay.getBounds()
+      const inside = p.x >= b.x && p.x < b.x + b.width && p.y >= b.y && p.y < b.y + b.height
+      if (!inside) setIgnore(true)
+    }, 200)
+
+    // Strażnik Z-order: co sekundę przywraca okno na wierzch, gdy Windows zdegradował
+    // je z warstwy topmost (klik w pasek, przełączenie okien itp.). Bez tego widget
+    // „znika" do następnego ręcznego AltGr+M. Patrz reassertTopmost.
+    topmostHandle = setInterval(reassertTopmost, 1000)
+
+    // Reakcja na zmianę rozdzielczości / (od)łączenie monitora — to JEDYNY moment, gdy
+    // okno realnie zmienia rozmiar (dopasowanie do nowego ekranu). Zdarza się rzadko i
+    // wtedy użytkownik i tak wchodzi w interakcję, więc ewentualne odrysowanie nie przeszkadza.
+    // broadcast() → renderer ponownie doklamruje pozycję widgetu do nowych wymiarów.
+    const reclamp = () => {
+      if (!overlay || overlay.isDestroyed()) return
+      overlay.setBounds(fullBounds())   // dopasuj do nowego ekranu (z 1px nadmiarem — patrz fullBounds)
+      applyWindowLevel()
+      broadcast()
+    }
+    screen.on('display-metrics-changed', reclamp)
+    screen.on('display-added', reclamp)
+    screen.on('display-removed', reclamp)
+
+    // Po wybudzeniu systemu przelicz natychmiast (tick i tak liczy z zegara ściennego)
+    powerMonitor.on('resume', () => { tick() })
+
+    // Globalne skróty klawiszowe — sterowanie bez myszy.
+    // UWAGA: na Windows AltGr = Ctrl+Alt, więc Ctrl+Alt+<litera> jest wyzwalany przez
+    // AltGr+<litera>. Litery dobrane tak, by NIE kolidowały z polskimi znakami (AltGr+s=ś,
+    // AltGr+c=ć itd.): P (wolne), K (zamiast S), M (zamiast C — zwijanie/rozwijanie).
+    const SHORTCUTS = [
+      ['CommandOrControl+Alt+P', 'toggle'],          // start / pauza
+      ['CommandOrControl+Alt+K', 'skipPhase'],       // pomiń fazę
+      ['CommandOrControl+Alt+M', 'toggleCollapse'],  // zwiń / rozwiń (AltGr+M)
+    ]
+    for (const [accel, cmd] of SHORTCUTS) {
+      const ok = globalShortcut.register(accel, () => handleCmd(cmd))
+      if (!ok) console.warn(`[skrót] nie udało się zarejestrować ${accel} — zajęty przez inną aplikację`)
+    }
+
+    setTimeout(() => { broadcast(); if (S.tasks.length === 0) { manager.show(); manager.focus() } }, 700)
+  }
+
+  // ── Okno warunków korzystania (first-run) ───────────────────────────
+  let termsWin = null
+  function createTermsWindow() {
+    termsWin = new BrowserWindow({
+      width: 560, height: 700, resizable: false, minimizable: false, maximizable: false,
+      title: 'Pomodoro Overlay — Warunki korzystania', backgroundColor: '#0d1117',
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+    })
+    termsWin.setMenuBarVisibility(false)
+    termsWin.loadFile(path.join(__dirname, 'terms.html'))
+    // Zamknięcie okna bez akceptacji = rezygnacja — aplikacja się kończy.
+    termsWin.on('closed', () => {
+      termsWin = null
+      if (S.termsVersion !== TERMS_VERSION) app.exit(0)
+    })
+  }
+  ipcMain.on('terms-accepted', () => {
+    S.termsVersion = TERMS_VERSION
+    flushSaved()
+    if (termsWin && !termsWin.isDestroyed()) termsWin.close()
+    startApp()
+  })
+  ipcMain.on('terms-declined', () => { app.exit(0) })
+}
+
+// Wymiary okna celowo o 1px większe niż monitor (góra + boki; dół WYRÓWNANY do dołu ekranu).
+// Powód: gdy okno topmost ma DOKŁADNIE wymiary monitora, Windows uznaje je za pełnoekranowe i
+// wypycha pasek zadań NAD nie — wtedy zwinięta listwa nie nachodzi na zegar. 1px nadmiaru łamie
+// to wykrywanie, więc 'screen-saver' znów trzyma okno nad paskiem zadań. Dół bez nadmiaru, żeby
+// #taskbar-view (bottom:0) siadał równo na pasku. To NIE jest realna zmiana rozmiaru w trakcie
+// pracy — ustawiamy raz przy tworzeniu (i przy zmianie rozdzielczości).
+function fullBounds() {
+  const b = screen.getPrimaryDisplay().bounds
+  return { x: b.x - 1, y: b.y - 1, width: b.width + 2, height: b.height + 1 }
+}
+
+// Jedno stałe okno na cały ekran. NIE jest movable ani resizable — przeciąganie widgetu
+// i jego pozycję obsługuje renderer (CSS), a tryby przełączamy treścią. Domyślnie klikalne
+// na wskroś; renderer włącza klikalność tylko nad strefami .clickzone.
+function createOverlay() {
+  const fb = fullBounds()
+  const win = new BrowserWindow({
+    x: fb.x, y: fb.y, width: fb.width, height: fb.height,
+    frame: false, alwaysOnTop: true, transparent: true, hasShadow: false,
+    skipTaskbar: true, resizable: false, movable: false,
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
+  })
+  win.setAlwaysOnTop(true, 'screen-saver', 1)
+  win.setOpacity(S.opacity)
+  win.setIgnoreMouseEvents(true, { forward: true })
+  ignoring = true
+  if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  win.loadFile(path.join(__dirname, 'overlay.html'))
+  return win
+}
+
+// Okno zwiniętej listwy: małe, NIEPRZEZROCZYSTE, dokładnie nad paskiem zadań. Tworzone raz,
+// ukryte; pokazywane przy zwinięciu. Ładuje overlay.html z rolą 'tray' (renderer rysuje wtedy
+// wyłącznie mini-pasek na całe okno). W pełni klikalne (małe okno — nie blokuje pulpitu).
+function createTray() {
+  const tb = trayBounds()
+  const win = new BrowserWindow({
+    x: tb.x, y: tb.y, width: tb.width, height: tb.height,
+    frame: false, alwaysOnTop: true, transparent: false, hasShadow: false,
+    skipTaskbar: true, resizable: false, movable: false, show: false, backgroundColor: '#080a14',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false,
+      backgroundThrottling: false, additionalArguments: ['--role=tray'],
+    },
+  })
+  win.setAlwaysOnTop(true, 'screen-saver', 1)
+  if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  win.loadFile(path.join(__dirname, 'overlay.html'))
+  return win
+}
+
+function createManager() {
+  const win = new BrowserWindow({
+    width: 550, height: 700, minWidth: 420, minHeight: 500, show: false,
+    title: '🍅 Pomodoro — Zadania', backgroundColor: '#0d1117',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+  })
+  win.loadFile(path.join(__dirname, 'manager.html'))
+  win.on('close', e => { e.preventDefault(); win.hide() })
+  return win
+}
+
+function handleCmd(cmd, data) {
+  switch (cmd) {
+
+    case 'toggle':
+      if (S.phase === 'done' || S.phase === 'idle') { S.currentIdx = 0; initTask() }
+      S.isRunning = !S.isRunning
+      if (S.isRunning) armClock()              // wznawiamy odliczanie od bieżącego phaseLeft
+      break
+
+    case 'skipPhase':
+      if (S.phase !== 'idle' && S.phase !== 'done') nextPhase()
+      break
+
+    // ── Ręczne wcześniejsze ukończenie zadania ────────────────────
+    case 'completeEarly':
+      if (S.tasks.length > 0 && S.currentIdx < S.tasks.length && S.phase === 'work') {
+        S.isRunning    = false
+        S.taskEarlyDone = true
+      }
+      break
+
+    // User wybrał: weź przerwę przed następnym zadaniem
+    case 'chooseBreak': {
+      if (!S.taskEarlyDone) break
+      S.taskEarlyDone = false
+      logTaskCompletion(S.tasks[S.currentIdx], 'completed')
+      S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
+      if (S.currentIdx >= S.tasks.length) { S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; break }
+      S.phase     = 'shortBreak'
+      startPhase(S.settings.shortBreakMinutes * 60)
+      S.isRunning = true
+      S.breakExpanded = true
+      expandOverlay()
+      break
+    }
+
+    // User wybrał: przejdź od razu do następnego zadania (timer kontynuuje)
+    case 'chooseNext': {
+      if (!S.taskEarlyDone) break
+      S.taskEarlyDone = false
+      logTaskCompletion(S.tasks[S.currentIdx], 'completed')
+      S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
+      if (S.currentIdx >= S.tasks.length) { S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; break }
+      S.phase     = 'work'
+      S.isRunning = true
+      armClock()   // phaseLeft bez zmian — kontynuuj odliczanie od teraz
+      S.breakExpanded = false
+      shrinkOverlay()
+      break
+    }
+
+    // Anuluj wczesne ukończenie (wróć do normalnego timera)
+    case 'cancelEarly':
+      S.taskEarlyDone = false
+      break
+
+    case 'nextTask':
+      if (S.tasks.length > 0 && S.currentIdx < S.tasks.length - 1) {
+        logTaskCompletion(S.tasks[S.currentIdx], 'skipped')
+        S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
+        S.phase = 'work'; startPhase(workInterval())
+        S.isRunning = false; S.breakExpanded = false; S.taskEarlyDone = false
+        shrinkOverlay()
+      }
+      break
+
+    // Ukończ zadanie, nie zatrzymując timera — usuwa z listy, skacze do kolejnego
+    case 'doneKeepTimer':
+      if (S.tasks.length > 0 && S.phase === 'work') {
+        logTaskCompletion(S.tasks[S.currentIdx], 'completed')
+        S.tasks.splice(S.currentIdx, 1)
+        S.taskSpent = 0; S.pomsDone = 0
+        if (S.currentIdx >= S.tasks.length) {
+          // Nie ma już kolejnych zadań
+          S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false
+        }
+        // currentIdx nie zmienia się — po usunięciu element pod tym indeksem to już następne zadanie
+        // Timer (phaseLeft) i isRunning bez zmian
+        writeSaved()
+      }
+      break
+
+    case 'shrinkManual':
+      S.breakExpanded = false; shrinkOverlay()
+      break
+
+    case 'shrinkWork':
+      S.workStartExpanded = false; S.breakExpanded = false; shrinkOverlay()
+      break
+
+    case 'setSize': {
+      const sz = data?.size
+      if (SIZE_DIMS[sz]) {
+        S.size = sz                 // rozmiar to teraz tylko klasa CSS widgetu — renderer ją
+        writeSaved()                // zastosuje i doklamruje pozycję (broadcast niżej)
+      }
+      break
+    }
+
+    case 'setOpacity': {
+      const v = Math.max(0.2, Math.min(1.0, data?.value ?? 0.9))
+      S.opacity = v
+      if (overlay && !overlay.isDestroyed()) overlay.setOpacity(v)   // opacity całego okna — nie rusza powierzchni
+      writeSaved()
+      break
+    }
+
+    // Renderer po przeciągnięciu widgetu zgłasza jego nową pozycję (współrzędne EKRANU).
+    case 'saveWidgetPos':
+      if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+        S.pos = { x: Math.round(data.x), y: Math.round(data.y) }
+        writeSaved()
+      }
+      break
+
+    case 'openManager': manager.show(); manager.focus(); break
+
+    case 'saveTasks': {
+      const newTasks    = Array.isArray(data?.tasks) ? data.tasks.map(sanitizeTask) : []
+      const newSettings = sanitizeSettings(data?.settings)
+      // Czy to ta sama lista (te same id i czasy, ta sama kolejność)? Jeśli tak — tylko edycja
+      // nazw/ustawień, więc NIE kasujemy postępu działającej sesji.
+      const sameList = newTasks.length === S.tasks.length &&
+        newTasks.every((t, i) => t.id === S.tasks[i]?.id && t.totalMinutes === S.tasks[i]?.totalMinutes)
+      S.tasks    = newTasks
+      S.settings = newSettings
+      if (!(sameList && S.phase !== 'idle' && S.phase !== 'done')) {
+        S.currentIdx = 0; S.isRunning = false; initTask(); shrinkOverlay()
+      }
+      writeSaved()
+      break
+    }
+
+    case 'resetTimer':
+      S.currentIdx = 0; S.isRunning = false; initTask(); shrinkOverlay()
+      break
+
+    case 'setAutostart':
+      app.setLoginItemSettings({ openAtLogin: !!data?.enabled, ...autostartOpts() })
+      break
+
+    case 'collapseWidget': doCollapse(); break
+    case 'expandWidget':   doExpand();   break
+
+    case 'toggleCollapse':
+      if (S.breakExpanded || S.workStartExpanded) break
+      if (S.collapsedMode) doExpand(); else doCollapse()
+      break
+
+    case 'openLogFolder': ensureLogReady(() => shell.openPath(LOG_DIR)); break
+
+    case 'quit': flushSaved(); app.exit(0); break
+  }
+  writeSaved()   // utrwal ewentualną zmianę postępu (currentIdx/taskSpent/pomsDone); debounced
+  broadcast()
+}
+
+ipcMain.on('cmd', (_, { cmd, data }) => handleCmd(cmd, data))
+
+// ── Autostart z Windows ────────────────────────────────────────────
+// Wersja spakowana (instalator): rejestrowany jest exe aplikacji — bez opcji.
+// Tryb deweloperski (npm start): process.execPath to electron.exe, więc bez
+// argumentu ze ścieżką projektu autostart otworzyłby puste okno Electrona.
+// Te same opcje MUSZĄ iść do set i get, inaczej odczyt stanu nie znajdzie wpisu.
+// Uwaga: autostart uruchamia aplikację ZAWSZE w stanie pauzy (resumeSession
+// ustawia isRunning=false) — odmierzanie rusza dopiero po kliknięciu ▶.
+function autostartOpts() {
+  return app.isPackaged ? {} : { args: [`"${__dirname}"`] }
+}
+
+ipcMain.handle('getState',     () => S)
+ipcMain.handle('getAutostart', () => app.getLoginItemSettings(autostartOpts()).openAtLogin)
+
+// ── Historia: odczyt logu CSV → wiersze dla zakładki „Historia" ───────
+ipcMain.handle('getLog', () => {
+  try {
+    if (!fs.existsSync(LOG_FILE)) return { rows: [], path: LOG_FILE }
+    let text = fs.readFileSync(LOG_FILE, 'utf8')
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+    const parsed = parseCSV(text, LOG_DELIM)
+    parsed.shift()  // nagłówek
+    const rows = parsed
+      .filter(r => r.length >= 2 && String(r[0]).trim() !== '')
+      .map(r => ({
+        completedAt: r[0], taskName: r[1], plannedMin: r[2], actualMin: r[3],
+        actualSec: r[4], pomodoros: r[5], deltaMin: r[6], status: r[7],
+      }))
+    return { rows, path: LOG_FILE }
+  } catch (e) {
+    return { rows: [], path: LOG_FILE, error: String(e && e.message || e) }
+  }
+})
+
+// ── Eksport zadań do pliku CSV (format zgodny z importem: nazwa;minuty) ─
+ipcMain.handle('exportTasks', async (_, tasks) => {
+  const list = (Array.isArray(tasks) ? tasks : []).map(sanitizeTask).filter(t => t.name.trim())
+  if (!list.length) return { canceled: true }
+  const parent = (manager && !manager.isDestroyed()) ? manager : undefined
+  const res = await dialog.showSaveDialog(parent, {
+    title: 'Eksportuj zadania do pliku CSV',
+    defaultPath: 'pomodoro-zadania.csv',
+    filters: [{ name: 'CSV', extensions: ['csv'] }],
+  })
+  if (res.canceled || !res.filePath) return { canceled: true }
+  try {
+    // BOM + ';' jak w logu — plik otwiera się poprawnie w polskim Excelu
+    const rows = list.map(t => csvField(t.name) + LOG_DELIM + t.totalMinutes).join('\n')
+    fs.writeFileSync(res.filePath, '﻿nazwa' + LOG_DELIM + 'minuty\n' + rows + '\n')
+    return { canceled: false, file: res.filePath, count: list.length }
+  } catch (e) {
+    return { canceled: false, error: String(e && e.message || e) }
+  }
+})
+
+// ── Import zadań z pliku CSV (dialog → parse → zwrot do renderera) ─────
+ipcMain.handle('importTasks', async () => {
+  const parent = (manager && !manager.isDestroyed()) ? manager : undefined
+  const res = await dialog.showOpenDialog(parent, {
+    title: 'Importuj zadania z pliku CSV',
+    filters: [{ name: 'CSV / tekst', extensions: ['csv', 'tsv', 'txt'] }, { name: 'Wszystkie pliki', extensions: ['*'] }],
+    properties: ['openFile'],
+  })
+  if (res.canceled || !res.filePaths.length) return { canceled: true }
+  try {
+    let text = fs.readFileSync(res.filePaths[0], 'utf8')
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1)
+    return { canceled: false, tasks: parseTasksFromCSV(text), file: path.basename(res.filePaths[0]) }
+  } catch (e) {
+    return { canceled: false, error: String(e && e.message || e) }
+  }
+})
+
+// Renderer (hit-test pod kursorem) zgłasza, czy kursor jest nad strefą klikalną.
+ipcMain.on('mouse-enter', () => setIgnore(false))
+ipcMain.on('mouse-leave', () => setIgnore(true))
+
+if (gotTheLock) {
+  app.on('before-quit', () => { flushSaved() })
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll()
+    if (tickHandle) clearInterval(tickHandle)
+    if (watchdogHandle) clearInterval(watchdogHandle)
+    if (topmostHandle) clearInterval(topmostHandle)
+  })
+}
+app.on('window-all-closed', () => {})
