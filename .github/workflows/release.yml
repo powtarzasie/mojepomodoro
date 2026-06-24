@@ -55,7 +55,7 @@ jobs:
             "- Porównanie sumy:  Get-FileHash .\$($exe.Name) -Algorithm SHA256",
             "- Provenance:  gh attestation verify .\$($exe.Name) --repo $repo",
             "",
-            "Pełna suma jest też w pliku SHA256SUMS.txt. Instalator nie jest podpisany płatnym certyfikatem, więc Windows pokaże SmartScreen („Więcej informacji” → „Uruchom mimo to”). Spakowane instalatory Electron/NSIS bywają fałszywie flagowane przez część silników AV — w razie wątpliwości porównaj SHA-256."
+            "Pełna suma jest też w pliku SHA256SUMS.txt. Instalator nie jest podpisany płatnym certyfikatem, więc Windows pokaże SmartScreen — w oknie ostrzeżenia kliknij Więcej informacji, a potem Uruchom mimo to. Spakowane instalatory Electron/NSIS bywają fałszywie flagowane przez część silników AV — w razie wątpliwości porównaj SHA-256."
           ) -join "`n"
           $notes | Out-File -FilePath "release/NOTES.md" -Encoding utf8
 
