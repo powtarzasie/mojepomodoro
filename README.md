@@ -64,9 +64,10 @@ Do każdego instalatora dołączane są:
   gh attestation verify .\MojePomodoro_Setup_vX.Y.Z.exe --repo powtarzasie/mojepomodoro
   ```
 
-- **VirusTotal** — link do skanu podawany przy wydaniu/na stronie. Uwaga: spakowane
-  instalatory Electron/NSIS bywają oznaczane **fałszywym alarmem** przez część
-  silników — w razie wątpliwości porównaj SHA-256 i sprawdź log builda w Actions.
+- **VirusTotal** — [publiczny raport skanu](https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a)
+  dla v1.2.1; zobacz aktualny wynik. Uwaga: spakowane instalatory Electron/NSIS bywają
+  czasem oznaczane **fałszywym alarmem** przez część silników — w razie wątpliwości
+  porównaj SHA-256 i sprawdź log builda w Actions.
 
 > Standard ten czyni plik **weryfikowalnym**, a nie *bez-ostrzeżeniowym*: ostrzeżenie
 > SmartScreen zniknie dopiero po podpisie kodu lub publikacji w Microsoft Store.
