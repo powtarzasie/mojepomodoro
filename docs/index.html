@@ -345,7 +345,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
           <span class="download-btn-inner">
             <b>Pobierz za darmo</b>
-            <small class="download-btn-sub">✦ Wersja v1.2 · aktualizacja 17.06 · open source (MIT)</small>
+            <small class="download-btn-sub">✦ Wersja v1.2.1 · build weryfikowalny (SHA-256 + provenance) · MIT</small>
           </span>
         </button>
         <p class="download-stats" id="heroStats">Pobrań: —</p>
@@ -475,10 +475,71 @@
     </div>
   </section>
 
+  <!-- ─────────── ZAUFANIE / WERYFIKOWALNOŚĆ ─────────── -->
+  <section class="info-section" aria-label="Zaufanie i weryfikowalność">
+    <p class="info-kicker">Nie musisz wierzyć na słowo</p>
+    <h2 class="info-heading">Sprawdź <span>sam</span></h2>
+    <div class="info-grid">
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></div>
+        <div>
+          <p class="info-card-title">Otwarty kod źródłowy</p>
+          <p class="info-card-desc">Cały kod jest w tym repozytorium: <a href="https://github.com/powtarzasie/mojepomodoro" style="color:var(--accent-soft);text-decoration:none">github.com/powtarzasie/mojepomodoro</a>. Przeczytaj albo zbuduj instalator samodzielnie.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div>
+          <p class="info-card-title">Budowane w GitHub Actions</p>
+          <p class="info-card-desc">Instalator powstaje <strong>automatycznie z otagowanego kodu</strong> — nie wgrywam pliku „z własnego komputera". Log builda jest publiczny.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
+        <div>
+          <p class="info-card-title">Suma kontrolna SHA-256</p>
+          <p class="info-card-desc">Po pobraniu porównaj <span class="mono">Get-FileHash</span> z plikiem <span class="mono">SHA256SUMS.txt</span> przy wydaniu. v1.2.1: <span class="mono" style="word-break:break-all">b0aea7de…b55101a</span>.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg></div>
+        <div>
+          <p class="info-card-title">Dowód pochodzenia (provenance)</p>
+          <p class="info-card-desc">Kryptograficzne potwierdzenie, że plik powstał z tego kodu i workflow:<br /><span class="mono" style="word-break:break-all">gh attestation verify plik.exe --repo powtarzasie/mojepomodoro</span></p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div>
+          <p class="info-card-title">Prywatność widać w kodzie</p>
+          <p class="info-card-desc">W <span class="mono">main.js</span> i <span class="mono">preload.js</span> nie ma <span class="mono">fetch</span>, <span class="mono">http</span> ani telemetrii — aplikacja <strong>nic nie wysyła</strong>. Lista zależności runtime jest pusta.</p>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
+        <div>
+          <p class="info-card-title">Niezależny skan</p>
+          <p class="info-card-desc">Możesz wrzucić instalator na <a href="https://www.virustotal.com/gui/home/upload" target="_blank" rel="noopener" style="color:var(--accent-soft);text-decoration:none">VirusTotal</a> i przeskanować ~70 silnikami. Spakowane instalatory bywają fałszywie flagowane — porównaj wtedy SHA-256.</p>
+        </div>
+      </div>
+
+    </div>
+    <p style="text-align:center;color:var(--faint);font-size:13.5px;line-height:1.55;max-width:680px;margin:clamp(24px,2.6vw,38px) auto 0;">
+      Instalator nie jest podpisany płatnym certyfikatem — <strong style="color:var(--dim)">instalujesz na własną odpowiedzialność</strong>.
+      Tego ostrzeżenia nie zdejmie żaden darmowy krok; zamiast tego dajemy Ci <strong style="color:var(--dim)">możliwość samodzielnej weryfikacji</strong> pliku. — Mariusz Świerguła
+    </p>
+  </section>
+
   <!-- ─────────── FOOTER ─────────── -->
   <footer class="foot">
     <div class="page" style="display:block; padding-top:0; padding-bottom:0;">
-      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b> <span style="color:var(--dim);font-weight:600;margin-left:6px">v1.2.0</span></p>
+      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b> <span style="color:var(--dim);font-weight:600;margin-left:6px">v1.2.1</span></p>
       <p class="a">Autor: Mariusz Świerguła — <a href="mailto:mariusz.swiergula@gmail.com">mariusz.swiergula@gmail.com</a></p>
       <p class="lic">© 2026 Mariusz Świerguła · Licencja MIT · Zbudowano w Electron · Wyłącznie na Windows 10/11 (komputer)</p>
       <p class="tm">„Pomodoro®" i „Pomodoro Technique®" to znaki towarowe Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta wyłącznie opisowo.</p>
@@ -505,12 +566,12 @@
       <div class="frow">
         <div class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>EXE</div>
         <div>
-          <p class="fname">MojePomodoro_Setup_v1.2.exe</p>
-          <p class="fmeta">Instalator EXE · Windows 10/11 (64-bit) · ~73 MB</p>
+          <p class="fname">MojePomodoro_Setup_v1.2.1.exe</p>
+          <p class="fmeta">Instalator EXE · Windows 10/11 (64-bit) · ~73 MB · build z GitHub Actions</p>
         </div>
-        <span class="fbadge">v1.2.0</span>
+        <span class="fbadge">v1.2.1</span>
       </div>
-      <a class="mbtn" id="dlBtn" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.2/MojePomodoro_Setup_v1.2.exe" download>
+      <a class="mbtn" id="dlBtn" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.2.1/MojePomodoro_Setup_v1.2.1.exe" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
         Pobierz instalator
       </a>
@@ -533,7 +594,10 @@
       <p class="arc-stats" id="modalStatsV11">Pobrań: —</p>
 
       <p class="mnote">
-        Instalator nie jest podpisany płatnym certyfikatem, więc Windows może pokazać <b>SmartScreen</b> („System Windows ochronił ten komputer") — kliknij <b>„Więcej informacji" → „Uruchom mimo to"</b>. Aplikacja jest <b>w 100% lokalna</b>: bez konta, bez telemetrii, kod otwarty na licencji MIT.
+        <b>SmartScreen.</b> Instalator nie jest podpisany płatnym certyfikatem, więc Windows może pokazać „System Windows ochronił ten komputer" — kliknij <b>„Więcej informacji" → „Uruchom mimo to"</b>. Instalujesz <b>na własną odpowiedzialność</b>.
+      </p>
+      <p class="mnote" style="margin-top:10px">
+        <b>Wolisz sprawdzić, zanim uruchomisz?</b> Plik powstaje w <a href="https://github.com/powtarzasie/mojepomodoro/actions" style="color:var(--accent-soft);text-decoration:none">GitHub Actions</a> z <a href="https://github.com/powtarzasie/mojepomodoro" style="color:var(--accent-soft);text-decoration:none">otwartego kodu</a>; przy wydaniu dołączamy <b>SHA-256</b> i <b>attestację provenance</b>. SHA-256 dla v1.2.1:<br /><span class="mono" style="color:var(--accent-soft);word-break:break-all;font-size:11.5px">b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a</span>
       </p>
     </div>
   </div>
@@ -551,20 +615,21 @@
 
     /* ── Licznik pobrań z GitHub API ── */
     (function(){
-      var API = 'https://api.github.com/repos/powtarzasie/mojepomodoro/releases/tags/v1.2';
-      var ASSET = 'MojePomodoro_Setup_v1.2.exe';
+      // Sumujemy pobrania instalatorów (.exe) ze WSZYSTKICH wydań — łączny zasięg,
+      // odporne na kolejne wersje (nowy build nie pokazuje wtedy „0").
+      var API = 'https://api.github.com/repos/powtarzasie/mojepomodoro/releases';
       var heroStats = document.getElementById('heroStats');
       var modalStats = document.getElementById('modalStats');
-      var dlBtn = document.getElementById('dlBtn');
       function fmt(n){ return n.toLocaleString('pl-PL'); }
       function set(el, n){ if(!el) return; el.innerHTML = (typeof n==='number') ? 'Pobrań: <strong>'+fmt(n)+'</strong>' : 'Pobrań: —'; }
       fetch(API, { headers:{ 'Accept':'application/vnd.github+json' } })
         .then(function(r){ if(!r.ok) throw new Error('GitHub '+r.status); return r.json(); })
-        .then(function(rel){
-          var a = (rel.assets||[]).find(function(x){ return x.name===ASSET; });
-          if(!a){ set(heroStats,null); set(modalStats,null); return; }
-          if(dlBtn) dlBtn.href = a.browser_download_url;
-          set(heroStats, a.download_count); set(modalStats, a.download_count);
+        .then(function(rels){
+          var total = 0;
+          (rels||[]).forEach(function(rel){
+            (rel.assets||[]).forEach(function(a){ if(/\.exe$/i.test(a.name)) total += (a.download_count||0); });
+          });
+          set(heroStats, total); set(modalStats, total);
         })
         .catch(function(e){ console.warn(e); set(heroStats,null); set(modalStats,null); });
     })();
