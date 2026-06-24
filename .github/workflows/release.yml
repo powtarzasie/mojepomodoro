@@ -41,6 +41,23 @@ jobs:
           "$hash  $($exe.Name)" | Out-File -FilePath "release/SHA256SUMS.txt" -Encoding ascii
           "EXE_PATH=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding ascii
           Write-Host "SHA-256: $hash  ($($exe.Name))"
+          # Notatki wydania = artefakt zaufania (SHA-256 + jak zweryfikowac) — na stronie Release.
+          # Budujemy tablica stringow + -join, NIE here-stringiem: here-string wymaga kolumny 0,
+          # co rozbija blok YAML "run: |".
+          $repo = $env:GITHUB_REPOSITORY
+          $notes = @(
+            "Instalator zbudowany automatycznie w GitHub Actions z otagowanego kodu — bez ręcznego wgrywania.",
+            "",
+            "## Weryfikacja",
+            "SHA-256 ($($exe.Name)):",
+            "$hash",
+            "",
+            "- Porównanie sumy:  Get-FileHash .\$($exe.Name) -Algorithm SHA256",
+            "- Provenance:  gh attestation verify .\$($exe.Name) --repo $repo",
+            "",
+            "Pełna suma jest też w pliku SHA256SUMS.txt. Instalator nie jest podpisany płatnym certyfikatem, więc Windows pokaże SmartScreen („Więcej informacji” → „Uruchom mimo to”). Spakowane instalatory Electron/NSIS bywają fałszywie flagowane przez część silników AV — w razie wątpliwości porównaj SHA-256."
+          ) -join "`n"
+          $notes | Out-File -FilePath "release/NOTES.md" -Encoding utf8
 
       - name: Attest build provenance
         if: startsWith(github.ref, 'refs/tags/')
@@ -54,8 +71,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME `
-            "$env:EXE_PATH" `
-            "release/SHA256SUMS.txt" `
-            --title "MojePomodoro $env:GITHUB_REF_NAME" `
-            --generate-notes
+          $tag = $env:GITHUB_REF_NAME
+          $assets = @("$env:EXE_PATH", "release/SHA256SUMS.txt")
+          # Idempotentnie: jesli Release dla tagu juz istnieje (re-run) — podmien assety i notatki,
+          # w przeciwnym razie utworz nowy. Bez tego ponowny bieg wywala sie na "release already exists".
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $assets --clobber
+            gh release edit $tag --notes-file release/NOTES.md
+          } else {
+            gh release create $tag $assets --title "MojePomodoro $tag" --notes-file release/NOTES.md
+          }
