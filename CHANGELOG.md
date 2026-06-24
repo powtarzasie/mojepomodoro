@@ -1,5 +1,14 @@
 # Historia zmian — Pomodoro Overlay / MojePomodoro
 
+## v1.2.1 — 2026-06-24
+
+Wydanie procesowe — **bez zmian funkcjonalnych** (kod aplikacji identyczny jak w 1.2.0).
+- Kod źródłowy opublikowany w repozytorium; wydanie budowane automatycznie w **GitHub Actions** z otagowanego kodu.
+- Do instalatora dołączane: suma kontrolna **SHA-256** (`SHA256SUMS.txt`) oraz **attestacja provenance** (`gh attestation verify`).
+- Ujednolicona nazwa instalatora: `MojePomodoro_Setup_v1.2.1.exe`.
+
+---
+
 ## v1.2.0 — 2026-06-17
 
 ### Naprawione
