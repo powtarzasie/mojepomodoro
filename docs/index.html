@@ -378,6 +378,31 @@
       html.js .benefit, html.js .info-kicker, html.js .info-heading, html.js .info-card, html.js .info-section > p { opacity:1 !important; }
       .info-card::after { display:none; }
     }
+
+    /* ─────────── WERYFIKACJA: kopiowanie + instrukcja ─────────── */
+    .verify-block { margin-top:12px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+    .verify-hash { flex:1 1 100%; font-family:var(--mono); font-size:12px; line-height:1.55; color:var(--accent-soft); word-break:break-all; user-select:all; background:rgba(255,255,255,.03); border:1px solid var(--line-soft); border-radius:8px; padding:8px 10px; }
+    .copy-btn { display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:10px; border:1px solid rgba(239,122,78,.45); background:rgba(239,122,78,.08); color:var(--ink); font:inherit; font-weight:700; font-size:12.5px; cursor:pointer; transition:background .15s var(--ease), border-color .15s var(--ease), transform .15s var(--ease); }
+    .copy-btn:hover { background:rgba(239,122,78,.16); }
+    .copy-btn:active { transform:scale(.97); }
+    .copy-btn:focus-visible { outline:2px solid var(--accent-soft); outline-offset:2px; }
+    .copy-btn svg { width:15px; height:15px; }
+    .copy-btn.copied { border-color:rgba(63,156,106,.5); background:rgba(63,156,106,.14); color:var(--green-l); }
+
+    .verify-details { max-width:760px; margin:clamp(22px,2.4vw,34px) auto 0; border:1px solid var(--line); border-radius:16px; background:rgba(255,255,255,.02); overflow:hidden; }
+    .verify-details summary { cursor:pointer; list-style:none; padding:16px 20px; font-weight:800; font-size:15.5px; letter-spacing:-.01em; display:flex; align-items:center; gap:11px; color:var(--ink); }
+    .verify-details summary::-webkit-details-marker { display:none; }
+    .verify-details summary::before { content:""; width:9px; height:9px; border-right:2px solid var(--accent-soft); border-bottom:2px solid var(--accent-soft); transform:rotate(-45deg); transition:transform .25s var(--ease); flex-shrink:0; }
+    .verify-details[open] summary::before { transform:rotate(45deg); }
+    .verify-details summary:hover { color:var(--accent-soft); }
+    .verify-details summary:focus-visible { outline:2px solid var(--accent-soft); outline-offset:-2px; border-radius:16px; }
+    .verify-steps { padding:0 20px 20px; color:var(--muted); font-size:14px; line-height:1.6; }
+    .verify-steps ol { margin:0 0 10px; padding-left:20px; }
+    .verify-steps li { margin:4px 0; }
+    .verify-steps pre { margin:0; overflow-x:auto; }
+    .verify-steps pre code { display:block; font-family:var(--mono); font-size:12.5px; color:var(--accent-soft); background:rgba(255,255,255,.03); border:1px solid var(--line-soft); border-radius:8px; padding:10px 12px; white-space:pre-wrap; word-break:break-all; }
+
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   </style>
   <script>document.documentElement.classList.add('js');</script>
 </head>
@@ -426,11 +451,11 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
           <span class="download-btn-inner">
             <b>Pobierz za darmo</b>
-            <small class="download-btn-sub">✦ Wersja v1.2.1 · sprawdzony i otwarty · open source (MIT)</small>
+            <small class="download-btn-sub">✦ Wersja v1.2.1 · open source (MIT) · weryfikowalny build</small>
           </span>
         </button>
         <p class="download-stats" id="heroStats">Pobrań: —</p>
-        <a class="hero-code" href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener">
+        <a class="hero-code" href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
           Zobacz kod na GitHub
         </a>
@@ -497,7 +522,7 @@
 
   <!-- ─────────── BENEFITS ─────────── -->
   <section class="benefits" aria-label="Najważniejsze zalety">
-    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg><span>Dane zostają<br />u Ciebie</span></div>
+    <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg><span>Dane robocze<br />lokalnie</span></div>
     <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18a4 4 0 0 1 .6-7.9 6 6 0 0 1 11.2-1.6A4.5 4.5 0 0 1 18 18z"/><line x1="2" y1="2" x2="22" y2="22"/></svg><span>Działa<br />offline</span></div>
     <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg><span>Open source<br />(MIT)</span></div>
     <div class="benefit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span>Bez admina<br />i Node.js</span></div>
@@ -553,7 +578,7 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg></div>
         <div>
           <p class="info-card-title">Prywatność i licencja</p>
-          <p class="info-card-desc">Zero telemetrii i kont — zadania i log zapisują się <strong>wyłącznie lokalnie</strong> na Twoim dysku. Open source na licencji <strong>MIT</strong>, wolne też do użytku komercyjnego.</p>
+          <p class="info-card-desc">Aplikacja po instalacji nie wysyła Twoich zadań, logów ani danych użytkownika do zewnętrznych serwerów — wszystkie dane robocze zapisują się <strong>lokalnie na Twoim komputerze</strong>. Open source na licencji <strong>MIT</strong>, wolne też do użytku komercyjnego.</p>
         </div>
       </div>
 
@@ -570,7 +595,7 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></div>
         <div>
           <p class="info-card-title">Otwarty kod źródłowy</p>
-          <p class="info-card-desc">Cały kod jest w tym repozytorium: <a href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener" style="color:var(--accent-soft);text-decoration:none">github.com/powtarzasie/mojepomodoro</a>. Przeczytaj albo zbuduj instalator samodzielnie.</p>
+          <p class="info-card-desc">Cały kod jest w tym repozytorium: <a href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener noreferrer" style="color:var(--accent-soft);text-decoration:none">github.com/powtarzasie/mojepomodoro</a>. Przeczytaj albo zbuduj instalator samodzielnie.</p>
         </div>
       </div>
 
@@ -586,7 +611,14 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
         <div>
           <p class="info-card-title">Suma kontrolna SHA-256</p>
-          <p class="info-card-desc">Po pobraniu porównaj <span class="mono">Get-FileHash</span> z plikiem <span class="mono">SHA256SUMS.txt</span> przy wydaniu. v1.2.1: <span class="mono" style="word-break:break-all">b0aea7de…b55101a</span>.</p>
+          <p class="info-card-desc">Po pobraniu porównaj <span class="mono">Get-FileHash</span> z wartością opublikowaną przy wydaniu (plik <span class="mono">SHA256SUMS.txt</span>). Pełny hash <span class="mono">v1.2.1</span>:</p>
+          <div class="verify-block">
+            <code class="verify-hash" id="sha256full">b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a</code>
+            <button type="button" class="copy-btn" data-copy="b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a" data-done="Skopiowano" aria-label="Kopiuj sumę SHA-256 do schowka">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span data-label>Kopiuj SHA-256</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -602,7 +634,7 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
         <div>
           <p class="info-card-title">Prywatność widać w kodzie</p>
-          <p class="info-card-desc">W <span class="mono">main.js</span> i <span class="mono">preload.js</span> nie ma <span class="mono">fetch</span>, <span class="mono">http</span> ani telemetrii — aplikacja <strong>nic nie wysyła</strong>. Lista zależności runtime jest pusta.</p>
+          <p class="info-card-desc">Kod aplikacji nie korzysta z zewnętrznych usług sieciowych ani bibliotek analitycznych. W plikach <span class="mono">main.js</span> i <span class="mono">preload.js</span> nie ma wywołań <span class="mono">fetch</span>, <span class="mono">http</span> ani mechanizmów telemetrii.</p>
         </div>
       </div>
 
@@ -610,14 +642,36 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
         <div>
           <p class="info-card-title">Niezależny skan VirusTotal</p>
-          <p class="info-card-desc">Plik ma <a href="https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a" target="_blank" rel="noopener" style="color:var(--accent-soft);text-decoration:none">publiczny raport na VirusTotal</a> — zobacz aktualny wynik skanu kilkudziesięcioma silnikami antywirusowymi. Spakowane instalatory Electron/NSIS bywają czasem fałszywie flagowane; w razie wątpliwości porównaj SHA-256.</p>
+          <p class="info-card-desc">Instalator ma <a href="https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a" target="_blank" rel="noopener noreferrer" style="color:var(--accent-soft);text-decoration:none">publiczny raport VirusTotal</a>. W chwili ostatniego sprawdzenia <strong>0/68</strong> silników bezpieczeństwa nie oznaczyło pliku jako złośliwego. Wynik może się zmieniać, dlatego w razie wątpliwości porównaj SHA-256 pobranego pliku z wartością opublikowaną przy wydaniu.</p>
         </div>
       </div>
 
     </div>
+    <span id="copyLive" class="sr-only" aria-live="polite"></span>
+    <details class="verify-details">
+      <summary>Jak sprawdzić pobrany plik?</summary>
+      <div class="verify-steps">
+        <ol>
+          <li>Pobierz instalator MojePomodoro.</li>
+          <li>Otwórz PowerShell w folderze, do którego pobrałeś plik.</li>
+          <li>Wklej polecenie:</li>
+        </ol>
+        <div class="verify-block">
+          <pre><code id="psVerifyCmd">Get-FileHash .\MojePomodoro_Setup_v1.2.1.exe -Algorithm SHA256</code></pre>
+          <button type="button" class="copy-btn" data-copy="Get-FileHash .\MojePomodoro_Setup_v1.2.1.exe -Algorithm SHA256" data-done="Skopiowano" aria-label="Kopiuj polecenie PowerShell do schowka">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-label>Kopiuj polecenie</span>
+          </button>
+        </div>
+        <ol start="4">
+          <li>Porównaj wynik z opublikowaną sumą SHA-256.</li>
+          <li>Jeśli wartości są identyczne, pobrany plik jest zgodny z plikiem opublikowanym przy wydaniu.</li>
+        </ol>
+      </div>
+    </details>
     <p style="text-align:center;color:var(--faint);font-size:13.5px;line-height:1.55;max-width:680px;margin:clamp(24px,2.6vw,38px) auto 0;">
-      Instalator nie jest podpisany płatnym certyfikatem — <strong style="color:var(--dim)">instalujesz na własną odpowiedzialność</strong>.
-      Tego ostrzeżenia nie zdejmie żaden darmowy krok; zamiast tego dajemy Ci <strong style="color:var(--dim)">możliwość samodzielnej weryfikacji</strong> pliku. — Mariusz Świerguła
+      Instalator nie ma jeszcze podpisu <strong style="color:var(--dim)">Code Signing</strong>. Windows może dlatego wyświetlić ostrzeżenie SmartScreen lub informację o nieznanym wydawcy.
+      Przed instalacją możesz zweryfikować jego SHA-256, pochodzenie builda w GitHub Actions oraz publiczny raport VirusTotal. — Mariusz Świerguła
     </p>
   </section>
 
@@ -646,7 +700,7 @@
       </div>
       <div class="mverdict">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
-        <p><b>Sprawdzony i otwarty.</b> Plik jest przeskanowany antywirusami, a kod jest publiczny — każdy może zobaczyć, co program robi. Pobierz spokojnie albo zajrzyj sam.</p>
+        <p><b>Otwarty i weryfikowalny.</b> Kod jest publiczny, a plik ma sumę SHA-256, dowód pochodzenia (provenance) i publiczny raport VirusTotal — możesz sam sprawdzić, co pobierasz. Zajrzyj do kodu albo pobierz gotowy program.</p>
       </div>
 
       <div class="mpaths">
@@ -654,7 +708,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
           <p class="mpath-t">Wolę najpierw zajrzeć</p>
           <p class="mpath-d">Cały kod jest publiczny (MIT). Zobacz go albo zbuduj program samodzielnie.</p>
-          <a class="mpath-btn ghost" href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener">
+          <a class="mpath-btn ghost" href="https://github.com/powtarzasie/mojepomodoro" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.04 1.53 1.04.89 1.55 2.34 1.1 2.91.84.09-.65.35-1.1.63-1.35-2.22-.26-4.56-1.13-4.56-5.02 0-1.11.39-2.02 1.03-2.73-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.04a9.3 9.3 0 0 1 5 0c1.91-1.32 2.75-1.04 2.75-1.04.55 1.4.2 2.44.1 2.7.64.71 1.03 1.62 1.03 2.73 0 3.9-2.34 4.76-4.57 5.01.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.59.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>
             Zobacz kod na GitHub
           </a>
@@ -662,7 +716,7 @@
         <div class="mpath">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
           <p class="mpath-t">Pobierz gotowy program</p>
-          <p class="mpath-d">MojePomodoro_Setup_v1.2.1.exe · ~73 MB · Windows 10/11. Działa lokalnie, nic nie wysyła.</p>
+          <p class="mpath-d">MojePomodoro_Setup_v1.2.1.exe · ~73 MB · Windows 10/11. Dane robocze zapisuje lokalnie na Twoim komputerze.</p>
           <a class="mpath-btn primary" id="dlBtn" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.2.1/MojePomodoro_Setup_v1.2.1.exe" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
             Pobierz instalator
@@ -671,13 +725,13 @@
         </div>
       </div>
 
-      <a class="mvt" href="https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a" target="_blank" rel="noopener">
+      <a class="mvt" href="https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a" target="_blank" rel="noopener noreferrer">
         <svg class="lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
-        <span>Przeskanowany na VirusTotal — zobacz wynik</span>
+        <span>Publiczny raport VirusTotal — zobacz wynik</span>
         <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
       </a>
 
-      <p class="mtech">Dla technicznych: <a href="https://github.com/powtarzasie/mojepomodoro/actions" target="_blank" rel="noopener">build w GitHub Actions</a>, suma kontrolna <b>SHA-256</b> i <b>dowód pochodzenia (provenance)</b> przy każdym wydaniu. SHA-256 v1.2.1: <span class="mono">b0aea7de…b55101a</span></p>
+      <p class="mtech">Dla technicznych: <a href="https://github.com/powtarzasie/mojepomodoro/actions" target="_blank" rel="noopener noreferrer">build w GitHub Actions</a>, suma kontrolna <b>SHA-256</b> i <b>dowód pochodzenia (provenance)</b> przy każdym wydaniu. SHA-256 v1.2.1: <span class="mono">b0aea7de…b55101a</span></p>
 
       <!-- ── Archiwum: poprzednia wersja ── -->
       <div class="arc-divider">poprzednia wersja</div>
@@ -806,6 +860,47 @@
           my = (e.clientY - r.top) / r.height * 100;
           if(raf) return;
           raf = requestAnimationFrame(function(){ c.style.setProperty('--mx', mx + '%'); c.style.setProperty('--my', my + '%'); raf = 0; });
+        });
+      });
+    })();
+
+    /* ── Kopiowanie do schowka (SHA-256, polecenie PowerShell) ── */
+    (function(){
+      var live = document.getElementById('copyLive');
+      function fallbackCopy(text){
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute'; ta.style.left = '-9999px';
+          document.body.appendChild(ta); ta.select();
+          var ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch(e){ console.warn(e); return false; }
+      }
+      function flash(btn){
+        var span = btn.querySelector('[data-label]');
+        if(!span) return;
+        if(btn._orig == null) btn._orig = span.textContent;
+        var done = btn.getAttribute('data-done') || 'Skopiowano';
+        span.textContent = done;
+        btn.classList.add('copied');
+        if(live) live.textContent = done;
+        clearTimeout(btn._t);
+        btn._t = setTimeout(function(){
+          span.textContent = btn._orig;
+          btn.classList.remove('copied');
+          if(live) live.textContent = '';
+        }, 2000);
+      }
+      [].slice.call(document.querySelectorAll('.copy-btn[data-copy]')).forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var text = btn.getAttribute('data-copy');
+          if(navigator.clipboard && navigator.clipboard.writeText){
+            navigator.clipboard.writeText(text).then(function(){ flash(btn); }, function(){ if(fallbackCopy(text)) flash(btn); });
+          } else if(fallbackCopy(text)) {
+            flash(btn);
+          }
         });
       });
     })();
