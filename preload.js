@@ -8,9 +8,14 @@ const ROLE = roleArg ? roleArg.split('=')[1] : 'overlay'
 
 contextBridge.exposeInMainWorld('bridge', {
   role: ROLE,
-  // Odbiór aktualizacji stanu timera od procesu głównego
+  // Odbiór aktualizacji stanu timera od procesu głównego (stan „lean" — bez listy zadań)
   onState: (callback) => {
     ipcRenderer.on('state', (_, data) => callback(data))
+  },
+
+  // Lista zadań osobnym kanałem — wysyłana tylko przy zmianie (patrz broadcast/pushTasksIfChanged)
+  onTasks: (callback) => {
+    ipcRenderer.on('tasks', (_, data) => callback(data))
   },
 
   // Wysyłanie komend do procesu głównego

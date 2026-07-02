@@ -21,6 +21,18 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ── Własne dymki (zamiast natywnego title): pojawiają się NAD elementem i trzymają
+      się dopóki najeżdżasz — bez znikania po chwili i bez uciekania pod okienko. ── */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+  background: #0a0e17; color: #fff; font-size: 11px; font-weight: 500; line-height: 1.3;
+  padding: 5px 9px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.55); z-index: 9999; pointer-events: none;
+}
+
 body {
   font-family: -apple-system, 'Segoe UI', sans-serif;
   background: var(--bg);
@@ -117,6 +129,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   margin-bottom: 12px;
 }
 .section-title {
@@ -127,23 +141,26 @@ body {
   color: var(--text2);
 }
 
+/* Pasek narzędzi (toolbar): jeden spójny, stonowany styl „ghost" */
 .btn-add {
-  background: rgba(224,92,52,0.15);
-  border: 1px solid rgba(224,92,52,0.3);
-  color: var(--accent2);
+  height: 30px;
+  padding: 0 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
   font-size: 12px;
   font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background .15s, border-color .15s;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background .15s, border-color .15s, color .15s;
 }
 .btn-add:hover {
-  background: rgba(224,92,52,0.25);
-  border-color: rgba(224,92,52,0.5);
-  color: #fff;
+  background: var(--surface2);
+  border-color: rgba(255,255,255,0.18);
+  color: var(--text);
 }
-
 /* ── TASK LIST ────────────────────────────────────────────── */
 #task-list { display: flex; flex-direction: column; gap: 6px; }
 
@@ -223,8 +240,9 @@ body {
 }
 .drag-handle:hover { color: var(--text2); }
 .drag-handle:active { cursor: grabbing; }
-.task-row.dragging  { opacity: 0.35; }
-.task-row.drag-over { border-color: rgba(224,92,52,0.55); background: rgba(224,92,52,0.09); }
+.task-row.dragging  { opacity: 0.45; border-color: rgba(224,92,52,0.55); background: rgba(224,92,52,0.09); }
+/* Podczas przeciągania myszą: kursor „chwytania" na całej stronie i brak zaznaczania tekstu */
+body.dragging-active, body.dragging-active * { cursor: grabbing !important; user-select: none !important; }
 
 .btn-remove {
   background: transparent;
@@ -252,6 +270,53 @@ body {
   border-radius: var(--radius);
 }
 .empty-list strong { display: block; font-size: 15px; margin-bottom: 6px; color: var(--text2); }
+
+/* ── QUICK-ADD COMPOSER (pole zawsze widoczne, Enter = dodaj) ─ */
+.task-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px dashed rgba(224,92,52,0.38);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  transition: border-color .15s, background .15s;
+}
+.task-composer:focus-within {
+  border-style: solid;
+  border-color: rgba(224,92,52,0.6);
+  background: rgba(224,92,52,0.05);
+}
+.composer-add {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: rgba(224,92,52,0.16);
+  border: 1px solid rgba(224,92,52,0.4);
+  color: var(--accent2);
+  border-radius: 8px; cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s, transform .1s;
+}
+.composer-add:hover  { background: var(--accent); color: #fff; border-color: transparent; }
+.composer-add:active { transform: scale(.94); }
+.composer-add .ico svg { width: 16px; height: 16px; }
+.composer-input {
+  flex: 1; min-width: 0;
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-size: 14px; font-family: inherit;
+}
+.composer-input::placeholder { color: var(--text2); }
+.composer-dur {
+  width: 52px; flex-shrink: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums;
+  text-align: center; padding: 5px 6px; border-radius: 6px; outline: none;
+  transition: border-color .15s;
+}
+.composer-dur:focus { border-color: rgba(255,255,255,0.25); }
+.composer-dur::-webkit-inner-spin-button,
+.composer-dur::-webkit-outer-spin-button { -webkit-appearance: none; }
+.composer-dur { -moz-appearance: textfield; }
 
 /* ── TOTAL TIME ───────────────────────────────────────────── */
 .total-time {
@@ -309,18 +374,22 @@ body {
 .actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
   margin-top: 24px;
+  margin-bottom: 22px;
 }
+/* Wiersz akcji: primary + secondary — ta sama wysokość (34px), różnica tylko w kolorze */
 .btn-primary {
-  flex: 1;
+  height: 34px;
+  padding: 0 16px;
   background: var(--accent);
-  border: none;
+  border: 1px solid transparent;
   color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 11px 20px;
-  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background .15s, transform .1s;
   font-family: inherit;
 }
@@ -329,19 +398,20 @@ body {
 .btn-primary.saved  { background: var(--green); }
 
 .btn-secondary {
+  height: 34px;
+  padding: 0 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text2);
   font-size: 13px;
   font-weight: 600;
-  padding: 11px 16px;
-  border-radius: var(--radius);
+  border-radius: 8px;
   cursor: pointer;
-  transition: background .15s, color .15s;
-  font-family: inherit;
   white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+  font-family: inherit;
 }
-.btn-secondary:hover { background: var(--surface2); color: var(--text); }
+.btn-secondary:hover { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.18); }
 
 /* ── TOGGLE SWITCH ────────────────────────────────────────── */
 .toggle { position:relative; display:inline-block; width:36px; height:20px; flex-shrink:0; }
@@ -361,12 +431,13 @@ body {
 /* ── POMOC / INSTRUKCJA ───────────────────────────────────── */
 .help-btn {
   margin-left: auto;
+  height: 30px;
+  padding: 0 11px;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text2);
   font-size: 12px;
   font-weight: 600;
-  padding: 7px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
@@ -377,85 +448,208 @@ body {
 .help-btn:hover  { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.18); }
 .help-btn.active { background: rgba(224,92,52,0.15); border-color: rgba(224,92,52,0.4); color: var(--accent2); }
 
-.help-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-.help-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 14px 16px; cursor: pointer; user-select: none;
-  transition: background .15s;
-}
-.help-head:hover { background: var(--surface2); }
-.help-head-title { font-size: 14px; font-weight: 700; color: var(--text); }
-.help-chevron { color: var(--text3); font-size: 12px; transition: transform .2s; }
-.help-card.open .help-chevron { transform: rotate(180deg); }
-
-.help-body { display: none; padding: 2px 18px 18px; border-top: 1px solid var(--border); }
-.help-card.open .help-body { display: block; }
-
-.help-h {
-  font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
-  color: var(--accent2); margin: 18px 0 8px;
-}
-.help-h:first-child { margin-top: 14px; }
-.help-body p { font-size: 13px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
-.help-body ul { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 4px 0; }
-.help-body li { font-size: 13px; color: var(--text2); display: flex; gap: 9px; align-items: baseline; line-height: 1.45; }
-.help-body li .ic {
-  flex-shrink: 0; min-width: 26px; height: 22px; padding: 0 6px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
-  font-size: 12px; color: var(--text); font-weight: 600; transform: translateY(2px);
-}
-.help-body li b { color: var(--text); font-weight: 600; }
-.help-body kbd {
-  display: inline-block; padding: 2px 7px; border-radius: 5px;
-  background: var(--surface2); border: 1px solid var(--border); border-bottom-width: 2px;
-  font-family: 'SF Mono','Consolas',monospace; font-size: 11px; color: var(--text);
-}
-.help-tip {
-  margin-top: 16px; padding: 10px 12px; border-radius: 8px;
-  background: rgba(224,92,52,0.08); border: 1px solid rgba(224,92,52,0.2);
-  font-size: 12px; color: var(--text2); line-height: 1.5;
-}
 
 /* ── HEADER ACTIONS (grupowanie przycisków w nagłówku sekcji) ─ */
 .header-actions { display: flex; gap: 8px; align-items: center; }
 
 /* ── HISTORIA (plan vs. fakt) ─────────────────────────────── */
 .history-scroll {
-  max-height: 280px; overflow-y: auto;
+  max-height: 280px; overflow-y: auto; overflow-x: hidden;
   border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--surface);
 }
-.history-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+/* table-layout:fixed → kolumny mieszczą się w oknie, bez poziomego scrolla */
+.history-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
 .history-table th {
   position: sticky; top: 0; z-index: 1; background: var(--surface2);
   text-align: left; color: var(--text2); font-weight: 700;
   font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
-  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  padding: 7px 8px; border-bottom: 1px solid var(--border);
 }
 .history-table th.num, .history-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .history-table td {
-  padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text2);
+  padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .history-table tbody tr:last-child td { border-bottom: none; }
 .history-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
-.history-table .h-date { color: var(--text3); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.history-table .h-name {
-  color: var(--text); max-width: 180px; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap;
-}
+/* Szerokości kolumn: Data · Zadanie(auto) · Plan · Fakt · Δ · 🍅 · Status */
+.history-table th:nth-child(1), .history-table td:nth-child(1) { width: 108px; }
+.history-table th:nth-child(3), .history-table td:nth-child(3) { width: 44px; }
+.history-table th:nth-child(4), .history-table td:nth-child(4) { width: 44px; }
+.history-table th:nth-child(5), .history-table td:nth-child(5) { width: 48px; }
+.history-table th:nth-child(6), .history-table td:nth-child(6) { width: 30px; }
+.history-table th:nth-child(7), .history-table td:nth-child(7) { width: 84px; }
+.history-table .h-date { color: var(--text3); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.history-table .h-name { color: var(--text); }
 .delta-pos  { color: var(--accent2); font-weight: 600; }   /* dłużej niż plan */
 .delta-neg  { color: var(--green);   font-weight: 600; }   /* szybciej niż plan */
 .delta-zero { color: var(--text3); }
 .h-status   { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
 .h-status.skipped { color: var(--text3); }
 .h-status.completed { color: var(--green); }
+
+/* ── SYSTEM IKON (inline SVG, spójny zestaw w stylu Lucide) ── */
+.ico { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; line-height:0; }
+.ico svg {
+  width:15px; height:15px; display:block;
+  stroke:currentColor; fill:none;
+  stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round;
+}
+/* Przyciski „ikona + tekst" */
+.btn-add, .help-btn, .btn-primary, .btn-secondary { display:inline-flex; align-items:center; gap:6px; }
+.btn-add .ico svg, .help-btn .ico svg { width:14px; height:14px; }
+
+/* ── FOCUS — widoczny dla klawiatury, na kolorze akcentu ───── */
+.task-name-input:focus-visible,
+.task-dur-input:focus-visible,
+.settings-input:focus-visible,
+.btn-add:focus-visible, .btn-primary:focus-visible, .btn-secondary:focus-visible,
+.help-btn:focus-visible, .btn-remove:focus-visible,
+.composer-add:focus-visible, .composer-dur:focus-visible {
+  outline:none;
+  box-shadow:0 0 0 2px var(--bg), 0 0 0 4px rgba(224,92,52,0.55);
+  border-radius:6px;
+}
+.toggle input:focus-visible + .toggle-track {
+  box-shadow:0 0 0 2px var(--bg), 0 0 0 4px rgba(224,92,52,0.55);
+}
+
+/* ── REDUKCJA RUCHU (a11y: prefers-reduced-motion) ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration:0.01ms !important;
+    animation-duration:0.01ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* ── ŻYWA KOLEJKA / PLAN DNIA ──────────────────────────────── */
+.plan-chip-row { margin-bottom: 10px; }
+.plan-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text2);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 11px; white-space: nowrap;
+}
+.plan-chip .ico svg { width: 13px; height: 13px; }
+.plan-chip .ico { color: var(--accent2); }
+.plan-chip b { color: var(--text); font-weight: 600; }
+
+.queue-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text3); margin: 12px 2px 6px;
+}
+.queue-label:first-child { margin-top: 0; }
+.queue-label.now { color: var(--accent); }
+
+/* Aktywny wiersz „Teraz" — pasek postępu zamiast pola czasu */
+.task-row.now { border-color: rgba(224,92,52,0.45); background: rgba(224,92,52,0.06); }
+.now-body { flex: 1; min-width: 0; }
+.now-progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.now-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.10); border-radius: 3px; overflow: hidden; }
+.now-fill { height: 100%; background: var(--accent); border-radius: 3px; width: 0%; transition: width .5s linear; }
+.now-fill.over { background: var(--accent2); }
+.now-time { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.now-btn {
+  width: 30px; height: 30px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.now-btn.done { background: rgba(42,157,92,0.15); border: 1px solid rgba(42,157,92,0.4); color: #4ade80; }
+.now-btn.done:hover { background: rgba(42,157,92,0.28); color: #fff; }
+.now-btn.skip { background: transparent; border: 1px solid var(--border); color: var(--text3); }
+.now-btn.skip:hover { background: rgba(224,80,80,0.18); border-color: rgba(224,80,80,0.35); color: #ff8a8a; }
+.now-btn .ico svg { width: 16px; height: 16px; }
+
+/* ETA — szacowany czas do startu zadania w kolejce */
+.row-eta {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  font-size: 11px; color: var(--text3); white-space: nowrap;
+}
+.row-eta .ico svg { width: 12px; height: 12px; }
+
+/* Composer jako ostatni wiersz kolejki („Dodaj do kolejki") */
+.task-composer.inline { margin: 6px 0 0; }
+
+/* Pasek autozapisu + reset (pod listą) */
+.queue-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.05);
+}
+.autosave-note { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+.autosave-note .ico { color: #4ade80; }
+.autosave-note .ico svg { width: 14px; height: 14px; }
+.reset-link {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2);
+  background: none; border: none; cursor: pointer; font-family: inherit; padding: 0;
+  transition: color .15s;
+}
+.reset-link:hover { color: var(--text); }
+.reset-link .ico svg { width: 14px; height: 14px; }
+
+/* Toast „Cofnij" */
+.undo-toast {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(8px);
+  display: flex; align-items: center; gap: 10px;
+  background: #10141d; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+  padding: 10px 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9998;
+  max-width: calc(100vw - 40px);
+}
+.undo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.undo-toast .ico { color: #4ade80; }
+.undo-toast .ico svg { width: 17px; height: 17px; }
+.undo-toast .msg { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.undo-btn {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600;
+  color: var(--accent2); background: none; border: none; cursor: pointer; font-family: inherit; flex-shrink: 0;
+}
+.undo-btn .ico svg { width: 15px; height: 15px; }
+
+/* ── „ZACZNIJ TERAZ" (przełącz bieżące zadanie) ────────────── */
+.btn-now-start {
+  background: transparent; border: 1px solid var(--border); color: var(--text3);
+  width: 22px; height: 22px; border-radius: 5px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn-now-start:hover { background: rgba(224,92,52,0.18); border-color: rgba(224,92,52,0.4); color: var(--accent2); }
+.btn-now-start .ico svg { width: 12px; height: 12px; }
+
+.composer-start {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; flex-shrink: 0;
+  background: transparent; border: 1px solid var(--border); color: var(--text2);
+  border-radius: 8px; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.composer-start:hover { background: rgba(224,92,52,0.18); border-color: rgba(224,92,52,0.4); color: var(--accent2); }
+.composer-start .ico svg { width: 14px; height: 14px; }
+
+/* Modal wyboru przy zamianie trwającego zadania */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px; max-width: 360px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.modal-text { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+.modal-text b { color: var(--text); font-weight: 600; }
+.modal-actions { display: flex; flex-direction: column; gap: 8px; }
+.modal-btn {
+  height: 38px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: inherit; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s;
+}
+.modal-btn.primary { background: var(--accent); color: #fff; }
+.modal-btn.primary:hover { background: #c94e28; }
+.modal-btn.secondary { background: var(--surface2); color: var(--text); border-color: var(--border); }
+.modal-btn.secondary:hover { background: rgba(255,255,255,0.08); }
+.modal-btn.ghost { background: none; color: var(--text2); }
+.modal-btn.ghost:hover { color: var(--text); }
 
 /* ── SCROLLBAR ────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 6px; }
@@ -473,7 +667,7 @@ body {
       <div class="app-title">🍅 Pomodoro Manager</div>
       <div class="app-subtitle">Zadania i ustawienia timera</div>
     </div>
-    <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji">❓ Jak to działa</button>
+    <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji"><span class="ico" data-ico="help"></span>Jak to działa</button>
   </div>
 
   <!-- Status aktywnego timera -->
@@ -489,23 +683,34 @@ body {
     </div>
   </div>
 
-  <!-- Przyciski akcji -->
-  <div class="actions">
-    <button class="btn-primary" id="save-btn">💾 Zapisz i zastosuj</button>
-    <button class="btn-secondary" id="reset-btn">🔄 Resetuj timer</button>
-  </div>
-
-  <!-- Lista zadań -->
+  <!-- Lista zadań (żywa kolejka / Plan dnia) -->
   <div class="section">
     <div class="section-header">
       <span class="section-title">Lista zadań</span>
       <div class="header-actions">
-        <button class="btn-add" id="import-csv-btn" title="Importuj zadania z pliku CSV (Excel / Todoist / Google → Zapisz jako CSV)">📥 Importuj CSV</button>
-        <button class="btn-add" id="export-csv-btn" title="Zapisz bieżącą listę zadań do pliku CSV (nazwa;minuty)">📤 Eksportuj CSV</button>
-        <button class="btn-add" id="add-task-btn">+ Dodaj zadanie</button>
+        <button class="btn-add" id="import-csv-btn" title="Importuj zadania z pliku CSV (Excel / Todoist / Google → Zapisz jako CSV)"><span class="ico" data-ico="download"></span>Importuj CSV</button>
+        <button class="btn-add" id="export-csv-btn" title="Zapisz bieżącą listę zadań do pliku CSV (nazwa;minuty)"><span class="ico" data-ico="upload"></span>Eksportuj CSV</button>
       </div>
     </div>
+
+    <div class="plan-chip-row"><span class="plan-chip" id="plan-chip" style="display:none"></span></div>
+
     <div id="task-list"></div>
+
+    <!-- Szybkie dodawanie jako ostatni wiersz kolejki: Enter dodaje i od razu stosuje (autozapis) -->
+    <div class="task-composer inline">
+      <button class="composer-add" id="composer-add" title="Dodaj zadanie (Enter)"><span class="ico" data-ico="plus"></span></button>
+      <input class="composer-input" id="composer-name" type="text" autocomplete="off" placeholder="Dodaj do kolejki i naciśnij Enter…">
+      <input class="composer-dur" id="composer-dur" type="number" min="1" max="480" value="25" title="Czas na zadanie (minuty)">
+      <span class="dur-unit">min</span>
+      <button class="composer-start" id="composer-start" title="Dodaj i zacznij teraz (zastąp trwające zadanie)"><span class="ico" data-ico="play"></span></button>
+    </div>
+
+    <div class="queue-footer">
+      <span class="autosave-note"><span class="ico" data-ico="check"></span>Zmiany zapisują się automatycznie</span>
+      <button class="reset-link" id="reset-link" title="Zresetuj timer do początku"><span class="ico" data-ico="reset"></span>Resetuj timer</button>
+    </div>
+
     <div class="total-time" id="total-time" style="display:none">
       Łącznie: <span id="total-min">0</span> min
     </div>
@@ -558,124 +763,89 @@ body {
     <div class="section-header">
       <span class="section-title">Historia · plan vs. fakt</span>
       <div class="header-actions">
-        <button class="btn-add" id="refresh-log-btn" title="Odśwież historię z pliku CSV">🔄 Odśwież</button>
-        <button class="btn-add" id="open-log-btn" title="Otwórz folder z plikiem pomodoro-log.csv">📂 Folder logów</button>
+        <button class="btn-add" id="refresh-log-btn" title="Odśwież historię z pliku CSV"><span class="ico" data-ico="refresh"></span>Odśwież</button>
+        <button class="btn-add" id="open-log-btn" title="Otwórz folder z plikiem pomodoro-log.csv"><span class="ico" data-ico="folder"></span>Folder logów</button>
       </div>
     </div>
     <div id="history-wrap"></div>
   </div>
 
-  <!-- Pomoc / instrukcja obsługi -->
-  <div class="help-card" id="help-card">
-    <div class="help-head" id="help-head">
-      <span class="help-head-title">❓ Jak korzystać z aplikacji</span>
-      <span class="help-chevron">▾</span>
-    </div>
-    <div class="help-body">
-
-      <div class="help-h">Czym jest ta aplikacja</div>
-      <p>Pomodoro Overlay to mały licznik czasu (nakładka), który „pływa" zawsze na wierzchu innych okien. Pomaga pracować <b>metodą Pomodoro</b>: bloki skupionej pracy przeplatane krótkimi przerwami. To okno (<b>Manager</b>) służy do zarządzania zadaniami i ustawieniami — sam licznik widać jako widżet w rogu ekranu.</p>
-
-      <div class="help-h">Widżet — ikony w nagłówku</div>
-      <ul>
-        <li><span class="ic">⚙</span> Otwiera to okno (Manager zadań i ustawień).</li>
-        <li><span class="ic">S/M/L</span> Zmienia rozmiar widżetu — klikaj, aby przełączać mały / średni / duży.</li>
-        <li><span class="ic">◐</span> Suwak przezroczystości widżetu.</li>
-        <li><span class="ic">▾</span> Zwija widżet do wąskiego mini-paska.</li>
-        <li><span class="ic">✕</span> Zamyka całą aplikację.</li>
-      </ul>
-
-      <div class="help-h">Widżet — licznik i przyciski</div>
-      <ul>
-        <li><span class="ic">●●</span> Kolorowa plakietka pokazuje fazę (PRACA / PRZERWA / DŁ. PRZERWA), a kropki — ile sesji pracy zaliczono do następnej długiej przerwy.</li>
-        <li><span class="ic">25:00</span> Duża cyfra to czas pozostały do końca fazy (w ostatniej minucie robi się czerwona).</li>
-        <li><span class="ic">▶ ⏸</span> Start / pauza licznika.</li>
-        <li><span class="ic">⏭</span> Pomiń bieżącą fazę (np. od razu zacznij przerwę albo wróć do pracy).</li>
-        <li><span class="ic">✓→</span> Oznacz zadanie jako ukończone, ale <b>nie zatrzymuj</b> timera — przeskakuje do następnego zadania.</li>
-        <li><span class="ic">✓</span> „Skończyłem to zadanie wcześniej" — pojawia się wybór: <b>☕ Przerwa</b> albo <b>▶ Następne</b>.</li>
-      </ul>
-      <p>Pasek na dole widżetu pokazuje, ile minut już poświęciłeś na bieżące zadanie względem planu.</p>
-
-      <div class="help-h">Sterowanie myszą — ważne</div>
-      <ul>
-        <li><span class="ic">🖱</span> Widżet <b>przepuszcza kliknięcia</b>, dopóki nie najedziesz na niego myszą — dzięki temu nie zasłania tego, co pod nim. Najedź kursorem, aby przyciski stały się klikalne.</li>
-        <li><span class="ic">✥</span> Aby przesunąć widżet — złap go i przeciągnij (poza przyciskami). Pozycja zapisuje się automatycznie.</li>
-      </ul>
-
-      <div class="help-h">Tryby pełnoekranowe</div>
-      <ul>
-        <li><span class="ic">☕</span> Gdy zaczyna się przerwa, widżet rozwija się na cały ekran z dużym licznikiem (przypomnienie, by odpocząć). Tło przepuszcza kliknięcia — możesz dalej korzystać z pulpitu; klikalne są tylko „Pomiń przerwę" i „Zmniejsz".</li>
-        <li><span class="ic">🍅</span> Po przerwie pokazuje się ekran „PRACA" — kliknij „Zaczynam!" lub „Zmniejsz", aby wrócić do małego widżetu.</li>
-      </ul>
-
-      <div class="help-h">Mini-pasek (po zwinięciu ▾)</div>
-      <p>Widżet zwija się do wąskiego paska tuż nad paskiem zadań: emoji fazy, nazwa zadania, czas, ⏭ pomiń, ✓→ ukończ, start/pauza, <b>▴</b> (rozwiń z powrotem) oraz <b>✕</b> (zamknij aplikację).</p>
-
-      <div class="help-h">To okno — Manager</div>
-      <ul>
-        <li><span class="ic">+</span> <b>Dodaj zadanie</b> — wpisz nazwę i czas w minutach.</li>
-        <li><span class="ic">⠿</span> Uchwyt — przeciągnij, aby zmienić kolejność zadań.</li>
-        <li><span class="ic">✕</span> Usuwa dane zadanie z listy.</li>
-        <li><span class="ic">⏱</span> <b>Pomodoro</b> — ustaw długość pracy, krótkiej i długiej przerwy oraz co ile sesji wypada długa przerwa.</li>
-        <li><span class="ic">⏻</span> <b>Autostart z Windows</b> — uruchamia aplikację po starcie systemu. Timer nie rusza sam — czeka w pauzie, aż klikniesz <b>▶</b>.</li>
-        <li><span class="ic">💾</span> <b>Zapisz i zastosuj</b> — zapisuje zmiany. Sama zmiana nazw nie kasuje bieżącego postępu; zmiana liczby lub kolejności zadań startuje plan od nowa.</li>
-        <li><span class="ic">🔄</span> <b>Resetuj timer</b> — wraca do pierwszego zadania i zeruje postęp.</li>
-      </ul>
-      <p>Karta na górze tego okna pokazuje <b>na żywo</b>, co dzieje się w liczniku.</p>
-
-      <div class="help-h">Import i eksport zadań (CSV)</div>
-      <ul>
-        <li><span class="ic">📥</span> <b>Importuj CSV</b> — wczytuje listę zadań z pliku <b>.csv</b>, <b>.tsv</b> lub <b>.txt</b> (np. wyeksportowanego z Excela, Arkuszy Google, Todoist itp. → „Zapisz jako CSV").</li>
-        <li><span class="ic">📤</span> <b>Eksportuj CSV</b> — zapisuje bieżącą listę zadań do pliku <b>.csv</b> (format <i>nazwa;minuty</i>). Taki plik można otworzyć w Excelu albo zaimportować z powrotem — np. na innym komputerze lub jako kopię zapasową planu.</li>
-        <li>Program <b>sam rozpoznaje kolumny</b>: nazwę zadania szuka w kolumnie typu <i>nazwa / zadanie / task / name / title / todo</i>, a czas w kolumnie typu <i>minuty / min / czas / time / duration / estimate</i>.</li>
-        <li>Jeśli plik nie ma nagłówków, brana jest <b>1. kolumna jako nazwa</b>, a <b>2. jako minuty</b>. Gdy minut brak — zadanie dostaje domyślne <b>25 min</b> (zakres 1–480).</li>
-        <li>Zaimportowane zadania <b>dopisują się</b> do listy (niczego nie kasują). To dopiero podgląd — możesz je poprawić, a potem kliknij <b>💾 Zapisz i zastosuj</b>.</li>
-      </ul>
-
-      <div class="help-h">Historia · plan vs. fakt (log CSV)</div>
-      <ul>
-        <li>Każde zadanie oznaczone jako <b>ukończone</b> lub <b>pominięte</b> zapisuje się automatycznie do pliku <b>pomodoro-log.csv</b> w folderze <b>Dokumenty\PomodoroOverlay</b>.</li>
-        <li>Tabela „Historia" pokazuje: <b>datę</b>, <b>nazwę</b> zadania, <b>plan</b> (ile minut założyłeś), <b>fakt</b> (ile realnie zajęło), <b>różnicę</b> (+/−) oraz <b>status</b>. Dzięki temu widzisz, jak Twoje szacunki mają się do rzeczywistości.</li>
-        <li><span class="ic">🔄</span> <b>Odśwież</b> — wczytuje historię z pliku na nowo.</li>
-        <li><span class="ic">📂</span> <b>Folder logów</b> — otwiera folder z plikiem CSV. Plik możesz otworzyć w Excelu i analizować dalej.</li>
-      </ul>
-
-      <div class="help-h">Skróty klawiszowe (działają w całym systemie)</div>
-      <ul>
-        <li><span class="ic"><kbd>Ctrl+Alt+P</kbd></span> Start / pauza.</li>
-        <li><span class="ic"><kbd>Ctrl+Alt+K</kbd></span> Pomiń bieżącą fazę.</li>
-        <li><span class="ic"><kbd>Ctrl+Alt+M</kbd></span> Zwiń / rozwiń widżet (działa też prawy <kbd>AltGr+M</kbd>).</li>
-      </ul>
-      <p style="font-size:12px;color:var(--text3)">Jeśli inny program zajmuje już dany skrót, może on u nas nie zadziałać (to normalne ograniczenie systemu).</p>
-
-      <div class="help-h">Jak działa cykl Pomodoro</div>
-      <p>Pracujesz przez ustawiony czas (domyślnie 25 min) → krótka przerwa (5 min). Po kilku sesjach (domyślnie 4) wypada długa przerwa (15 min). Jeśli masz listę zadań, licznik prowadzi Cię przez nie po kolei; bez zadań działa jako zwykły licznik Pomodoro.</p>
-
-      <div class="help-tip">💡 Wskazówka: widżet zawsze jest na wierzchu. Jeśli przeszkadza — zwiń go (<b>▾</b>), zmniejsz przezroczystość (<b>◐</b>) albo przeciągnij w inne miejsce ekranu.</div>
-
-      <div class="help-h">Licencja</div>
-      <p>Pomodoro Overlay jest udostępniany na licencji <b>MIT</b> — możesz go bez opłat używać prywatnie i komercyjnie, kopiować, modyfikować oraz przekazywać dalej. Jedyny warunek: w kopiach należy zachować informację o autorze i treść licencji. Program jest dostarczany „tak jak jest", bez gwarancji.</p>
-      <p>© 2026 <b>Mariusz Świerguła</b> &lt;Mariusz.swiergula@gmail.com&gt;. Pełna treść licencji znajduje się w pliku <b>LICENSE</b> dołączonym do programu.</p>
-      <p style="font-size:12px;color:var(--text3)">Aplikacja korzysta z bibliotek open source: <b>Electron</b> i <b>electron-builder</b> (obie na licencji MIT). Pełna lista komponentów i atrybucji — plik <b>THIRD_PARTY_LICENSES.md</b> dołączony do programu.</p>
-      <p style="font-size:12px;color:var(--text3)">„Pomodoro Technique®" i „Pomodoro®" są znakami towarowymi Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta wyłącznie opisowo.</p>
-
-    </div>
-  </div>
-
   <div style="text-align:center; font-size:10px; color:rgba(255,255,255,0.10); margin-top:20px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.04); letter-spacing:.03em;">
-    Pomodoro Overlay v1.1 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
+    Pomodoro Overlay v1.3.0 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
   </div>
 
+</div>
+
+<!-- Toast „Cofnij" — pojawia się po dodaniu/usunięciu zadania -->
+<div class="undo-toast" id="undo-toast">
+  <span class="ico" data-ico="check"></span>
+  <span class="msg" id="undo-msg"></span>
+  <button class="undo-btn" id="undo-btn"><span class="ico" data-ico="undo"></span>Cofnij</button>
+</div>
+
+<!-- Modal: zamiana trwającego zadania („Zacznij teraz") -->
+<div class="modal-overlay" id="replace-modal" hidden>
+  <div class="modal">
+    <div class="modal-title">Zacząć to zadanie teraz?</div>
+    <div class="modal-text">Trwa teraz „<b id="replace-cur-name"></b>". Co z nim zrobić?</div>
+    <div class="modal-actions">
+      <button class="modal-btn primary"   id="replace-queue">Wróć do kolejki (zrobię później)</button>
+      <button class="modal-btn secondary" id="replace-skip">Pomiń je (zapis w historii)</button>
+      <button class="modal-btn ghost"     id="replace-cancel">Anuluj</button>
+    </div>
+  </div>
 </div>
 
 <script>
 const api = window.bridge
 
+// Zamień natywne title=… na własne dymki (data-tip) — bez znikania po chwili / pod okienkiem.
+function convertTips(root) {
+  (root || document).querySelectorAll('[title]').forEach(elx => {
+    const t = elx.getAttribute('title'); if (!t) return
+    elx.setAttribute('data-tip', t)
+    if (!elx.getAttribute('aria-label')) elx.setAttribute('aria-label', t)
+    elx.removeAttribute('title')
+  })
+}
+convertTips(document)
+
+// ── System ikon (inline SVG, spójny zestaw w stylu Lucide, MIT) ────
+// Emoji zostawiamy WYŁĄCZNIE jako semantykę faz/brandu (🍅 ☕ 🌿);
+// wszystkie kontrolki używają jednego zestawu wektorów (currentColor → dziedziczą kolor i hover).
+const ICONS = {
+  plus:     '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  x:        '<path d="M18 6 6 18"/><path d="M6 6l12 12"/>',
+  grip:     '<circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
+  upload:   '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>',
+  save:     '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>',
+  check:    '<path d="M20 6 9 17l-5-5"/>',
+  reset:    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  refresh:  '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/>',
+  folder:   '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9l-.81-1.2A2 2 0 0 0 7.92 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  help:     '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  clock:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  flag:     '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  undo:     '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/>',
+  play:     '<path d="M6 4l14 8-14 8z"/>',
+}
+function svgIco(name) {
+  return `<span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg></span>`
+}
+function setIco(span, name) {
+  if (span) span.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`
+}
+// Wypełnij statyczne placeholdery <span class="ico" data-ico="…">
+document.querySelectorAll('.ico[data-ico]').forEach(s => setIco(s, s.dataset.ico))
+
 // ── Lokalny stan edycji ───────────────────────────────────────────
 let localTasks    = []
 let localSettings = {}
 let liveState     = null
-let dragSrcIdx    = null
+let LIVE_TASKS    = []          // autorytatywna lista zadań z main (kanał 'tasks'); 'state' jest „lean"
+let liveIds       = new Set()   // id-ki obecne w main — do wykrycia usunięć (patrz onTasks)
+let isDragging    = false   // trwa przeciąganie wiersza → nie przerysowuj listy
 let dirty         = false   // czy bufor edycji ma niezapisane zmiany
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -686,7 +856,188 @@ function escHtml(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
 }
 
-// ── Renderowanie listy zadań ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+//  AUTOZAPIS + COFNIJ  (zmiany na liście stosują się same; bez „Zapisz")
+// ════════════════════════════════════════════════════════════════
+let applyTimer = null
+function scheduleApply() { clearTimeout(applyTimer); applyTimer = setTimeout(applyNow, 600) }
+function markDirty()     { dirty = true; scheduleApply() }
+
+// Wyślij bieżący bufor (zadania + ustawienia) do procesu głównego. NIE filtrujemy pustych
+// nazw, żeby autozapis w trakcie pisania nie skasował właśnie edytowanego wiersza.
+function applyNow() {
+  clearTimeout(applyTimer)
+  localSettings = {
+    workMinutes:       Math.max(1, parseInt(document.getElementById('s-work').value)  || 25),
+    shortBreakMinutes: Math.max(1, parseInt(document.getElementById('s-short').value) || 5),
+    longBreakMinutes:  Math.max(1, parseInt(document.getElementById('s-long').value)  || 15),
+    longBreakAfter:    Math.max(2, parseInt(document.getElementById('s-count').value) || 4),
+  }
+  api.cmd('saveTasks', { tasks: localTasks, settings: localSettings })
+  dirty = false
+}
+
+// Cofnij ostatnie dodanie/usunięcie — trzymamy migawkę bufora sprzed akcji.
+let undoSnapshot = null, undoTimer = null
+function snapshotUndo(msg) {
+  undoSnapshot = localTasks.map(t => ({ ...t }))
+  document.getElementById('undo-msg').textContent = msg
+  const toast = document.getElementById('undo-toast')
+  toast.classList.add('show')
+  clearTimeout(undoTimer)
+  undoTimer = setTimeout(() => toast.classList.remove('show'), 6000)
+}
+function doUndo() {
+  if (!undoSnapshot) return
+  localTasks = undoSnapshot.map(t => ({ ...t }))
+  undoSnapshot = null
+  renderTaskList()
+  applyNow()
+  document.getElementById('undo-toast').classList.remove('show')
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PLAN DNIA / ETA  (kiedy ruszy każde zadanie w kolejce)
+// ════════════════════════════════════════════════════════════════
+function activeTaskIdx() {
+  const s = liveState
+  if (!s || s.phase === 'idle' || s.phase === 'done') return -1
+  return (s.currentIdx >= 0 && s.currentIdx < localTasks.length) ? s.currentIdx : -1
+}
+function plZad(n) {
+  if (n === 1) return 'zadanie'
+  const t = n % 10, h = n % 100
+  return (t >= 2 && t <= 4 && !(h >= 12 && h <= 14)) ? 'zadania' : 'zadań'
+}
+function fmtEta(min) {
+  if (min <= 0) return 'zaraz'
+  if (min < 60) return `~${min} min`
+  const h = Math.floor(min / 60), m = min % 60
+  return m ? `~${h} h ${m} min` : `~${h} h`
+}
+// Czas (min) do startu każdego kolejnego zadania + łączny czas i godzina końca.
+function computePlan() {
+  const s = liveState || {}
+  const short = (s.settings && s.settings.shortBreakMinutes) || 5
+  const activeIdx = activeTaskIdx()
+  const etas = {}
+  let remainingCur = 0
+  if (activeIdx >= 0) {
+    const spentMin = Math.floor((s.taskSpent || 0) / 60)
+    remainingCur = Math.max(0, (localTasks[activeIdx].totalMinutes || 0) - spentMin)
+  }
+  let acc = remainingCur
+  const startI = activeIdx >= 0 ? activeIdx + 1 : 0
+  for (let i = startI; i < localTasks.length; i++) {
+    if (activeIdx >= 0 || i > startI) acc += short   // przerwa przed kolejnym zadaniem
+    etas[i] = acc
+    acc += (parseInt(localTasks[i].totalMinutes) || 0)
+  }
+  const sumDur = localTasks.reduce((t, x) => t + (parseInt(x.totalMinutes) || 0), 0)
+  const end = new Date(Date.now() + acc * 60000)
+  return { etas, activeIdx, sumDur, endLabel: `${pad2(end.getHours())}:${pad2(end.getMinutes())}` }
+}
+function updatePlanChip(plan) {
+  const chip = document.getElementById('plan-chip')
+  if (!chip) return
+  const n = localTasks.length
+  if (n === 0) { chip.style.display = 'none'; return }
+  chip.style.display = ''
+  chip.innerHTML = `${svgIco('flag')} <b>${n}</b> ${plZad(n)} · <b>${plan.sumDur}</b> min · koniec ~${plan.endLabel}`
+}
+// Aktualizacja „na żywo" co sekundę BEZ przerysowania listy (nie gubi fokusu w polach).
+function refreshLiveBits() {
+  if (!liveState) return
+  const plan = computePlan()
+  updatePlanChip(plan)
+  const fill = document.querySelector('[data-now-fill]')
+  const timeEl = document.querySelector('[data-now-time]')
+  if (fill && plan.activeIdx >= 0 && localTasks[plan.activeIdx]) {
+    const total = localTasks[plan.activeIdx].totalMinutes || 0
+    const spentMin = Math.floor((liveState.taskSpent || 0) / 60)
+    const over = spentMin > total
+    fill.style.width = (total > 0 ? Math.min(100, spentMin / total * 100) : 0).toFixed(1) + '%'
+    fill.classList.toggle('over', over)
+    if (timeEl) timeEl.textContent = over ? `+${spentMin - total} min ponad plan` : `${spentMin} / ${total} min`
+  }
+  document.querySelectorAll('[data-eta-idx]').forEach(elx => {
+    const eta = plan.etas[parseInt(elx.dataset.etaIdx)]
+    if (eta !== undefined) elx.textContent = `za ${fmtEta(eta)}`
+  })
+}
+
+// ── Renderowanie listy (Teraz / Następne + ETA + przyciski) ───────
+function makeLabel(text, cls) {
+  const d = document.createElement('div')
+  d.className = 'queue-label ' + (cls || '')
+  d.textContent = text
+  return d
+}
+function bindRowCommon(row, i) {
+  const nameEl = row.querySelector('[data-field="name"]')
+  if (nameEl) nameEl.addEventListener('input', e => { localTasks[i].name = e.target.value; markDirty() })
+  const durEl = row.querySelector('[data-field="dur"]')
+  if (durEl) durEl.addEventListener('input', e => {
+    const v = parseInt(e.target.value)
+    localTasks[i].totalMinutes = isNaN(v) ? 1 : Math.max(1, Math.min(v, 480))
+    markDirty(); updateTotalTime()
+  })
+  const rm = row.querySelector('.btn-remove')
+  if (rm) rm.addEventListener('click', () => {
+    snapshotUndo(`Usunięto „${localTasks[i].name || 'zadanie'}"`)
+    localTasks.splice(i, 1)
+    markDirty(); renderTaskList(); updateTotalTime()
+  })
+  const h = row.querySelector('.drag-handle')
+  if (h) h.addEventListener('mousedown', e => startPointerDrag(e, i))
+}
+function buildNowRow(task, i) {
+  const total = task.totalMinutes || 0
+  const spentMin = Math.floor((liveState.taskSpent || 0) / 60)
+  const over = spentMin > total
+  const pct = total > 0 ? Math.min(100, spentMin / total * 100) : 0
+  const row = document.createElement('div')
+  row.className = 'task-row now'
+  row.dataset.idx = i
+  row.innerHTML = `
+    <span class="drag-handle" data-tip="Przeciągnij, aby zmienić kolejność">${svgIco('grip')}</span>
+    <div class="now-body">
+      <input class="task-name-input" type="text" value="${escHtml(task.name)}" placeholder="Nazwa zadania…" data-field="name" data-idx="${i}">
+      <div class="now-progress">
+        <div class="now-bar"><div class="now-fill ${over ? 'over' : ''}" data-now-fill style="width:${pct.toFixed(1)}%"></div></div>
+        <span class="now-time" data-now-time>${over ? `+${spentMin - total} min ponad plan` : `${spentMin} / ${total} min`}</span>
+      </div>
+    </div>
+    <button class="now-btn done" data-act="done" data-tip="Ukończ zadanie" aria-label="Ukończ zadanie">${svgIco('check')}</button>
+    <button class="now-btn skip" data-act="skip" data-tip="Pomiń / rezygnuj" aria-label="Pomiń zadanie">${svgIco('x')}</button>
+  `
+  bindRowCommon(row, i)
+  row.querySelector('[data-act="done"]').addEventListener('click', () => api.cmd('doneKeepTimer'))
+  row.querySelector('[data-act="skip"]').addEventListener('click', () => api.cmd('nextTask'))
+  return row
+}
+function buildQueueRow(task, i, eta) {
+  const etaHtml = (eta !== undefined)
+    ? `<span class="row-eta" data-tip="Szacowany czas do startu">${svgIco('clock')}<span data-eta-idx="${i}">za ${fmtEta(eta)}</span></span>`
+    : ''
+  const row = document.createElement('div')
+  row.className = 'task-row'
+  row.dataset.idx = i
+  row.innerHTML = `
+    <span class="drag-handle" data-tip="Przeciągnij, aby zmienić kolejność">${svgIco('grip')}</span>
+    <span class="task-idx">${i + 1}</span>
+    <input class="task-name-input" type="text" value="${escHtml(task.name)}" placeholder="Nazwa zadania…" data-field="name" data-idx="${i}">
+    ${etaHtml}
+    <input class="task-dur-input" type="number" value="${task.totalMinutes}" min="1" max="480" data-field="dur" data-idx="${i}">
+    <span class="dur-unit">min</span>
+    <button class="btn-now-start" data-act="start" data-tip="Zacznij teraz (zastąp trwające)" aria-label="Zacznij teraz">${svgIco('play')}</button>
+    <button class="btn-remove" data-idx="${i}" data-tip="Usuń zadanie" aria-label="Usuń zadanie">${svgIco('x')}</button>
+  `
+  bindRowCommon(row, i)
+  const st = row.querySelector('[data-act="start"]')
+  if (st) st.addEventListener('click', () => promoteTaskNow(localTasks[i].id))
+  return row
+}
 function renderTaskList() {
   const list = document.getElementById('task-list')
   list.innerHTML = ''
@@ -695,114 +1046,104 @@ function renderTaskList() {
     list.innerHTML = `
       <div class="empty-list">
         <strong>Brak zadań</strong>
-        Kliknij <em>"+ Dodaj zadanie"</em> i wpisz co chcesz zrobić
+        Dodaj pierwsze w polu poniżej i naciśnij <em>Enter</em>
       </div>`
     document.getElementById('total-time').style.display = 'none'
+    updatePlanChip(computePlan())
     return
   }
 
-  const activeIdx = liveState?.currentIdx ?? -1
+  const plan = computePlan()
+  const activeIdx = plan.activeIdx
+  let nextLabelDone = false
 
   localTasks.forEach((task, i) => {
-    const row = document.createElement('div')
-    row.className = 'task-row' + (i === activeIdx ? ' active' : '')
-    row.dataset.idx = i
-    row.draggable = true
-
-    row.innerHTML = `
-      <span class="drag-handle" title="Przeciągnij aby zmienić kolejność">⠿</span>
-      <span class="task-idx">${i + 1}</span>
-      <input
-        class="task-name-input"
-        type="text"
-        value="${escHtml(task.name)}"
-        placeholder="Nazwa zadania…"
-        data-field="name"
-        data-idx="${i}"
-      >
-      <input
-        class="task-dur-input"
-        type="number"
-        value="${task.totalMinutes}"
-        min="1"
-        max="480"
-        data-field="dur"
-        data-idx="${i}"
-      >
-      <span class="dur-unit">min</span>
-      <button class="btn-remove" data-idx="${i}" title="Usuń zadanie">✕</button>
-    `
-
-    // Nasłuchiwanie zmian
-    row.querySelector('[data-field="name"]').addEventListener('input', e => {
-      localTasks[i].name = e.target.value
-      dirty = true
-    })
-    row.querySelector('[data-field="dur"]').addEventListener('input', e => {
-      const v = parseInt(e.target.value)
-      localTasks[i].totalMinutes = isNaN(v) ? 1 : Math.max(1, Math.min(v, 480))
-      dirty = true
-      updateTotalTime()
-    })
-    row.querySelector('.btn-remove').addEventListener('click', () => {
-      localTasks.splice(i, 1)
-      dirty = true
-      renderTaskList()
-      updateTotalTime()
-    })
-
-    // Drag-and-drop reorder
-    row.addEventListener('dragstart', e => {
-      // Nie startuj dragu z inputa
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') { e.preventDefault(); return }
-      dragSrcIdx = i
-      e.dataTransfer.effectAllowed = 'move'
-      setTimeout(() => row.classList.add('dragging'), 0)
-    })
-    row.addEventListener('dragend', () => {
-      row.classList.remove('dragging')
-      document.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over'))
-    })
-    row.addEventListener('dragover', e => {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
-      if (dragSrcIdx !== null && dragSrcIdx !== i) {
-        document.querySelectorAll('.task-row').forEach(r => r.classList.remove('drag-over'))
-        row.classList.add('drag-over')
+    if (i === activeIdx) {
+      list.appendChild(makeLabel('Teraz', 'now'))
+      list.appendChild(buildNowRow(task, i))
+    } else {
+      if (!nextLabelDone && i > activeIdx) {
+        list.appendChild(makeLabel(activeIdx >= 0 ? 'Następne' : 'Zadania', ''))
+        nextLabelDone = true
       }
-    })
-    row.addEventListener('dragleave', () => row.classList.remove('drag-over'))
-    row.addEventListener('drop', e => {
-      e.preventDefault()
-      row.classList.remove('drag-over')
-      if (dragSrcIdx !== null && dragSrcIdx !== i) {
-        const moved = localTasks.splice(dragSrcIdx, 1)[0]
-        localTasks.splice(i, 0, moved)
-        dragSrcIdx = null
-        dirty = true
-        renderTaskList()
-        updateTotalTime()
-      }
-    })
-
-    list.appendChild(row)
+      list.appendChild(buildQueueRow(task, i, plan.etas[i]))
+    }
   })
 
+  updatePlanChip(plan)
   updateTotalTime()
 }
 
-function updateTotalTime() {
-  const total = localTasks.reduce((s, t) => s + (parseInt(t.totalMinutes) || 0), 0)
-  const wrap  = document.getElementById('total-time')
-  if (localTasks.length > 0) {
-    wrap.style.display = 'block'
-    document.getElementById('total-min').textContent =
-      total >= 60
-        ? `${Math.floor(total/60)}h ${total%60}min`
-        : `${total} min`
-  } else {
-    wrap.style.display = 'none'
+// ── Reorder oparty na myszy ───────────────────────────────────────
+// ptrDrag trzyma TYLKO id chwytanego zadania — pozycję wyliczamy na bieżąco, więc
+// przerysowania listy w trakcie nie gubią kontekstu.
+let ptrDrag = null
+
+function curDragIdx() {
+  return ptrDrag ? localTasks.findIndex(t => t.id === ptrDrag.id) : -1
+}
+
+// Docelowy indeks (w tablicy bez chwytanego elementu) = liczba pozostałych wierszy,
+// których środek jest powyżej kursora.
+function desiredIndex(clientY, from) {
+  const rows = [...document.querySelectorAll('#task-list .task-row')]
+  let idx = 0
+  rows.forEach((r, j) => {
+    if (j === from) return
+    const box = r.getBoundingClientRect()
+    if (clientY > box.top + box.height / 2) idx++
+  })
+  return idx
+}
+
+function markDragRow() {
+  const idx = curDragIdx()
+  document.querySelectorAll('#task-list .task-row')
+    .forEach((r, j) => r.classList.toggle('dragging', j === idx))
+}
+
+function startPointerDrag(e, idx) {
+  if (e.button !== 0) return                 // tylko lewy przycisk
+  e.preventDefault()                         // bez zaznaczania tekstu / focusu
+  const task = localTasks[idx]
+  if (!task) return
+  ptrDrag = { id: task.id }
+  isDragging = true
+  dirty = true
+  document.body.classList.add('dragging-active')
+  document.addEventListener('mousemove', onPointerMove)
+  document.addEventListener('mouseup', endPointerDrag)
+  markDragRow()
+}
+
+function onPointerMove(e) {
+  if (!ptrDrag) return
+  const from = curDragIdx()
+  if (from < 0) return
+  const to = desiredIndex(e.clientY, from)
+  if (to !== from) {
+    const moved = localTasks.splice(from, 1)[0]
+    localTasks.splice(to, 0, moved)
+    renderTaskList()      // przerysuj w nowej kolejności
+    markDragRow()         // i utrzymaj podświetlenie chwytanego wiersza
+    updateTotalTime()
   }
+}
+
+function endPointerDrag() {
+  document.removeEventListener('mousemove', onPointerMove)
+  document.removeEventListener('mouseup', endPointerDrag)
+  ptrDrag = null
+  isDragging = false
+  document.body.classList.remove('dragging-active')
+  document.querySelectorAll('#task-list .task-row').forEach(r => r.classList.remove('dragging'))
+  scheduleApply()   // nowa kolejność → autozapis do timera
+}
+
+function updateTotalTime() {
+  // Łączny czas pokazuje teraz chip „Plan dnia" — stary wiersz „Łącznie" chowamy.
+  const wrap = document.getElementById('total-time')
+  if (wrap) wrap.style.display = 'none'
 }
 
 // ── Renderowanie ustawień ─────────────────────────────────────────
@@ -871,7 +1212,7 @@ function renderDelta(raw) {
   if (d === 0)  return `<td class="num delta-zero">0</td>`
   const cls = d > 0 ? 'delta-pos' : 'delta-neg'
   const txt = (d > 0 ? '+' : '') + d
-  return `<td class="num ${cls}">${txt} min</td>`
+  return `<td class="num ${cls}">${txt}</td>`
 }
 
 async function renderHistory() {
@@ -920,11 +1261,14 @@ async function renderHistory() {
 
 // ── Inicjalizacja ─────────────────────────────────────────────────
 async function init() {
-  const s = await api.getState()
-  if (!s) return
+  let s
+  try { s = await api.getState() } catch (_) { s = null }
+  if (!s) { renderTaskList(); renderSettings(); return }   // fallback: pusty, ale sprawny UI
 
   liveState     = s
-  localTasks    = s.tasks.map(t => ({ ...t }))
+  LIVE_TASKS    = s.tasks || []
+  liveIds       = new Set(LIVE_TASKS.map(t => t.id))
+  localTasks    = LIVE_TASKS.map(t => ({ ...t }))
   localSettings = { ...s.settings }
 
   renderTaskList()
@@ -933,8 +1277,10 @@ async function init() {
   renderHistory()
 
   // Autostart
-  const autostartOn = await api.getAutostart()
-  document.getElementById('s-autostart').checked = !!autostartOn
+  try {
+    const autostartOn = await api.getAutostart()
+    document.getElementById('s-autostart').checked = !!autostartOn
+  } catch (_) {}
 }
 
 document.getElementById('s-autostart').addEventListener('change', e => {
@@ -943,19 +1289,10 @@ document.getElementById('s-autostart').addEventListener('change', e => {
 
 // Edycja ustawień też oznacza bufor jako „brudny" (focus-refresh ich nie nadpisze)
 ;['s-work','s-short','s-long','s-count'].forEach(id =>
-  document.getElementById(id).addEventListener('input', () => { dirty = true }))
+  document.getElementById(id).addEventListener('input', markDirty))
 
-// ── Pomoc / instrukcja (zwijana sekcja) ───────────────────────────
-const helpCard = document.getElementById('help-card')
-const helpBtn  = document.getElementById('help-btn')
-function toggleHelp() {
-  const open = !helpCard.classList.contains('open')
-  helpCard.classList.toggle('open', open)
-  helpBtn.classList.toggle('active', open)
-  if (open) helpCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-document.getElementById('help-head').addEventListener('click', toggleHelp)
-helpBtn.addEventListener('click', toggleHelp)
+// ── Pomoc / instrukcja — otwiera osobne okno (help.html), by widzieć panel i instrukcję naraz
+document.getElementById('help-btn').addEventListener('click', () => api.cmd('openHelp'))
 
 // ── Live updates ──────────────────────────────────────────────────
 function tasksSignature(arr) {
@@ -963,7 +1300,7 @@ function tasksSignature(arr) {
 }
 // Wczytaj świeży stan z procesu głównego do bufora edycji (tylko gdy nic nie edytowano).
 function refreshFromLive() {
-  if (dirty || !liveState) return
+  if (dirty || !liveState || isDragging) return   // nie przerysowuj listy w trakcie przeciągania
   localTasks    = liveState.tasks.map(t => ({ ...t }))
   localSettings = { ...liveState.settings }
   renderTaskList()
@@ -977,26 +1314,104 @@ function maybeRefreshHistory(s) {
   if (key !== lastHistKey) { lastHistKey = key; renderHistory() }
 }
 api.onState(s => {
+  s.tasks = LIVE_TASKS          // stan „lean" nie niesie listy — dołóż aktualną z kanału 'tasks'
   liveState = s
   renderStatus()
-  // Bez niezapisanych zmian trzymaj listę zsynchronizowaną z mainem
-  // (np. gdy timer usunął zadanie przez „Ukończ"), żeby Zapisz nie przywróciło starej listy.
-  if (!dirty && tasksSignature(s.tasks) !== tasksSignature(localTasks)) refreshFromLive()
+  refreshLiveBits()   // pasek postępu „Teraz", ETA i chip „Plan dnia" — co sekundę, bez przerysowania
   maybeRefreshHistory(s)
+})
+
+// Kanał 'tasks' (tylko przy zmianie listy w main). Tu żyje reconcyliacja anty-wyścigowa:
+// USUNIĘCIA po stronie main są autorytatywne i wypadają z bufora NAWET przy niezapisanych zmianach,
+// więc zaległy applyNow nie „wskrzesi" ukończonego/pominiętego zadania.
+api.onTasks(tasks => {
+  const arr = tasks || []
+  const newIds = new Set(arr.map(t => t.id))
+  if (liveIds.size) {
+    const removed = [...liveIds].filter(id => !newIds.has(id))
+    if (removed.length) {
+      localTasks = localTasks.filter(t => !removed.includes(t.id))
+      if (dirty || isDragging) renderTaskList()   // odzwierciedl usunięcie, zachowując lokalne edycje
+    }
+  }
+  liveIds = newIds
+  LIVE_TASKS = arr
+  if (liveState) liveState.tasks = arr
+  // Bez niezapisanych zmian trzymaj bufor zsynchronizowany z mainem.
+  if (!dirty && !isDragging && tasksSignature(arr) !== tasksSignature(localTasks)) refreshFromLive()
 })
 // Po powrocie do okna odśwież bufor i historię (jeśli brak niezapisanych zmian).
 window.addEventListener('focus', () => { refreshFromLive(); renderHistory() })
 
-// ── Dodaj zadanie ─────────────────────────────────────────────────
-document.getElementById('add-task-btn').addEventListener('click', () => {
-  localTasks.push({ id: Date.now(), name: '', totalMinutes: 25 })
-  dirty = true
+// ── Szybkie dodawanie zadań (composer): wpisz nazwę → Enter ───────
+// Pole jest zawsze widoczne nad listą. Enter (lub „+") dodaje pozycję,
+// czyści nazwę i zostawia fokus — gotowe na kolejne zadanie bez klikania.
+function commitComposer() {
+  const nameEl = document.getElementById('composer-name')
+  const durEl  = document.getElementById('composer-dur')
+  const name = nameEl.value.trim()
+  if (!name) { nameEl.focus(); return }
+  let dur = parseInt(durEl.value)
+  dur = isNaN(dur) ? 25 : Math.max(1, Math.min(dur, 480))
+  snapshotUndo(`Dodano „${name}"`)
+  localTasks.push({ id: Date.now() + Math.floor(Math.random() * 1e6), name, totalMinutes: dur })
+  markDirty()                  // od razu zastosuj do timera (autozapis)
+  nameEl.value = ''            // wyczyść nazwę, zachowaj minuty na kolejne
   renderTaskList()
   updateTotalTime()
-  // Fokus na nowe pole
-  const inputs = document.querySelectorAll('.task-name-input')
-  if (inputs.length) inputs[inputs.length - 1].focus()
+  nameEl.focus()              // gotowe na następne zadanie
+}
+document.getElementById('composer-add').addEventListener('click', commitComposer)
+document.getElementById('composer-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); commitComposer() }
 })
+document.getElementById('composer-dur').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); commitComposer() }
+})
+
+// ── „Zacznij teraz" — przełącz bieżące zadanie na wybrane ─────────
+// Gdy coś trwa, pytamy co zrobić z przerwanym (wróć do kolejki / pomiń). Gdy nic nie trwa —
+// po prostu start. applyNow() najpierw wysyła aktualną listę, żeby main znał zadanie po id.
+let pendingPromoteId = null
+function promoteTaskNow(id) {
+  applyNow()
+  const s = liveState
+  const hasActive = s && s.phase !== 'idle' && s.phase !== 'done' && s.currentIdx < (s.tasks ? s.tasks.length : 0)
+  const cur = hasActive ? s.tasks[s.currentIdx] : null
+  if (!cur || cur.id === id) { api.cmd('startTaskNow', { id, prevAction: 'queue' }); return }
+  pendingPromoteId = id
+  document.getElementById('replace-cur-name').textContent = cur.name || 'zadanie'
+  document.getElementById('replace-modal').hidden = false
+}
+function closeReplaceModal() { document.getElementById('replace-modal').hidden = true; pendingPromoteId = null }
+document.getElementById('replace-queue').addEventListener('click', () => {
+  if (pendingPromoteId != null) api.cmd('startTaskNow', { id: pendingPromoteId, prevAction: 'queue' })
+  closeReplaceModal()
+})
+document.getElementById('replace-skip').addEventListener('click', () => {
+  if (pendingPromoteId != null) api.cmd('startTaskNow', { id: pendingPromoteId, prevAction: 'skip' })
+  closeReplaceModal()
+})
+document.getElementById('replace-cancel').addEventListener('click', closeReplaceModal)
+document.getElementById('replace-modal').addEventListener('click', e => { if (e.target.id === 'replace-modal') closeReplaceModal() })
+
+// „Dodaj i zacznij teraz" (▶ w composerze): dodaj nowe zadanie i od razu zacznij je w miejsce trwającego
+function commitComposerAndStart() {
+  const nameEl = document.getElementById('composer-name')
+  const durEl  = document.getElementById('composer-dur')
+  const name = nameEl.value.trim()
+  if (!name) { nameEl.focus(); return }
+  let dur = parseInt(durEl.value)
+  dur = isNaN(dur) ? 25 : Math.max(1, Math.min(dur, 480))
+  const id = Date.now() + Math.floor(Math.random() * 1e6)
+  snapshotUndo(`Dodano „${name}"`)
+  localTasks.push({ id, name, totalMinutes: dur })
+  nameEl.value = ''
+  renderTaskList(); updateTotalTime()
+  promoteTaskNow(id)
+  nameEl.focus()
+}
+document.getElementById('composer-start').addEventListener('click', commitComposerAndStart)
 
 // ── Import zadań z CSV ────────────────────────────────────────────
 // Dołącza zaimportowane pozycje do listy (nie zastępuje). Trafiają do bufora
@@ -1014,11 +1429,11 @@ document.getElementById('import-csv-btn').addEventListener('click', async () => 
     name: t.name,
     totalMinutes: t.totalMinutes,
   }))
-  dirty = true
+  markDirty()
   renderTaskList()
   updateTotalTime()
   alert(`Zaimportowano ${imported.length} zadań z pliku „${res.file}".\n\n` +
-        `Sprawdź i ewentualnie popraw listę, a następnie kliknij „💾 Zapisz i zastosuj".`)
+        `Sprawdź i ewentualnie popraw listę, a następnie kliknij „Zapisz i zastosuj".`)
 })
 
 // ── Eksport zadań do CSV ──────────────────────────────────────────
@@ -1039,37 +1454,11 @@ document.getElementById('export-csv-btn').addEventListener('click', async () => 
 document.getElementById('open-log-btn').addEventListener('click', () => api.cmd('openLogFolder'))
 document.getElementById('refresh-log-btn').addEventListener('click', renderHistory)
 
-// ── Zapisz i zastosuj ─────────────────────────────────────────────
-document.getElementById('save-btn').addEventListener('click', () => {
-  // Odczytaj ustawienia z pól
-  localSettings = {
-    workMinutes:        Math.max(1, parseInt(document.getElementById('s-work').value)  || 25),
-    shortBreakMinutes:  Math.max(1, parseInt(document.getElementById('s-short').value) || 5),
-    longBreakMinutes:   Math.max(1, parseInt(document.getElementById('s-long').value)  || 15),
-    longBreakAfter:     Math.max(2, parseInt(document.getElementById('s-count').value) || 4),
-  }
-
-  // Filtruj puste zadania (brak nazwy lub 0 minut)
-  const validTasks = localTasks.filter(t => t.name.trim() && t.totalMinutes > 0)
-  localTasks = validTasks
-
-  api.cmd('saveTasks', { tasks: localTasks, settings: localSettings })
-  dirty = false
-
-  renderTaskList()
-
-  // Wizualne potwierdzenie zapisu
-  const btn = document.getElementById('save-btn')
-  btn.textContent = '✓ Zapisano!'
-  btn.classList.add('saved')
-  setTimeout(() => {
-    btn.textContent = '💾 Zapisz i zastosuj'
-    btn.classList.remove('saved')
-  }, 2000)
-})
+// ── Cofnij (toast po dodaniu/usunięciu zadania) ───────────────────
+document.getElementById('undo-btn').addEventListener('click', doUndo)
 
 // ── Resetuj timer ─────────────────────────────────────────────────
-document.getElementById('reset-btn').addEventListener('click', () => {
+document.getElementById('reset-link').addEventListener('click', () => {
   if (confirm('Zresetować timer do początku? Postęp bieżącego zadania zostanie utracony.')) {
     api.cmd('resetTimer')
   }

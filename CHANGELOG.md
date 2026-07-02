@@ -1,5 +1,39 @@
 # Historia zmian — Pomodoro Overlay / MojePomodoro
 
+## v1.3.0 — 2026-07-02
+
+### Nowe funkcje
+- **Tryb skupienia (pełny ekran).** Czarny ekran z nazwą bieżącego zadania i minutnikiem w rogu —
+  wchodzisz przyciskiem lub skrótem `AltGr+F`, wychodzisz `Esc`. Pomaga odciąć rozpraszacze.
+- **Panel „Czas minął — ukończone?".** Gdy blok pracy z aktywnym zadaniem dobiega końca, aplikacja
+  nie przeskakuje od razu do przerwy, tylko pyta: wziąć przerwę, przejść do następnego, czy pracować dalej.
+- **„Zacznij teraz".** Dowolne zadanie z kolejki można natychmiast ustawić jako bieżące (z pytaniem,
+  co zrobić z przerwanym: wrócić do kolejki czy pominąć).
+- **Żywa kolejka „Plan dnia" + ETA.** Manager pokazuje pasek postępu bieżącego zadania, szacowany czas
+  do startu każdego kolejnego i przybliżoną godzinę końca dnia.
+- **„Cofnij" (undo).** Dodanie lub usunięcie zadania można wycofać jednym kliknięciem.
+- **Osobne okno „Jak to działa".** Instrukcję można teraz trzymać obok panelu (dołączona do instalatora).
+
+### Stabilność i wydajność
+- **Płynniejsza nakładka.** Klikalność „na wskroś" liczona jest teraz tanim testem geometrycznym zamiast
+  kosztownego sprawdzania przy każdym ruchu myszy po całym ekranie — mniejsze zużycie procesora.
+- **Lista zadań nie „wskrzesza".** Jeśli timer ukończył zadanie w trakcie edycji listy w managerze,
+  ukończone zadanie nie wraca już do kolejki.
+- **Spójne ukończenie zadania.** Oznaczenie zadania jako ukończone w listwie dokładnie w chwili końca
+  bloku nie zaburza już zapisu w historii.
+- **Tryb skupienia bez „ślepego" ekranu.** Zamknięcie okna skupienia (np. Alt+F4) przywraca nakładkę
+  zamiast zostawiać pusty ekran.
+- **Ustępowanie oknom systemowym.** Nakładka i tryb skupienia nie zasłaniają już Menedżera zadań ani
+  monitów systemowych; zwinięta listwa nie zakrywa zegara ani zasobnika Windows.
+
+### UX
+- **Sygnał dźwiękowy** także w momencie „czas minął — ukończone?" (wcześniej ta chwila była cicha).
+- **Nowe skróty klawiszowe:** `AltGr+D` — ukończ bieżące zadanie, `AltGr+T` — otwórz managera;
+  w trybie skupienia `Enter`/`Spacja` = start/pauza.
+- Poprawki po zmianie rozdzielczości ekranu, bezpieczniejsze zamykanie aplikacji, limit długości nazwy zadania.
+
+---
+
 ## v1.2.1 — 2026-06-24
 
 Wydanie procesowe — **bez zmian funkcjonalnych** (kod aplikacji identyczny jak w 1.2.0).

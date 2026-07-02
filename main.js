@@ -1,4 +1,4 @@
-// Pomodoro Overlay Timer v1.2
+// Pomodoro Overlay Timer v1.3.0
 // Copyright (c) 2026 Mariusz Świerguła <Mariusz.swiergula@gmail.com>
 // MIT License — https://opensource.org/licenses/MIT
 //
@@ -25,16 +25,22 @@ const LOG_DELIM  = ';'
 const LOG_COLS   = ['completedAt', 'taskName', 'plannedMin', 'actualMin', 'actualSec', 'pomodoros', 'deltaMin', 'status']
 const LOG_HEADER = '﻿' + LOG_COLS.join(LOG_DELIM) + '\n'
 
-let logReady = false
-// Zapewnia istnienie folderu i nagłówka — jednorazowo, asynchronicznie (nie blokuje).
-function ensureLogReady(cb) {
-  if (logReady) { cb && cb(); return }
-  fs.mkdir(LOG_DIR, { recursive: true }, () => {
-    fs.access(LOG_FILE, fs.constants.F_OK, err => {
-      if (err) fs.writeFile(LOG_FILE, LOG_HEADER, () => { logReady = true; cb && cb() })
-      else     { logReady = true; cb && cb() }
+let logInit  = null                // wspólna obietnica inicjalizacji logu (folder + nagłówek raz)
+let logChain = Promise.resolve()   // łańcuch serializujący dopisania (kolejność + brak wyścigu)
+// Zapewnia istnienie folderu i nagłówka — jednorazowo (jedna obietnica → brak podwójnego nagłówka
+// przy równoległych wywołaniach). Zwraca Promise (nie blokuje).
+function ensureLogReady() {
+  if (!logInit) {
+    logInit = new Promise(resolve => {
+      fs.mkdir(LOG_DIR, { recursive: true }, () => {
+        fs.access(LOG_FILE, fs.constants.F_OK, err => {
+          if (err) fs.writeFile(LOG_FILE, LOG_HEADER, () => resolve())
+          else     resolve()
+        })
+      })
     })
-  })
+  }
+  return logInit
 }
 
 function pad2n(n) { return String(n).padStart(2, '0') }
@@ -62,7 +68,10 @@ function logTaskCompletion(task, status) {
     (deltaMin > 0 ? '+' : '') + deltaMin,
     status,
   ].join(LOG_DELIM) + '\n'
-  ensureLogReady(() => fs.appendFile(LOG_FILE, row, () => {}))
+  logChain = logChain
+    .then(ensureLogReady)
+    .then(() => new Promise(res => fs.appendFile(LOG_FILE, row, () => res())))
+    .catch(() => {})
 }
 
 // ── Parser CSV (na potrzeby odczytu logu i importu zadań) ─────────────
@@ -191,7 +200,7 @@ function clampInt(v, min, max, dflt) {
 function sanitizeTask(t) {
   return {
     id: (t && t.id != null) ? t.id : Date.now() + Math.floor(Math.random() * 1e6),
-    name: String((t && t.name) || ''),
+    name: String((t && t.name) || '').slice(0, 200),   // spójny limit z importem CSV (bez nieograniczonego stanu)
     totalMinutes: clampInt(t && t.totalMinutes, 1, 480, 25),
   }
 }
@@ -221,8 +230,10 @@ const S = {
   breakExpanded:  false,
   workStartExpanded: false, // fullscreen "PRACA" po zakończeniu przerwy
   taskEarlyDone:  false,   // czeka na wybór po ręcznym ukończeniu zadania
+  askDone:        false,   // koniec bloku pracy z aktywnym zadaniem → pytamy „Ukończone?"
   pos:           (saved?.pos && typeof saved.pos.x === 'number') ? saved.pos : null,
   collapsedMode: false,
+  focusMode:     false,   // pełnoekranowy tryb skupienia (czarne tło, nazwa zadania, minutnik w rogu)
   termsVersion:  clampInt(saved?.termsVersion, 0, 9999, 0),   // 0 = warunki jeszcze niezaakceptowane
 }
 
@@ -251,9 +262,10 @@ const S = {
 //          Pełnoekranowe okno nie może rysować po pasku zadań, a małe okno 'screen-saver'
 //          tak — dlatego zwinięty pasek dostaje własne okno. Nieprzezroczyste = pokaż/ukryj
 //          NIE migocze (blank dotyczył tylko okien transparent).
-let overlay = null, manager = null, tray = null
+let overlay = null, manager = null, tray = null, focusWin = null
 let tickHandle = null, watchdogHandle = null, topmostHandle = null
 let ignoring = true
+let isQuitting = false   // true dopiero przy realnym zamykaniu aplikacji (patrz before-quit / 'quit')
 let movingUntil = 0   // rezerwa zgodności (drag widgetu obsługuje renderer)
 
 // Poziom warstwy zależny od trybu: pełnoekranowa kurtyna siedzi na 'floating' (niżej niż
@@ -265,11 +277,48 @@ function applyWindowLevel() {
   else                                        overlay.setAlwaysOnTop(true, 'screen-saver', 1)
 }
 
+// Tryb skupienia ma OSOBNE, nieprzezroczyste okno (focusWin), które wchodzi w realny
+// fullscreen — bo duże okno nakładki (transparent) NIE potrafi zasłonić paska zadań
+// (patrz komentarz przy createOverlay / createTray: pełnoekranowe transparentne okno nie
+// rysuje po pasku zadań, choćby na 'screen-saver'). Okno opaque → pokaż/ukryj nie migocze.
+function showFocusWindow() {
+  if (!focusWin || focusWin.isDestroyed()) focusWin = createFocusWindow()
+  focusWin.setBounds(focusBounds())
+  focusWin.show()
+  if (!focusWin.isFullScreen()) focusWin.setFullScreen(true)   // realny fullscreen → Windows chowa pasek zadań i zegar
+  focusWin.setAlwaysOnTop(true, 'screen-saver', 1)
+  focusWin.focus()                                             // fokus klawiatury → Esc działa
+}
+function hideFocusWindow() {
+  if (!focusWin || focusWin.isDestroyed()) return
+  if (focusWin.isFullScreen()) focusWin.setFullScreen(false)
+  focusWin.hide()
+}
+
+// Wyłączenie trybu skupienia. Wołane też automatycznie przy zmianie fazy (koniec bloku pracy
+// itp.), żeby użytkownik nie został z czarnym ekranem nieaktualnego zadania.
+function exitFocusIfOn() {
+  if (!S.focusMode) return
+  S.focusMode = false
+  hideFocusWindow()
+  syncTray()
+}
+
 // Windows potrafi po cichu zdegradować transparentne okno alwaysOnTop z warstwy topmost
 // (pasek zadań, powiadomienia, przełączanie okien). Co sekundę przywracamy topmost na
 // poziomie właściwym dla bieżącego trybu — to nie operacja na powierzchni, więc bezpieczne.
+// W trybie skupienia NIE podnosimy nakładki (wyszłaby nad fullscreenowe okno focus, co
+// przywróciłoby pasek zadań); zamiast tego utrzymujemy topmost samego okna focus.
 function reassertTopmost() {
   if (Date.now() < movingUntil) return
+  if (S.focusMode) {
+    // Podnoś okno skupienia TYLKO gdy ma fokus — inaczej systemowe/inne okna (Menedżer zadań,
+    // prompty aplikacji) nie wyszłyby na wierzch. Utrata fokusu zdejmuje topmost (createFocusWindow),
+    // powrót go przywraca.
+    if (focusWin && !focusWin.isDestroyed() && focusWin.isFocused())
+      focusWin.setAlwaysOnTop(true, 'screen-saver', 1)
+    return
+  }
   applyWindowLevel()
 }
 
@@ -282,7 +331,7 @@ function armClock() { S.phaseEndsAt = Date.now() + S.phaseLeft * 1000 }
 function startPhase(seconds) { S.phaseLeft = seconds; armClock() }
 
 function initTask() {
-  S.pomsDone = 0; S.taskSpent = 0; S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false
+  S.pomsDone = 0; S.taskSpent = 0; S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false; S.askDone = false
   if (S.tasks.length > 0 && S.currentIdx >= S.tasks.length) {
     // Wszystkie zadania ukończone
     S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; return
@@ -295,7 +344,7 @@ function initTask() {
 // przywrócone z pliku). Odliczanie rusza świeżym blokiem pracy, na pauzie — użytkownik
 // jak zawsze naciska start. NIE zerujemy postępu (w odróżnieniu od initTask).
 function resumeSession() {
-  S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false
+  S.breakExpanded = false; S.workStartExpanded = false; S.taskEarlyDone = false; S.askDone = false
   if (S.tasks.length > 0 && S.currentIdx >= S.tasks.length) {
     S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; return
   }
@@ -319,7 +368,7 @@ function _advancePhase() {
   }
 }
 
-function nextPhase() { _advancePhase(); _syncOverlaySize() }
+function nextPhase() { exitFocusIfOn(); _advancePhase(); _syncOverlaySize() }
 
 function _syncOverlaySize() {
   const isBreak = S.phase === 'shortBreak' || S.phase === 'longBreak'
@@ -344,11 +393,15 @@ function setIgnore(v) {
 
 // Prostokąt zwiniętej listwy: NA pasku zadań (od jego górnej krawędzi w dół), przy prawej
 // krawędzi ekranu — dokładnie jak w pierwotnej wersji, która nachodziła na zegar.
+// Rezerwa przy prawej krawędzi = obszar zegara + zasobnika systemowego Windows. Listwa siada NA
+// pasku zadań, ale NIE zasłania zegara/ikon zasobnika, żeby dało się w nie kliknąć.
+const TRAY_TRAY_RESERVE = 200
 function trayBounds() {
   const { bounds, workArea } = screen.getPrimaryDisplay()
   const taskbarH = Math.max(36, bounds.height - workArea.height - workArea.y)
-  const w = Math.max(340, Math.round(bounds.width * 0.28))
-  return { x: bounds.x + bounds.width - w, y: workArea.y + workArea.height, width: w, height: taskbarH }
+  const w = Math.max(300, Math.round(bounds.width * 0.24))
+  const x = bounds.x + bounds.width - TRAY_TRAY_RESERVE - w
+  return { x: Math.max(bounds.x, x), y: workArea.y + workArea.height, width: w, height: taskbarH }
 }
 // Pokaż/ukryj okno-listwę zgodnie z trybem. Nieprzezroczyste okno → pokaż/ukryj nie migocze.
 function syncTray() {
@@ -379,15 +432,46 @@ function tick() {
     if (m !== lastSavedSpentMin) { lastSavedSpentMin = m; writeSaved() }  // zapis postępu co pełną minutę
   }
   S.phaseLeft = left
-  if (left === 0) nextPhase()
+  if (left === 0) {
+    // Koniec bloku pracy z aktywnym zadaniem → NIE przechodź od razu do przerwy,
+    // tylko zatrzymaj i pokaż wyraźny panel „Ukończone?" (decyzja użytkownika).
+    if (S.phase === 'work' && S.tasks.length > 0 && S.currentIdx < S.tasks.length) {
+      S.isRunning = false
+      S.askDone   = true
+      exitFocusIfOn()   // pokaż panel „Ukończone?" w widgetcie zamiast czarnego ekranu
+    } else {
+      nextPhase()   // prosty pomodoro bez zadania / przerwa → klasyczne przejście
+    }
+  }
   broadcast()
 }
 
+// Stan „lean" — wszystko poza listą zadań. Lista leci osobnym kanałem 'tasks' TYLKO przy zmianie
+// (pushTasksIfChanged), więc co-sekundowy broadcast nie serializuje całej tablicy zadań do 4 okien.
+function leanState() {
+  const { tasks, ...rest } = S
+  return rest
+}
 function broadcast() {
-  // webContents.send i tak robi structured clone — bez ręcznego JSON.parse(JSON.stringify)
-  if (overlay && !overlay.isDestroyed()) overlay.webContents.send('state', S)
-  if (tray && !tray.isDestroyed() && tray.isVisible()) tray.webContents.send('state', S)
-  if (manager && !manager.isDestroyed() && manager.isVisible()) manager.webContents.send('state', S)
+  const st = leanState()   // webContents.send i tak robi structured clone
+  if (overlay && !overlay.isDestroyed()) overlay.webContents.send('state', st)
+  if (tray && !tray.isDestroyed() && tray.isVisible()) tray.webContents.send('state', st)
+  if (focusWin && !focusWin.isDestroyed() && focusWin.isVisible()) focusWin.webContents.send('state', st)
+  if (manager && !manager.isDestroyed() && manager.isVisible()) manager.webContents.send('state', st)
+}
+
+// Wyślij listę zadań do WSZYSTKICH okien (także ukrytych — to rzadkie, więc tanie), ale tylko gdy
+// faktycznie się zmieniła. Dzięki temu np. zwinięta listwa ma aktualne zadania zaraz po pokazaniu,
+// a manager dostaje autorytatywne usunięcia (patrz reconcyliacja anty-wyścigowa w manager.html).
+let _lastTasksSig = null
+function tasksSigMain() { return S.tasks.map(t => `${t.id}:${t.name}:${t.totalMinutes}`).join('|') }
+function pushTasksIfChanged() {
+  const sig = tasksSigMain()
+  if (sig === _lastTasksSig) return
+  _lastTasksSig = sig
+  for (const w of [overlay, tray, focusWin, manager]) {
+    if (w && !w.isDestroyed()) w.webContents.send('tasks', S.tasks)
+  }
 }
 
 if (gotTheLock) {
@@ -403,7 +487,7 @@ if (gotTheLock) {
   })
 
   function startApp() {
-    overlay = createOverlay(); tray = createTray(); manager = createManager()
+    overlay = createOverlay(); tray = createTray(); manager = createManager(); focusWin = createFocusWindow()
     ensureLogReady()   // utwórz folder Dokumenty\PomodoroOverlay + nagłówek CSV z wyprzedzeniem
     tickHandle = setInterval(tick, 1000); resumeSession()
 
@@ -431,6 +515,8 @@ if (gotTheLock) {
       if (!overlay || overlay.isDestroyed()) return
       overlay.setBounds(fullBounds())   // dopasuj do nowego ekranu (z 1px nadmiarem — patrz fullBounds)
       applyWindowLevel()
+      syncTray()                        // przesuń listwę na nowy pasek zadań (gdy zwinięte)
+      if (focusWin && !focusWin.isDestroyed()) focusWin.setBounds(focusBounds())
       broadcast()
     }
     screen.on('display-metrics-changed', reclamp)
@@ -448,13 +534,16 @@ if (gotTheLock) {
       ['CommandOrControl+Alt+P', 'toggle'],          // start / pauza
       ['CommandOrControl+Alt+K', 'skipPhase'],       // pomiń fazę
       ['CommandOrControl+Alt+M', 'toggleCollapse'],  // zwiń / rozwiń (AltGr+M)
+      ['CommandOrControl+Alt+F', 'toggleFocus'],     // tryb skupienia
+      ['CommandOrControl+Alt+D', 'doneKeepTimer'],   // ukończ bieżące zadanie (D — wolne od polskich znaków AltGr)
+      ['CommandOrControl+Alt+T', 'openManager'],     // otwórz managera zadań (T — wolne od polskich znaków AltGr)
     ]
     for (const [accel, cmd] of SHORTCUTS) {
       const ok = globalShortcut.register(accel, () => handleCmd(cmd))
       if (!ok) console.warn(`[skrót] nie udało się zarejestrować ${accel} — zajęty przez inną aplikację`)
     }
 
-    setTimeout(() => { broadcast(); if (S.tasks.length === 0) { manager.show(); manager.focus() } }, 700)
+    setTimeout(() => { pushTasksIfChanged(); broadcast(); if (S.tasks.length === 0) { manager.show(); manager.focus() } }, 700)
   }
 
   // ── Okno warunków korzystania (first-run) ───────────────────────────
@@ -493,6 +582,14 @@ function fullBounds() {
   return { x: b.x - 1, y: b.y - 1, width: b.width + 2, height: b.height + 1 }
 }
 
+// Dokładne wymiary monitora (BEZ 1px nadmiaru) dla okna trybu skupienia — wchodzi ono w realny
+// fullscreen, więc nie potrzebuje sztuczki z nadmiarem (ta służy oknu nakładki do współpracy
+// z paskiem zadań). Tu chcemy odwrotnie: pełny fullscreen, który pasek zadań chowa.
+function focusBounds() {
+  const b = screen.getPrimaryDisplay().bounds
+  return { x: b.x, y: b.y, width: b.width, height: b.height }
+}
+
 // Jedno stałe okno na cały ekran. NIE jest movable ani resizable — przeciąganie widgetu
 // i jego pozycję obsługuje renderer (CSS), a tryby przełączamy treścią. Domyślnie klikalne
 // na wskroś; renderer włącza klikalność tylko nad strefami .clickzone.
@@ -502,7 +599,11 @@ function createOverlay() {
     x: fb.x, y: fb.y, width: fb.width, height: fb.height,
     frame: false, alwaysOnTop: true, transparent: true, hasShadow: false,
     skipTaskbar: true, resizable: false, movable: false,
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, backgroundThrottling: false },
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false,
+      backgroundThrottling: false,
+      autoplayPolicy: 'no-user-gesture-required',   // sygnał dźwiękowy faz zagra bez gestu (apka sterowana skrótami)
+    },
   })
   win.setAlwaysOnTop(true, 'screen-saver', 1)
   win.setOpacity(S.opacity)
@@ -533,6 +634,37 @@ function createTray() {
   return win
 }
 
+// Osobne okno trybu skupienia: NIEPRZEZROCZYSTE, wchodzi w realny fullscreen (Windows chowa
+// wtedy pasek zadań i zegar). Duże okno nakładki jest transparent i — jak listwa tray — nie
+// zasłoni paska zadań, dlatego focus dostaje własne okno. Ładuje overlay.html z rolą 'focus'
+// (renderer rysuje wtedy WYŁĄCZNIE ekran skupienia). Tworzone raz, ukryte; pokazywane na żądanie.
+function createFocusWindow() {
+  const fb = focusBounds()
+  const win = new BrowserWindow({
+    x: fb.x, y: fb.y, width: fb.width, height: fb.height,
+    frame: false, alwaysOnTop: true, transparent: false, hasShadow: false,
+    skipTaskbar: true, resizable: false, movable: false, show: false, backgroundColor: '#05060a',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false,
+      backgroundThrottling: false, additionalArguments: ['--role=focus'],
+    },
+  })
+  win.setMenuBarVisibility(false)
+  if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  win.loadFile(path.join(__dirname, 'overlay.html'))
+  // Zamknięcie z zewnątrz (Alt+F4) w trybie skupienia: nie zostawiaj pustego, martwego ekranu —
+  // wyjdź z trybu i pokaż z powrotem nakładkę.
+  win.on('closed', () => {
+    focusWin = null
+    if (S.focusMode) { S.focusMode = false; syncTray(); broadcast() }
+  })
+  // Utrata fokusu zdejmuje topmost (żeby Menedżer zadań / prompty systemowe wyszły na wierzch);
+  // powrót fokusu przywraca. reassertTopmost również respektuje isFocused().
+  win.on('blur',  () => { if (!win.isDestroyed()) win.setAlwaysOnTop(false) })
+  win.on('focus', () => { if (!win.isDestroyed()) win.setAlwaysOnTop(true, 'screen-saver', 1) })
+  return win
+}
+
 function createManager() {
   const win = new BrowserWindow({
     width: 550, height: 700, minWidth: 420, minHeight: 500, show: false,
@@ -540,8 +672,26 @@ function createManager() {
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
   })
   win.loadFile(path.join(__dirname, 'manager.html'))
-  win.on('close', e => { e.preventDefault(); win.hide() })
+  // X chowa okno (apka żyje dalej). Ale przy realnym zamykaniu (isQuitting) pozwól je zamknąć —
+  // inaczej wylogowanie / zamknięcie systemu mogłoby zawisnąć na anulowanym close.
+  win.on('close', e => { if (!isQuitting) { e.preventDefault(); win.hide() } })
   return win
+}
+
+// Osobne okno „Jak to działa" — żeby instrukcję i panel można było widzieć równolegle.
+// Tworzone leniwie przy pierwszym otwarciu; zamknięcie tylko chowa (szybki ponowny start).
+let helpWin = null
+function openHelp() {
+  if (helpWin && !helpWin.isDestroyed()) { helpWin.show(); helpWin.focus(); return }
+  helpWin = new BrowserWindow({
+    width: 560, height: 720, minWidth: 420, minHeight: 480, show: false,
+    title: '🍅 Pomodoro — Jak to działa', backgroundColor: '#0d1117',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+  })
+  helpWin.setMenuBarVisibility(false)
+  helpWin.loadFile(path.join(__dirname, 'help.html'))
+  helpWin.once('ready-to-show', () => { helpWin.show(); helpWin.focus() })
+  helpWin.on('close', e => { if (!isQuitting) { e.preventDefault(); helpWin.hide() } })
 }
 
 function handleCmd(cmd, data) {
@@ -567,10 +717,13 @@ function handleCmd(cmd, data) {
 
     // User wybrał: weź przerwę przed następnym zadaniem
     case 'chooseBreak': {
-      if (!S.taskEarlyDone) break
-      S.taskEarlyDone = false
+      if (!S.taskEarlyDone && !S.askDone) break
+      S.taskEarlyDone = false; S.askDone = false
       logTaskCompletion(S.tasks[S.currentIdx], 'completed')
-      S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
+      // Ukończone → USUŃ z listy (nie tylko przesuwaj wskaźnik). Inaczej zadanie zostawało w
+      // S.tasks, wracało na liście i odpalało się od nowa po „done" (toggle→currentIdx=0).
+      // Po splice currentIdx wskazuje już następne zadanie (jak w doneKeepTimer).
+      S.tasks.splice(S.currentIdx, 1); S.taskSpent = 0; S.pomsDone = 0
       if (S.currentIdx >= S.tasks.length) { S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; break }
       S.phase     = 'shortBreak'
       startPhase(S.settings.shortBreakMinutes * 60)
@@ -582,30 +735,47 @@ function handleCmd(cmd, data) {
 
     // User wybrał: przejdź od razu do następnego zadania (timer kontynuuje)
     case 'chooseNext': {
-      if (!S.taskEarlyDone) break
-      S.taskEarlyDone = false
+      if (!S.taskEarlyDone && !S.askDone) break
+      S.taskEarlyDone = false; S.askDone = false
       logTaskCompletion(S.tasks[S.currentIdx], 'completed')
-      S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
+      S.tasks.splice(S.currentIdx, 1); S.taskSpent = 0; S.pomsDone = 0   // ukończone → usuń z listy (jak doneKeepTimer)
       if (S.currentIdx >= S.tasks.length) { S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false; break }
       S.phase     = 'work'
       S.isRunning = true
-      armClock()   // phaseLeft bez zmian — kontynuuj odliczanie od teraz
+      // Wczesne ukończenie: kontynuuj resztę bloku. Po upływie czasu (askDone, phaseLeft=0):
+      // wystartuj świeży blok pracy dla następnego zadania.
+      if (S.phaseLeft <= 0) startPhase(workInterval()); else armClock()
       S.breakExpanded = false
       shrinkOverlay()
       break
     }
 
-    // Anuluj wczesne ukończenie (wróć do normalnego timera)
-    case 'cancelEarly':
-      S.taskEarlyDone = false
+    // „Jeszcze nie skończyłem" po upływie bloku — zadanie NIE jest ukończone:
+    // weź zaplanowaną przerwę (klasyczny pomodoro), to samo zadanie trwa dalej.
+    case 'continueAfterTimeUp':
+      if (!S.askDone) break
+      S.askDone = false
+      nextPhase()          // work→przerwa: pomsDone++, startPhase(przerwa), rozwiń kurtynę
+      S.isRunning = true
       break
 
+    // Anuluj wczesne ukończenie / panel po czasie (wróć do normalnego timera)
+    case 'cancelEarly':
+      S.taskEarlyDone = false
+      S.askDone = false
+      break
+
+    // Rezygnacja / pominięcie zadania (✗) — zapis jako „skipped", skok do następnego
     case 'nextTask':
-      if (S.tasks.length > 0 && S.currentIdx < S.tasks.length - 1) {
+      if (S.tasks.length > 0 && S.currentIdx < S.tasks.length) {
         logTaskCompletion(S.tasks[S.currentIdx], 'skipped')
-        S.currentIdx++; S.taskSpent = 0; S.pomsDone = 0
-        S.phase = 'work'; startPhase(workInterval())
-        S.isRunning = false; S.breakExpanded = false; S.taskEarlyDone = false
+        S.tasks.splice(S.currentIdx, 1); S.taskSpent = 0; S.pomsDone = 0   // pominięte → usuń z listy
+        S.taskEarlyDone = false; S.askDone = false
+        if (S.currentIdx >= S.tasks.length) {
+          S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false
+        } else {
+          S.phase = 'work'; startPhase(workInterval()); S.isRunning = false; S.breakExpanded = false
+        }
         shrinkOverlay()
       }
       break
@@ -616,15 +786,51 @@ function handleCmd(cmd, data) {
         logTaskCompletion(S.tasks[S.currentIdx], 'completed')
         S.tasks.splice(S.currentIdx, 1)
         S.taskSpent = 0; S.pomsDone = 0
+        S.taskEarlyDone = false; S.askDone = false   // domknij ewentualny panel „Co teraz?" (spójność listwa/panel/focus)
         if (S.currentIdx >= S.tasks.length) {
           // Nie ma już kolejnych zadań
           S.phase = 'done'; S.phaseLeft = 0; S.isRunning = false
+          exitFocusIfOn()   // brak zadań → wyjdź z czarnego ekranu
+        } else if (S.phaseLeft <= 0) {
+          // Ukończenie w momencie końca bloku (panel askDone) — przezbrój świeży blok dla kolejnego zadania.
+          startPhase(workInterval())
         }
         // currentIdx nie zmienia się — po usunięciu element pod tym indeksem to już następne zadanie
-        // Timer (phaseLeft) i isRunning bez zmian
         writeSaved()
       }
       break
+
+    // Zacznij wybrane zadanie OD RAZU (przeskakuje na początek i staje się bieżące). Przerwane
+    // zadanie: prevAction 'queue' = zostaje w liście (wznowisz później), 'skip' = zapis jako
+    // pominięte + usunięte. Świeży blok pracy, postęp zerowany (timer liczy tylko bieżące).
+    case 'startTaskNow': {
+      const id = data?.id
+      if (id == null) break
+      if (S.tasks.findIndex(t => t.id === id) < 0) break
+      const wasActive = S.phase !== 'idle' && S.phase !== 'done'
+      const curTask = (wasActive && S.currentIdx >= 0 && S.currentIdx < S.tasks.length) ? S.tasks[S.currentIdx] : null
+      if (curTask && curTask.id === id) break   // już bieżące — nic nie rób
+
+      if (curTask && data?.prevAction === 'skip') {
+        logTaskCompletion(curTask, 'skipped')
+        const ci = S.tasks.findIndex(t => t.id === curTask.id)
+        if (ci >= 0) S.tasks.splice(ci, 1)
+      }
+      // prevAction 'queue' → przerwane zadanie zostaje w liście (wznowisz później)
+
+      const ni = S.tasks.findIndex(t => t.id === id)   // przelicz po ewentualnym splice
+      const [task] = S.tasks.splice(ni, 1)
+      S.tasks.unshift(task)
+      S.currentIdx = 0
+      S.taskSpent = 0; S.pomsDone = 0
+      S.taskEarlyDone = false; S.askDone = false
+      S.breakExpanded = false; S.workStartExpanded = false
+      S.phase = 'work'; startPhase(workInterval())
+      S.isRunning = true
+      shrinkOverlay()
+      writeSaved()
+      break
+    }
 
     case 'shrinkManual':
       S.breakExpanded = false; shrinkOverlay()
@@ -661,16 +867,28 @@ function handleCmd(cmd, data) {
 
     case 'openManager': manager.show(); manager.focus(); break
 
+    case 'openHelp': openHelp(); break
+
     case 'saveTasks': {
       const newTasks    = Array.isArray(data?.tasks) ? data.tasks.map(sanitizeTask) : []
       const newSettings = sanitizeSettings(data?.settings)
-      // Czy to ta sama lista (te same id i czasy, ta sama kolejność)? Jeśli tak — tylko edycja
-      // nazw/ustawień, więc NIE kasujemy postępu działającej sesji.
-      const sameList = newTasks.length === S.tasks.length &&
-        newTasks.every((t, i) => t.id === S.tasks[i]?.id && t.totalMinutes === S.tasks[i]?.totalMinutes)
+      const wasActive   = S.phase !== 'idle' && S.phase !== 'done'
+      const curTask     = S.tasks[S.currentIdx]
       S.tasks    = newTasks
       S.settings = newSettings
-      if (!(sameList && S.phase !== 'idle' && S.phase !== 'done')) {
+      // Zachowaj trwającą sesję, jeśli BIEŻĄCE zadanie nadal istnieje (po id) i ma ten sam
+      // czas — wtedy dopisanie zadania na koniec, edycja nazw albo zmiana kolejności NIE
+      // kasuje postępu ani nie zatrzymuje timera. Resetujemy plan tylko, gdy bieżące zadanie
+      // zniknęło albo zmieniono jego długość (realna zmiana planu tego, co teraz robisz).
+      let preserved = false
+      if (wasActive && curTask) {
+        const ni = newTasks.findIndex(t => t.id === curTask.id)
+        if (ni >= 0 && newTasks[ni].totalMinutes === curTask.totalMinutes) {
+          S.currentIdx = ni
+          preserved = true
+        }
+      }
+      if (!preserved) {
         S.currentIdx = 0; S.isRunning = false; initTask(); shrinkOverlay()
       }
       writeSaved()
@@ -693,11 +911,35 @@ function handleCmd(cmd, data) {
       if (S.collapsedMode) doExpand(); else doCollapse()
       break
 
-    case 'openLogFolder': ensureLogReady(() => shell.openPath(LOG_DIR)); break
+    // ── Tryb skupienia (pełnoekranowa czerń) ──────────────────────
+    // Wchodzimy tylko podczas pracy. setOpacity(1) → pełna czerń (widget chodzi na ~0.9);
+    // collapsedMode=false → chowamy listwę; applyWindowLevel → 'screen-saver' kryje pasek zadań.
+    case 'enterFocus':
+      if (S.phase === 'work' && !S.focusMode) {
+        S.focusMode = true; S.collapsedMode = false
+        showFocusWindow(); syncTray()
+      }
+      break
 
-    case 'quit': flushSaved(); app.exit(0); break
+    case 'exitFocus':
+      exitFocusIfOn()
+      break
+
+    case 'toggleFocus':
+      if (S.focusMode) {
+        exitFocusIfOn()
+      } else if (S.phase === 'work') {
+        S.focusMode = true; S.collapsedMode = false
+        showFocusWindow(); syncTray()
+      }
+      break
+
+    case 'openLogFolder': ensureLogReady().then(() => shell.openPath(LOG_DIR)); break
+
+    case 'quit': isQuitting = true; app.quit(); break   // before-quit → flushSaved, will-quit → cleanup
   }
   writeSaved()   // utrwal ewentualną zmianę postępu (currentIdx/taskSpent/pomsDone); debounced
+  pushTasksIfChanged()   // lista zadań osobnym kanałem — tylko gdy się zmieniła
   broadcast()
 }
 
@@ -781,7 +1023,7 @@ ipcMain.on('mouse-enter', () => setIgnore(false))
 ipcMain.on('mouse-leave', () => setIgnore(true))
 
 if (gotTheLock) {
-  app.on('before-quit', () => { flushSaved() })
+  app.on('before-quit', () => { isQuitting = true; flushSaved() })
   app.on('will-quit', () => {
     globalShortcut.unregisterAll()
     if (tickHandle) clearInterval(tickHandle)

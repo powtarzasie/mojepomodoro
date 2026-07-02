@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>🍅 Pomodoro — Jak to działa</title>
+<style>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b27;
+  --surface2: #1e2535;
+  --border:   rgba(255,255,255,0.07);
+  --accent:   #e05c34;
+  --accent2:  #f4a261;
+  --green:    #2a9d5c;
+  --blue:     #2563eb;
+  --text:     rgba(255,255,255,0.88);
+  --text2:    rgba(255,255,255,0.48);
+  --text3:    rgba(255,255,255,0.22);
+  --radius:   10px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; font-size: 14px; line-height: 1.5; overflow-y: auto;
+}
+.app { max-width: 560px; margin: 0 auto; padding: 24px 22px 44px; }
+
+.app-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.app-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.app-subtitle { font-size: 12px; color: var(--text2); }
+
+.help-h {
+  font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--accent2); margin: 20px 0 8px;
+}
+.help-h:first-child { margin-top: 4px; }
+p { font-size: 13px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+ul { list-style: none; display: flex; flex-direction: column; gap: 7px; margin: 4px 0; }
+li { font-size: 13px; color: var(--text2); display: flex; gap: 9px; align-items: baseline; line-height: 1.45; }
+li .ic {
+  flex-shrink: 0; min-width: 26px; height: 22px; padding: 0 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; color: var(--text); font-weight: 600; transform: translateY(2px);
+}
+b { color: var(--text); font-weight: 600; }
+kbd {
+  display: inline-block; padding: 2px 7px; border-radius: 5px;
+  background: var(--surface2); border: 1px solid var(--border); border-bottom-width: 2px;
+  font-family: 'SF Mono','Consolas',monospace; font-size: 11px; color: var(--text);
+}
+.help-tip {
+  margin-top: 18px; padding: 10px 12px; border-radius: 8px;
+  background: rgba(224,92,52,0.08); border: 1px solid rgba(224,92,52,0.2);
+  font-size: 12px; color: var(--text2); line-height: 1.5;
+}
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div>
+      <div class="app-title">❓ Jak to działa</div>
+      <div class="app-subtitle">Instrukcja obsługi Pomodoro Overlay</div>
+    </div>
+  </div>
+
+  <div class="help-h">Czym jest ta aplikacja</div>
+  <p>Pomodoro Overlay to mały licznik czasu (nakładka), który „pływa" zawsze na wierzchu innych okien. Pomaga pracować <b>metodą Pomodoro</b>: bloki skupionej pracy przeplatane krótkimi przerwami. Okno <b>Manager</b> służy do zarządzania zadaniami i ustawieniami — sam licznik widać jako widżet w rogu ekranu.</p>
+
+  <div class="help-h">Widżet — ikony w nagłówku</div>
+  <ul>
+    <li><span class="ic">⚙</span> Otwiera Manager zadań i ustawień.</li>
+    <li><span class="ic">S/M/L</span> Zmienia rozmiar widżetu — klikaj, aby przełączać mały / średni / duży.</li>
+    <li><span class="ic">◐</span> Suwak przezroczystości widżetu.</li>
+    <li><span class="ic">▾</span> Zwija widżet do wąskiego mini-paska.</li>
+    <li><span class="ic">✕</span> Zamyka całą aplikację.</li>
+  </ul>
+
+  <div class="help-h">Widżet — licznik i przyciski</div>
+  <ul>
+    <li><span class="ic">●●</span> Kolorowa plakietka pokazuje fazę (PRACA / PRZERWA / DŁ. PRZERWA), a kropki — ile sesji pracy zaliczono do następnej długiej przerwy.</li>
+    <li><span class="ic">25:00</span> Duża cyfra to czas pozostały do końca fazy (w ostatniej minucie robi się czerwona).</li>
+    <li><span class="ic">▶ ⏸</span> Start / pauza licznika.</li>
+    <li><span class="ic">⏭</span> Pomiń bieżącą fazę (np. od razu zacznij przerwę albo wróć do pracy).</li>
+    <li><span class="ic">✓</span> <b>Ukończ zadanie</b> — oznacza bieżące zadanie jako zrobione; pojawia się wybór <b>☕ Przerwa</b> albo <b>▶ Następne</b>.</li>
+    <li><span class="ic">✗</span> <b>Rezygnacja / pomiń</b> — odkłada bieżące zadanie (zapis jako „pominięte") i przechodzi do następnego.</li>
+  </ul>
+  <p>Pasek na dole widżetu pokazuje, ile minut już poświęciłeś na bieżące zadanie względem planu.</p>
+
+  <div class="help-h">Pytanie „Ukończone?" po upływie bloku pracy</div>
+  <p>Gdy skończy się blok pracy (np. 25 min), a masz aktywne zadanie, licznik zatrzyma się i zapyta: <b>czy zadanie jest ukończone?</b> Do wyboru: <b>☕ Przerwa</b> (ukończone → odpoczynek), <b>▶ Następne</b> (ukończone → od razu kolejne zadanie) albo <b>↻ Jeszcze pracuję</b> (zadanie trwa dalej — bierzesz zaplanowaną przerwę i wracasz do niego). Dzięki temu jedno zadanie może spokojnie zająć kilka „pomidorów".</p>
+
+  <div class="help-h">Ekran pełnoekranowy „PRACA"</div>
+  <p>Po przerwie pojawia się pulsujący ekran „PRACA" z <b>dużą nazwą bieżącego zadania</b> oraz informacją, <b>ile czasu zostało na to zadanie</b> (osobno od bloku 25 min — bo zadanie może być zaplanowane na dużo więcej lub mniej). Kliknij <b>Zaczynam!</b> albo <b>Zmniejsz</b>, aby wrócić do małego widżetu.</p>
+
+  <div class="help-h">Sterowanie myszą — ważne</div>
+  <ul>
+    <li><span class="ic">🖱</span> Widżet <b>przepuszcza kliknięcia</b>, dopóki nie najedziesz na niego myszą — dzięki temu nie zasłania tego, co pod nim. Najedź kursorem, aby przyciski stały się klikalne.</li>
+    <li><span class="ic">✥</span> Aby przesunąć widżet — złap go i przeciągnij (poza przyciskami). Pozycja zapisuje się automatycznie.</li>
+  </ul>
+
+  <div class="help-h">Tryby pełnoekranowe</div>
+  <ul>
+    <li><span class="ic">☕</span> Gdy zaczyna się przerwa, widżet rozwija się na cały ekran z dużym licznikiem. Tło przepuszcza kliknięcia — możesz dalej korzystać z pulpitu; klikalne są tylko „Pomiń przerwę" i „Zmniejsz".</li>
+    <li><span class="ic">🍅</span> Po przerwie pokazuje się ekran „PRACA" — patrz wyżej.</li>
+  </ul>
+
+  <div class="help-h">Mini-pasek (po zwinięciu ▾)</div>
+  <p>Widżet zwija się do wąskiego paska tuż nad paskiem zadań: emoji fazy, nazwa zadania, czas, ⏭ pomiń fazę, ✓ ukończ zadanie, start/pauza, <b>▴</b> (rozwiń z powrotem) oraz <b>✕</b> (zamknij aplikację).</p>
+
+  <div class="help-h">Manager — zadania i ustawienia</div>
+  <ul>
+    <li><span class="ic">+</span> <b>Dodaj zadanie</b> — wpisz nazwę i czas w minutach.</li>
+    <li><span class="ic">⠿</span> Uchwyt — przeciągnij, aby zmienić kolejność zadań.</li>
+    <li><span class="ic">✕</span> Usuwa dane zadanie z listy.</li>
+    <li><span class="ic">⏱</span> <b>Pomodoro</b> — ustaw długość pracy, krótkiej i długiej przerwy oraz co ile sesji wypada długa przerwa.</li>
+    <li><span class="ic">⏻</span> <b>Autostart z Windows</b> — uruchamia aplikację po starcie systemu. Timer nie rusza sam — czeka w pauzie, aż klikniesz <b>▶</b>.</li>
+    <li><span class="ic">💾</span> <b>Zapisz i zastosuj</b> — zapisuje zmiany. Dopisanie zadania na koniec, zmiana nazw albo kolejności <b>nie kasuje</b> postępu bieżącego zadania. Plan startuje od nowa tylko, gdy zmienisz długość lub usuniesz zadanie, które właśnie robisz.</li>
+    <li><span class="ic">🔄</span> <b>Resetuj timer</b> — wraca do pierwszego zadania i zeruje postęp.</li>
+  </ul>
+  <p>Karta na górze Managera pokazuje <b>na żywo</b>, co dzieje się w liczniku.</p>
+
+  <div class="help-h">Import i eksport zadań (CSV)</div>
+  <ul>
+    <li><span class="ic">📥</span> <b>Importuj CSV</b> — wczytuje listę zadań z pliku <b>.csv</b>, <b>.tsv</b> lub <b>.txt</b> (np. z Excela, Arkuszy Google, Todoist → „Zapisz jako CSV").</li>
+    <li><span class="ic">📤</span> <b>Eksportuj CSV</b> — zapisuje bieżącą listę zadań do pliku <b>.csv</b> (format <i>nazwa;minuty</i>) — np. jako kopia zapasowa albo przeniesienie na inny komputer.</li>
+    <li>Program <b>sam rozpoznaje kolumny</b>: nazwę szuka w kolumnie typu <i>nazwa / zadanie / task / name / title / todo</i>, a czas w <i>minuty / min / czas / time / duration / estimate</i>.</li>
+    <li>Bez nagłówków: <b>1. kolumna = nazwa</b>, <b>2. = minuty</b>. Gdy minut brak — zadanie dostaje <b>25 min</b> (zakres 1–480).</li>
+    <li>Zaimportowane zadania <b>dopisują się</b> do listy. To podgląd — możesz je poprawić, a potem kliknij <b>💾 Zapisz i zastosuj</b>.</li>
+  </ul>
+
+  <div class="help-h">Historia · plan vs. fakt (log CSV)</div>
+  <ul>
+    <li>Każde zadanie <b>ukończone</b> lub <b>pominięte</b> zapisuje się automatycznie do <b>pomodoro-log.csv</b> w folderze <b>Dokumenty\PomodoroOverlay</b>.</li>
+    <li>Tabela „Historia" pokazuje: <b>datę</b>, <b>nazwę</b>, <b>plan</b>, <b>fakt</b>, <b>różnicę</b> (+/−) i <b>status</b> — widzisz, jak Twoje szacunki mają się do rzeczywistości.</li>
+    <li><span class="ic">🔄</span> <b>Odśwież</b> — wczytuje historię na nowo.</li>
+    <li><span class="ic">📂</span> <b>Folder logów</b> — otwiera folder z plikiem CSV (do analizy w Excelu).</li>
+  </ul>
+
+  <div class="help-h">Skróty klawiszowe (działają w całym systemie)</div>
+  <ul>
+    <li><span class="ic"><kbd>Ctrl+Alt+P</kbd></span> Start / pauza.</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+K</kbd></span> Pomiń bieżącą fazę.</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+M</kbd></span> Zwiń / rozwiń widżet (działa też prawy <kbd>AltGr+M</kbd>).</li>
+  </ul>
+  <p style="font-size:12px;color:var(--text3)">Jeśli inny program zajmuje już dany skrót, może on u nas nie zadziałać (to normalne ograniczenie systemu).</p>
+
+  <div class="help-h">Jak działa cykl Pomodoro</div>
+  <p>Pracujesz przez ustawiony czas (domyślnie 25 min) → krótka przerwa (5 min). Po kilku sesjach (domyślnie 4) wypada długa przerwa (15 min). Z listą zadań licznik prowadzi Cię przez nie po kolei; bez zadań działa jak zwykły licznik Pomodoro.</p>
+
+  <div class="help-tip">💡 Wskazówka: widżet zawsze jest na wierzchu. Jeśli przeszkadza — zwiń go (<b>▾</b>), zmniejsz przezroczystość (<b>◐</b>) albo przeciągnij w inne miejsce ekranu.</div>
+
+  <div class="help-h">Licencja</div>
+  <p>Pomodoro Overlay jest na licencji <b>MIT</b> — możesz go bez opłat używać prywatnie i komercyjnie, kopiować, modyfikować i przekazywać dalej. Warunek: w kopiach zachowaj informację o autorze i treść licencji. Program „tak jak jest", bez gwarancji.</p>
+  <p>© 2026 <b>Mariusz Świerguła</b> &lt;Mariusz.swiergula@gmail.com&gt;. Pełna treść licencji — plik <b>LICENSE</b>.</p>
+  <p style="font-size:12px;color:var(--text3)">Aplikacja korzysta z bibliotek open source: <b>Electron</b> i <b>electron-builder</b> (MIT). Pełna lista — <b>THIRD_PARTY_LICENSES.md</b>.</p>
+  <p style="font-size:12px;color:var(--text3)">„Pomodoro Technique®" i „Pomodoro®" to znaki towarowe Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta opisowo.</p>
+</div>
+</body>
+</html>

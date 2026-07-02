@@ -72,6 +72,26 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 }
 .btn-done:hover { background:rgba(42,157,92,0.2); border-color:rgba(42,157,92,0.35); color:#4ade80; }
 
+/* ✗ Rezygnacja / pomiń zadanie — bliźniaczy do ✓, ale czerwony akcent */
+.btn-skip-task {
+  -webkit-app-region:no-drag;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  color:rgba(255,255,255,0.22); width:var(--ibtn-sz); height:var(--ibtn-sz);
+  border-radius:5px; cursor:pointer; font-size:11px; display:flex; align-items:center;
+  justify-content:center; transition:background .15s,color .15s,border-color .15s; flex-shrink:0;
+}
+.btn-skip-task:hover { background:rgba(224,80,80,0.18); border-color:rgba(224,80,80,0.35); color:#ff8a8a; }
+
+/* Własne dymki (zamiast natywnego title): nad elementem, trzymają się przy hover */
+[data-tip] { position:relative; }
+[data-tip]:hover::after {
+  content:attr(data-tip);
+  position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  white-space:nowrap; background:#0a0e17; color:#fff; font-size:11px; font-weight:500; line-height:1.3;
+  padding:5px 9px; border-radius:6px; border:1px solid rgba(255,255,255,0.14);
+  box-shadow:0 6px 18px rgba(0,0,0,0.55); z-index:9999; pointer-events:none;
+}
+
 /* ══ PANEL WYBORU po wcześniejszym ukończeniu ════════════ */
 .done-panel { display:none; margin-bottom:var(--gap-task); }
 .done-panel.visible { display:block; }
@@ -86,6 +106,8 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 .done-btn.break-opt:hover { background:rgba(42,157,92,0.28); }
 .done-btn.next-opt  { background:rgba(224,92,52,0.15); border-color:rgba(224,92,52,0.25); color:#f4a261; }
 .done-btn.next-opt:hover  { background:rgba(224,92,52,0.28); }
+.done-btn.cont-opt  { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.12); color:rgba(255,255,255,0.7); }
+.done-btn.cont-opt:hover  { background:rgba(255,255,255,0.12); color:#fff; }
 
 /* ══ TIMER ═══════════════════════════════════════════════ */
 .row-timer { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--gap-timer); }
@@ -100,8 +122,6 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 .action-btn.primary:hover      { background:#c94e28; }
 .action-btn.primary.pause      { background:#3a3f52; }
 .action-btn.primary.pause:hover { background:#4a505f; }
-.action-btn.done-go { background:rgba(42,157,92,0.25); color:#4ade80; font-size:9px; font-weight:700; letter-spacing:-.02em; }
-.action-btn.done-go:hover { background:rgba(42,157,92,0.45); color:#fff; }
 
 /* ══ PROGRESS ════════════════════════════════════════════ */
 .prog-bar  { height:2px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; margin-bottom:4px; }
@@ -113,7 +133,20 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 .work-screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center; animation:work-pulse 1.2s ease-in-out infinite; }
 .work-screen.hidden { display:none; animation:none; }
 .work-start-badge { font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; padding:6px 20px; border-radius:30px; color:#fff; background:#e05c34; }
-.work-start-timer { font-size:96px; font-weight:700; font-variant-numeric:tabular-nums; font-family:'SF Mono','Consolas','Courier New',monospace; letter-spacing:-.04em; line-height:1; color:#f4a261; }
+.work-task-label { font-size:13px; letter-spacing:.06em; color:rgba(255,255,255,0.30); text-transform:uppercase; }
+.work-task-big   { font-size:40px; font-weight:700; color:#fff; line-height:1.12; max-width:80%; }
+.work-timer-wrap { display:flex; align-items:baseline; gap:12px; }
+.work-start-timer { font-size:64px; font-weight:700; font-variant-numeric:tabular-nums; font-family:'SF Mono','Consolas','Courier New',monospace; letter-spacing:-.03em; line-height:1; color:#f4a261; }
+.work-timer-sub  { font-size:12px; letter-spacing:.08em; color:rgba(255,255,255,0.32); text-transform:uppercase; }
+.work-remain { width:min(440px,78vw); background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:10px 14px; display:flex; flex-direction:column; gap:7px; }
+.work-remain-top { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+.work-remain-cap { font-size:12px; letter-spacing:.04em; color:rgba(255,255,255,0.40); text-transform:uppercase; }
+.work-remain-val { font-size:14px; font-weight:700; color:#fff; white-space:nowrap; }
+.work-remain-val.low  { color:#f4a261; }
+.work-remain-val.over { color:#ff8a8a; }
+.work-remain-bar  { height:5px; border-radius:3px; background:rgba(255,255,255,0.10); overflow:hidden; }
+.work-remain-fill { height:100%; width:0%; background:#e05c34; border-radius:3px; transition:width 1s linear; }
+.work-remain-sub  { font-size:11px; color:rgba(255,255,255,0.30); text-align:right; }
 
 /* ══ COLLAPSED (mini) ════════════════════════════════════ */
 .collapsed-view { display:none; }
@@ -178,6 +211,46 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 .tb-done:hover { background:rgba(42,157,92,0.45) !important; color:#fff; }
 .tb-quit { color:rgba(255,255,255,0.55); }
 .tb-quit:hover { background:rgba(255,80,80,0.25) !important; color:#ff6b6b; }
+
+/* Ikona SVG w przycisku nagłówka (np. tryb skupienia) — spójny rozmiar z glifami emoji */
+.icon-btn svg { width:12px; height:12px; display:block; }
+
+/* ══ FULLSCREEN TRYB SKUPIENIA ═══════════════════════════════ */
+/* Jednolita czerń (setOpacity okna =1 w main → pełne krycie). Nazwa zadania na środku,
+   minutnik + ikony w prawym dolnym rogu, podpowiedź Esc w lewym. Cały ekran = .clickzone,
+   żeby klik nie przeszedł na aplikację pod spodem. Bez animacji (spokój, nie presja). */
+.focus-screen { position:fixed; inset:0; background:#05060a; }
+.focus-screen.hidden { display:none; }
+.focus-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:0 8%; text-align:center; }
+.focus-eyebrow { display:inline-flex; align-items:center; gap:7px; font-size:12px; letter-spacing:.14em; color:#586072; }
+.focus-eyebrow svg { width:14px; height:14px; }
+.focus-task { font-size:38px; font-weight:400; color:#e9ebf1; line-height:1.3; max-width:760px; }
+.focus-sub { font-size:14px; color:#4d5462; }
+
+.focus-hint { position:absolute; left:30px; bottom:26px; font-size:12px; color:#454c5c; display:flex; align-items:center; gap:7px; }
+.focus-key { border:1px solid #2a3040; border-radius:5px; padding:1px 6px; font-size:11px; color:#5b6373; }
+
+.focus-corner { position:absolute; right:28px; bottom:24px; display:flex; flex-direction:column; align-items:flex-end; gap:15px; }
+.focus-pom { display:flex; align-items:center; gap:12px; }
+.focus-pom-text { text-align:right; line-height:1.2; }
+.focus-pom-val { font-size:19px; color:#c2cad6; font-variant-numeric:tabular-nums; }
+.focus-pom-cap { font-size:11px; color:#5b6373; }
+.focus-ring-track { stroke:#1b2130; }
+.focus-ring-fill  { stroke:#5f8a72; transition:stroke-dashoffset 1s linear; }
+.focus-budget { width:216px; }
+.focus-budget-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+.focus-budget-cap { font-size:11px; color:#5b6373; letter-spacing:.04em; }
+.focus-budget-val { font-size:12px; color:#8b94a4; font-variant-numeric:tabular-nums; }
+.focus-budget-val.over { color:#b89268; }
+.focus-bar { height:5px; background:#161c28; border-radius:3px; overflow:hidden; }
+.focus-bar-fill { height:100%; width:0%; background:#6f7a90; border-radius:3px; transition:width 1s linear; }
+.focus-bar-fill.over { background:#b08a5a; }
+.focus-ctrls { display:flex; align-items:center; gap:9px; margin-top:3px; }
+.focus-btn { -webkit-app-region:no-drag; width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid #242a3a; border-radius:10px; color:#9aa3b2; cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
+.focus-btn:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.focus-btn svg { width:19px; height:19px; }
+.focus-btn.done { background:rgba(95,138,114,0.12); border-color:#2f5a45; color:#7fb89a; }
+.focus-btn.done:hover { background:rgba(95,138,114,0.22); color:#bff0d3; }
 </style>
 </head>
 <body>
@@ -194,6 +267,7 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
       </div>
       <div class="hdr-btns">
         <button class="icon-btn"          id="btn-settings" title="Manager zadań">⚙</button>
+        <button class="icon-btn"          id="btn-focus"    title="Tryb skupienia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg></button>
         <button class="icon-btn size-btn" id="btn-size"     title="Rozmiar (S/M/L)">M</button>
         <button class="icon-btn"          id="btn-opacity"  title="Przezroczystość">◐</button>
         <button class="icon-btn"          id="btn-collapse" title="Zwiń">▾</button>
@@ -208,21 +282,23 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
       <span class="opacity-val" id="opacity-val">90%</span>
     </div>
 
-    <!-- Nazwa zadania + przycisk ✓ (ukończ wcześniej) -->
+    <!-- Przyciski ✗/✓ NAJPIERW, potem nazwa zadania (na życzenie usera) -->
     <div class="task-row" id="task-row">
+      <button class="btn-skip-task" id="btn-skip-task" data-tip="Zrezygnuj / pomiń zadanie" aria-label="Zrezygnuj z zadania" style="display:none">✗</button>
+      <button class="btn-done" id="btn-done" data-tip="Ukończ zadanie" aria-label="Ukończ zadanie" style="display:none">✓</button>
       <div class="task-name muted" id="task-name">Kliknij ⚙ aby dodać zadania</div>
-      <button class="btn-done" id="btn-done" title="Ukończyłem to zadanie wcześniej" style="display:none">✓</button>
     </div>
 
     <!-- Panel wyboru po wcześniejszym ukończeniu -->
     <div class="done-panel" id="done-panel">
       <div class="done-top">
-        <span class="done-msg">✓ Ukończono! Co teraz?</span>
-        <button class="icon-btn" id="btn-cancel-done" title="Wróć do timera">←</button>
+        <span class="done-msg" id="done-msg">✓ Ukończono! Co teraz?</span>
+        <button class="icon-btn" id="btn-cancel-done" data-tip="Wróć do timera" aria-label="Wróć do timera">←</button>
       </div>
       <div class="done-actions">
         <button class="done-btn break-opt" id="btn-choose-break">☕ Przerwa</button>
         <button class="done-btn next-opt"  id="btn-choose-next">▶ Następne →</button>
+        <button class="done-btn cont-opt"  id="btn-continue-work" style="display:none">↻ Jeszcze pracuję</button>
       </div>
     </div>
 
@@ -231,9 +307,8 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
       <div class="timer" id="timer">--:--</div>
       <div class="timer-right">
         <div class="timer-btns">
-          <button class="action-btn"         id="btn-skip"      title="Pomiń fazę">⏭</button>
-          <button class="action-btn done-go" id="btn-done-keep" title="Ukończ zadanie (timer gra dalej)">✓→</button>
-          <button class="action-btn primary" id="btn-play"      title="Start/Pauza">▶</button>
+          <button class="action-btn"         id="btn-skip" data-tip="Pomiń fazę" aria-label="Pomiń fazę">⏭</button>
+          <button class="action-btn primary" id="btn-play" data-tip="Start / pauza" aria-label="Start / pauza">▶</button>
         </div>
       </div>
     </div>
@@ -261,8 +336,22 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 <div class="work-screen hidden" id="work-screen">
   <div class="break-pom-count" id="work-pom-count"></div>
   <span class="work-start-badge">PRACA</span>
-  <div class="work-start-timer" id="work-start-timer">25:00</div>
-  <div class="break-next-task" id="work-start-task"></div>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+    <div class="work-task-label" id="work-task-label">Teraz robisz</div>
+    <div class="work-task-big" id="work-task-big">Sesja Pomodoro</div>
+  </div>
+  <div class="work-timer-wrap">
+    <div class="work-start-timer" id="work-start-timer">25:00</div>
+    <div class="work-timer-sub">do przerwy</div>
+  </div>
+  <div class="work-remain" id="work-remain" style="display:none">
+    <div class="work-remain-top">
+      <span class="work-remain-cap">Na zadanie</span>
+      <span class="work-remain-val" id="work-remain-val">—</span>
+    </div>
+    <div class="work-remain-bar"><div class="work-remain-fill" id="work-remain-fill"></div></div>
+    <div class="work-remain-sub" id="work-remain-sub"></div>
+  </div>
   <div class="break-actions clickzone">
     <button class="break-btn skip"   id="btn-start-work">Zaczynam! ▶</button>
     <button class="break-btn shrink" id="btn-shrink-work">Zmniejsz ↘</button>
@@ -286,6 +375,45 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
   </div>
 </div>
 
+<!-- ═══ FULLSCREEN TRYB SKUPIENIA ════════════════════════════ -->
+<div class="focus-screen hidden clickzone" id="focus-screen">
+  <div class="focus-center">
+    <span class="focus-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/></svg> tryb skupienia</span>
+    <div class="focus-task" id="focus-task">Sesja Pomodoro</div>
+    <span class="focus-sub">Tylko to. Reszta zaczeka.</span>
+  </div>
+
+  <div class="focus-hint"><span class="focus-key">Esc</span> wyjście</div>
+
+  <div class="focus-corner">
+    <div class="focus-pom">
+      <div class="focus-pom-text">
+        <div class="focus-pom-val" id="focus-pom-val">--</div>
+        <div class="focus-pom-cap">do przerwy</div>
+      </div>
+      <svg width="46" height="46" viewBox="0 0 46 46">
+        <circle class="focus-ring-track" cx="23" cy="23" r="18" fill="none" stroke-width="3"></circle>
+        <circle class="focus-ring-fill" id="focus-ring-fill" cx="23" cy="23" r="18" fill="none" stroke-width="3" stroke-linecap="round" stroke-dasharray="113.1" stroke-dashoffset="0" transform="rotate(-90 23 23)"></circle>
+      </svg>
+    </div>
+
+    <div class="focus-budget" id="focus-budget">
+      <div class="focus-budget-top">
+        <span class="focus-budget-cap">zadanie</span>
+        <span class="focus-budget-val" id="focus-budget-val">—</span>
+      </div>
+      <div class="focus-bar"><div class="focus-bar-fill" id="focus-bar-fill"></div></div>
+    </div>
+
+    <div class="focus-ctrls">
+      <button class="focus-btn" id="focus-play" title="Start / pauza" aria-label="Start / pauza"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5v13a1 1 0 0 0 1.5.87l10.5-6.5a1 1 0 0 0 0-1.74L8.5 4.63A1 1 0 0 0 7 5.5z"/></svg></button>
+      <button class="focus-btn" id="focus-skip" title="Pomiń fazę" aria-label="Pomiń fazę"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4" fill="currentColor"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+      <button class="focus-btn done" id="focus-done" title="Ukończ zadanie" aria-label="Ukończ zadanie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+      <button class="focus-btn" id="focus-exit" title="Wyjdź z trybu skupienia (Esc)" aria-label="Wyjdź z trybu skupienia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══ MINI TASKBAR (zwinięty) ═══════════════════════════════ -->
 <div id="taskbar-view" class="clickzone">
   <span class="tb-emoji" id="tb-badge">🍅</span>
@@ -293,7 +421,7 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
   <div class="tb-task"  id="tb-task">Brak zadań</div>
   <div class="tb-timer" id="tb-timer">--:--</div>
   <button class="tb-btn"         id="tb-skip"   title="Pomiń fazę">⏭</button>
-  <button class="tb-btn tb-done" id="tb-done"   title="Ukończ zadanie (timer gra dalej)">✓→</button>
+  <button class="tb-btn tb-done" id="tb-done"   title="Ukończ zadanie">✓</button>
   <button class="tb-btn tb-play" id="tb-play"   title="Start/Pauza">▶</button>
   <button class="tb-btn"         id="tb-expand" title="Rozwiń">▴</button>
   <button class="tb-btn tb-quit" id="tb-quit"   title="Zamknij aplikację">✕</button>
@@ -309,6 +437,14 @@ const ROLE = (api && api.role) || 'overlay'
 // Cache referencji DOM — unikamy dziesiątek getElementById na każdy render.
 const _cache = {}
 const el = id => _cache[id] || (_cache[id] = document.getElementById(id))
+
+// Zamień natywne title=… na własne dymki (data-tip) — nie znikają po chwili / pod okienkiem.
+document.querySelectorAll('[title]').forEach(elx => {
+  const t = elx.getAttribute('title'); if (!t) return
+  elx.setAttribute('data-tip', t)
+  if (!elx.getAttribute('aria-label')) elx.setAttribute('aria-label', t)
+  elx.removeAttribute('title')
+})
 
 const pad2 = n => String(n).padStart(2,'0')
 const fmt  = s => `${pad2(Math.floor(s/60))}:${pad2(s%60)}`
@@ -326,6 +462,10 @@ let opacityOpen  = false
 let initialized  = false
 let lastState    = null
 let prevPhase    = null
+let prevAskDone  = false
+let TASKS        = []          // lista zadań (kanał 'tasks'); stan 'state' jest „lean" (bez listy)
+let clickRects   = []          // prostokąty klikalne (tani hit-test bez elementFromPoint) — patrz niżej
+const HIT_PAD    = 6           // margines klikalności (px) — włącza klik chwilę przed wejściem kursora na widget
 
 // ── Dźwięk przy zmianie faz (WebAudio, bez plików audio) ─────────
 let audioCtx = null
@@ -394,7 +534,9 @@ function setCollapsed(val) { api.cmd(val ? 'collapseWidget' : 'expandWidget') }
 // ── Render: normalny widget ──────────────────────────────────────
 function renderWidget(s) {
   const task      = s.tasks[s.currentIdx]
+  const askDone   = s.askDone
   const earlyDone = s.taskEarlyDone
+  const showPanel = askDone || earlyDone     // panel „Co teraz?" (po czasie lub wcześniejszym ✓)
   const isWork    = s.phase === 'work'
 
   // Badge + dots
@@ -404,14 +546,21 @@ function renderWidget(s) {
   renderDots(el('dots'), s.pomsDone, s.settings.longBreakAfter)
 
   // Przełącz: normalny widok vs panel ukończenia
-  el('task-row').style.display  = earlyDone ? 'none' : 'flex'
-  el('timer-row').style.display = earlyDone ? 'none' : ''
-  el('done-panel').classList.toggle('visible', earlyDone)
+  el('task-row').style.display  = showPanel ? 'none' : 'flex'
+  el('timer-row').style.display = showPanel ? 'none' : ''
+  el('done-panel').classList.toggle('visible', showPanel)
 
-  // Przycisk ✓ — widoczny tylko podczas fazy pracy z aktywnym zadaniem
-  el('btn-done').style.display = (isWork && task && !earlyDone && !opacityOpen) ? '' : 'none'
+  // Wejście w tryb skupienia — tylko gdy trwa praca (nie podczas panelu „Co teraz?" / suwaka)
+  el('btn-focus').style.display = (isWork && !showPanel && !opacityOpen) ? '' : 'none'
 
-  if (!earlyDone) {
+  if (showPanel) {
+    // Komunikat zależny od kontekstu + „Jeszcze pracuję" tylko po upływie czasu
+    setText(el('done-msg'), askDone ? '⏰ Czas minął — ukończone?' : '✓ Ukończono! Co teraz?')
+    el('btn-continue-work').style.display = askDone ? '' : 'none'
+    el('btn-cancel-done').style.display   = askDone ? 'none' : ''
+  }
+
+  if (!showPanel) {
     // Nazwa zadania
     const nameEl = el('task-name')
     if (task)                       { setText(nameEl, task.name); nameEl.className = 'task-name' }
@@ -419,8 +568,10 @@ function renderWidget(s) {
     else if (s.isRunning || isWork) { setText(nameEl, 'Sesja Pomodoro'); nameEl.className = 'task-name' }
     else                            { setText(nameEl, 'Kliknij ⚙ aby dodać zadania'); nameEl.className = 'task-name muted' }
     nameEl.style.display = opacityOpen ? 'none' : ''
-    el('btn-done').style.display = (isWork && task && !opacityOpen) ? '' : 'none'
-    el('btn-done-keep').style.display = (isWork && !!task) ? '' : 'none'
+    // ✓ ukończ i ✗ rezygnacja — widoczne tylko podczas pracy z aktywnym zadaniem
+    const showTaskBtns = isWork && !!task && !opacityOpen
+    el('btn-done').style.display      = showTaskBtns ? '' : 'none'
+    el('btn-skip-task').style.display = showTaskBtns ? '' : 'none'
 
     // Timer
     const timeText = s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--'
@@ -464,8 +615,33 @@ function renderWidget(s) {
 function renderWorkScreen(s) {
   const task = s.tasks[s.currentIdx]
   setText(el('work-start-timer'), s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--')
-  setLabelTask(el('work-start-task'), 'Zadanie:', task ? task.name : '')
+  // Duża nazwa bieżącego zadania
+  setText(el('work-task-big'), task ? task.name : 'Sesja Pomodoro')
+  el('work-task-label').style.display = task ? '' : 'none'
   renderDots(el('work-pom-count'), s.pomsDone, s.settings.longBreakAfter)
+
+  // „Na zadanie" — czas pozostały dla CAŁEGO zadania (osobno od bloku 25 min).
+  const remainBox = el('work-remain')
+  if (task) {
+    remainBox.style.display = ''
+    const totalSec = (task.totalMinutes || 0) * 60
+    const spent    = s.taskSpent || 0
+    const leftSec  = totalSec - spent
+    const valEl    = el('work-remain-val')
+    if (leftSec >= 0) {
+      const leftMin = Math.round(leftSec / 60)
+      setText(valEl, `zostało ~${leftMin} min`)
+      valEl.className = 'work-remain-val' + (leftMin <= 5 ? ' low' : '')
+    } else {
+      setText(valEl, `przekroczono o +${Math.round(-leftSec / 60)} min`)
+      valEl.className = 'work-remain-val over'
+    }
+    const pct = totalSec > 0 ? Math.min(100, spent / totalSec * 100) : 0
+    el('work-remain-fill').style.width = pct.toFixed(1) + '%'
+    setText(el('work-remain-sub'), `${Math.floor(spent / 60)} / ${task.totalMinutes} min`)
+  } else {
+    remainBox.style.display = 'none'
+  }
 }
 
 // ── Render: fullscreen przerwa ───────────────────────────────────
@@ -511,6 +687,65 @@ function renderTaskbar(s) {
   play.className = 'tb-btn tb-play' + (s.isRunning ? ' paused' : '')
 }
 
+// ── Render: fullscreen tryb skupienia ───────────────────────────
+// Pierścień = „do przerwy" (frakcja bieżącego bloku pracy). Pasek = budżet całego zadania
+// (taskSpent / totalMinutes); po przekroczeniu planu pasek i etykieta przechodzą w bursztyn.
+const FOCUS_PLAY  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5.5v13a1 1 0 0 0 1.5.87l10.5-6.5a1 1 0 0 0 0-1.74L8.5 4.63A1 1 0 0 0 7 5.5z"/></svg>'
+const FOCUS_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+const FOCUS_R = 18, FOCUS_C = 2 * Math.PI * FOCUS_R
+function setPlayIcon(node, running) {
+  const key = running ? 'pause' : 'play'
+  if (node._ico === key) return
+  node._ico = key
+  node.innerHTML = running ? FOCUS_PAUSE : FOCUS_PLAY
+}
+function renderFocusScreen(s) {
+  const task = s.tasks[s.currentIdx]
+  setText(el('focus-task'), task ? task.name : 'Sesja Pomodoro')
+
+  // Pomidor: ile do przerwy (bez sekund — „bez presji")
+  const workSec = (s.settings.workMinutes || 25) * 60
+  const left    = Math.max(0, s.phaseLeft || 0)
+  setText(el('focus-pom-val'), left > 0 ? `~${Math.max(1, Math.round(left / 60))} min` : '0 min')
+  const frac = workSec > 0 ? Math.max(0, Math.min(1, left / workSec)) : 0
+  el('focus-ring-fill').style.strokeDashoffset = (FOCUS_C * (1 - frac)).toFixed(1)
+
+  setPlayIcon(el('focus-play'), s.isRunning)
+
+  // Budżet całego zadania
+  const budget = el('focus-budget')
+  const doneBtn = el('focus-done')
+  if (task) {
+    budget.style.visibility = 'visible'
+    doneBtn.style.display = ''
+    const totalSec = (task.totalMinutes || 0) * 60
+    const spent    = s.taskSpent || 0
+    const overtime = totalSec > 0 && spent > totalSec
+    const pct      = totalSec > 0 ? Math.min(100, spent / totalSec * 100) : 0
+    const fill     = el('focus-bar-fill')
+    fill.style.width = pct.toFixed(1) + '%'
+    fill.classList.toggle('over', overtime)
+    const spentMin = Math.floor(spent / 60)
+    const valEl = el('focus-budget-val')
+    if (overtime) { setText(valEl, `+${spentMin - task.totalMinutes} min ponad plan`); valEl.classList.add('over') }
+    else          { setText(valEl, `${spentMin} / ${task.totalMinutes} min`);          valEl.classList.remove('over') }
+  } else {
+    budget.style.visibility = 'hidden'
+    doneBtn.style.display = 'none'
+  }
+}
+
+// ── Hit-test klikalności (tanie liczenie prostokątów, bez elementFromPoint na każdy ruch) ──
+function fullRect()   { return { l: 0, t: 0, r: window.innerWidth, b: window.innerHeight } }
+function rectOf(node) {
+  const r = node.getBoundingClientRect()
+  return { l: r.left - HIT_PAD, t: r.top - HIT_PAD, r: r.right + HIT_PAD, b: r.bottom + HIT_PAD }
+}
+function pointInClickRects(x, y) {
+  for (const r of clickRects) if (x >= r.l && x < r.r && y >= r.t && y < r.b) return true
+  return false
+}
+
 // ── Główny render ────────────────────────────────────────────────
 function render(s) {
   try {
@@ -525,11 +760,17 @@ function render(s) {
     }
 
     // Dźwięk na przejściu praca↔przerwa — tylko w dużym oknie (tray dublowałby).
-    if (ROLE === 'overlay' && prevPhase && prevPhase !== s.phase &&
-        ACTIVE_PHASES.includes(s.phase) && ACTIVE_PHASES.includes(prevPhase)) {
-      chime(s.phase === 'work')
+    if (ROLE === 'overlay') {
+      if (prevPhase && prevPhase !== s.phase &&
+          ACTIVE_PHASES.includes(s.phase) && ACTIVE_PHASES.includes(prevPhase)) {
+        chime(s.phase === 'work')
+      }
+      // Koniec bloku pracy z aktywnym zadaniem: faza się NIE zmienia (askDone) — osobny sygnał,
+      // żeby najważniejszy moment (decyzja „ukończone?") nie był niemy.
+      if (s.askDone && !prevAskDone) chime(false)
     }
-    prevPhase = s.phase
+    prevPhase   = s.phase
+    prevAskDone = s.askDone
 
     // Okno-listwa (tray): rysuje WYŁĄCZNIE mini-pasek na całe okno. Jego pokazywaniem/
     // chowaniem steruje main (tylko gdy zwinięte). Tu zawsze renderujemy pasek.
@@ -543,6 +784,30 @@ function render(s) {
       return
     }
 
+    // Okno trybu skupienia (osobne, nieprzezroczyste, fullscreen): rysuje WYŁĄCZNIE ekran focus.
+    if (ROLE === 'focus') {
+      el('widget').style.display = 'none'
+      el('taskbar-view').style.display = 'none'
+      el('break-screen').classList.add('hidden')
+      el('work-screen').classList.add('hidden')
+      el('focus-screen').classList.remove('hidden')
+      renderFocusScreen(s)
+      return
+    }
+
+    // W dużym oknie nakładki tryb skupienia tylko chowa widget/kurtyny — czerń i UI focusa są
+    // na osobnym oknie (focusWin). Duże, transparentne okno i tak nie zasłoniłoby paska zadań.
+    if (s.focusMode) {
+      el('taskbar-view').style.display = 'none'
+      el('widget').style.display = 'none'
+      el('break-screen').classList.add('hidden')
+      el('work-screen').classList.add('hidden')
+      el('focus-screen').classList.add('hidden')
+      clickRects = []            // nic nie widać → przepuszczaj klik (kliki łapie osobne okno focus)
+      return
+    }
+    el('focus-screen').classList.add('hidden')
+
     // Duże okno: wszystkie tryby to przełączenie widoczności warstw (CSS), bez operacji na
     // oknie → nic nie miga. Mini-pasek (zwinięcie) obsługuje OSOBNE okno tray, więc tu przy
     // zwinięciu nie pokazujemy nic (okno przezroczyste).
@@ -551,6 +816,7 @@ function render(s) {
       el('break-screen').classList.add('hidden')
       el('work-screen').classList.add('hidden')
       el('widget').style.display = 'none'
+      clickRects = []            // duże okno puste → przepuszczaj (listwę obsługuje osobne okno tray)
       return
     }
 
@@ -563,10 +829,12 @@ function render(s) {
       el('widget').style.display = 'none'
       if (showBreak) renderBreakScreen(s)
       else           renderWorkScreen(s)
+      clickRects = [fullRect()]      // cała kurtyna łapie klik (blokuje pulpit na czas przerwy/startu)
     } else {
       el('widget').style.display = ''
       placeWidget()                  // pozycja małego widgetu (CSS) z zapisanego S.pos
       renderWidget(s)
+      clickRects = [rectOf(el('widget'))]   // klikalny tylko widget; reszta ekranu przepuszcza
     }
   } catch (err) {
     console.error('render error', err)
@@ -579,7 +847,6 @@ function render(s) {
 // ── Kontrolki ────────────────────────────────────────────────────
 el('btn-play').addEventListener('click',     () => api.cmd('toggle'))
 el('btn-skip').addEventListener('click',      () => api.cmd('skipPhase'))
-el('btn-done-keep').addEventListener('click', () => api.cmd('doneKeepTimer'))
 el('btn-settings').addEventListener('click', () => api.cmd('openManager'))
 el('btn-quit').addEventListener('click',     () => api.cmd('quit'))
 el('btn-collapse').addEventListener('click', () => setCollapsed(true))
@@ -601,6 +868,10 @@ el('btn-opacity').addEventListener('click', () => {
   if (nameEl) nameEl.style.display = opacityOpen ? 'none' : ''
   const doneBtn = el('btn-done')
   if (doneBtn) doneBtn.style.display = opacityOpen ? 'none' : ''
+  const skipBtn = el('btn-skip-task')
+  if (skipBtn) skipBtn.style.display = opacityOpen ? 'none' : ''
+  const focusBtn = el('btn-focus')
+  if (focusBtn) focusBtn.style.display = (!opacityOpen && lastState && lastState.phase === 'work' && !lastState.askDone && !lastState.taskEarlyDone) ? '' : 'none'
 })
 el('opacity-slider').addEventListener('input', e => {
   const pct = parseInt(e.target.value)
@@ -608,11 +879,13 @@ el('opacity-slider').addEventListener('input', e => {
   api.cmd('setOpacity', { value: pct / 100 })
 })
 
-// Wczesne ukończenie zadania
+// ✓ Ukończ zadanie / ✗ Rezygnacja oraz panel wyboru „Co teraz?"
 el('btn-done').addEventListener('click',          () => api.cmd('completeEarly'))
+el('btn-skip-task').addEventListener('click',     () => api.cmd('nextTask'))
 el('btn-cancel-done').addEventListener('click',   () => api.cmd('cancelEarly'))
 el('btn-choose-break').addEventListener('click',  () => api.cmd('chooseBreak'))
 el('btn-choose-next').addEventListener('click',   () => api.cmd('chooseNext'))
+el('btn-continue-work').addEventListener('click', () => api.cmd('continueAfterTimeUp'))
 
 // Fullscreen przerwa
 el('btn-skip-break').addEventListener('click',   () => api.cmd('skipPhase'))
@@ -627,9 +900,26 @@ el('tb-done').addEventListener('click',   () => api.cmd('doneKeepTimer'))
 el('tb-play').addEventListener('click',   () => api.cmd('toggle'))
 el('tb-expand').addEventListener('click', () => setCollapsed(false))
 
-api.onState(s => { lastState = s; render(s) })
+// Tryb skupienia: wejście z nagłówka, sterowanie z rogu, wyjście (ikona / Esc)
+el('btn-focus').addEventListener('click',   () => api.cmd('enterFocus'))
+el('focus-play').addEventListener('click',  () => api.cmd('toggle'))
+el('focus-skip').addEventListener('click',  () => api.cmd('skipPhase'))
+el('focus-done').addEventListener('click',  () => api.cmd('doneKeepTimer'))
+el('focus-exit').addEventListener('click',  () => api.cmd('exitFocus'))
+window.addEventListener('keydown', e => {
+  const inFocus = ROLE === 'focus' || (lastState && lastState.focusMode)
+  if (e.key === 'Escape' && inFocus) { e.preventDefault(); api.cmd('exitFocus') }
+  else if (ROLE === 'focus' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); api.cmd('toggle') }
+})
+
+// Lista zadań przychodzi osobnym kanałem (tylko przy zmianie); stan 'state' jest „lean" (bez listy).
+api.onTasks(t => {
+  TASKS = t || []
+  if (lastState) { lastState.tasks = TASKS; render(lastState) }
+})
+api.onState(s => { s.tasks = TASKS; lastState = s; render(s) })
 api.getState()
-  .then(s => { if (s) { lastState = s; render(s) } })
+  .then(s => { if (s) { TASKS = s.tasks || []; lastState = s; render(s) } })
   .catch(err => { console.error('getState failed', err); document.body.style.visibility = 'visible' })
 
 // ════════════════════════════════════════════════════════════════════════
@@ -676,22 +966,27 @@ if (ROLE === 'overlay') {
   window.addEventListener('mouseup', () => {
     if (!dragging) return
     dragging = false
+    clickRects = [rectOf(el('widget'))]   // odśwież prostokąt klikalny po przeciągnięciu (bez czekania na render)
     const sx = (window.screenX || 0) + parseInt(el('widget').style.left || '0', 10)
     const sy = (window.screenY || 0) + parseInt(el('widget').style.top  || '0', 10)
     api.cmd('saveWidgetPos', { x: sx, y: sy })
   })
 
-  // Klikalność: gdy kursor nad .clickzone (widget / przyciski przerwy) → włącz klik;
-  // nad obszarem przezroczystym → przepuszczaj (pulpit znów klikalny).
+  // Klikalność: kursor nad prostokątem klikalnym (widget / kurtyna) → włącz klik; poza → przepuszczaj.
+  // Zamiast elementFromPoint na KAŻDY ruch (kosztowny hit-test wymuszający layout, odpalany dla ruchu
+  // po całym ekranie przez forward:true) — tani test „punkt w prostokącie" na clickRects, koalescowany
+  // do jednej próbki na klatkę (rAF). Zachowuje natychmiastową reakcję, znosi stały narzut CPU.
   const setClickThrough = (passThrough) => {
     if (passThrough === ignoringLocal) return
     ignoringLocal = passThrough
     if (passThrough) api.mouseLeave(); else api.mouseEnter()
   }
+  let hitRAF = 0, hitX = 0, hitY = 0
+  const runHit = () => { hitRAF = 0; setClickThrough(!pointInClickRects(hitX, hitY)) }
   window.addEventListener('mousemove', e => {
     if (dragging) return                                  // przy przeciąganiu okno zostaje klikalne
-    const node = document.elementFromPoint(e.clientX, e.clientY)
-    setClickThrough(!(node && node.closest('.clickzone')))
+    hitX = e.clientX; hitY = e.clientY
+    if (!hitRAF) hitRAF = requestAnimationFrame(runHit)
   })
   document.documentElement.addEventListener('mouseleave', () => { if (!dragging) setClickThrough(true) })
 }
