@@ -1,4 +1,4 @@
-// Pomodoro Overlay Timer v1.3.0
+// Pomodoro Overlay Timer v1.3.1
 // Copyright (c) 2026 Mariusz Świerguła <Mariusz.swiergula@gmail.com>
 // MIT License — https://opensource.org/licenses/MIT
 //
@@ -232,7 +232,7 @@ const S = {
   taskEarlyDone:  false,   // czeka na wybór po ręcznym ukończeniu zadania
   askDone:        false,   // koniec bloku pracy z aktywnym zadaniem → pytamy „Ukończone?"
   pos:           (saved?.pos && typeof saved.pos.x === 'number') ? saved.pos : null,
-  collapsedMode: false,
+  collapsedMode: true,    // start ZAWSZE jako zwinięta listwa nad paskiem zadań (zasłania zegar); AltGr+M / ▴ rozwija
   focusMode:     false,   // pełnoekranowy tryb skupienia (czarne tło, nazwa zadania, minutnik w rogu)
   termsVersion:  clampInt(saved?.termsVersion, 0, 9999, 0),   // 0 = warunki jeszcze niezaakceptowane
 }
@@ -319,6 +319,22 @@ function reassertTopmost() {
       focusWin.setAlwaysOnTop(true, 'screen-saver', 1)
     return
   }
+  if (S.collapsedMode) {
+    // Zwinięte: nakładka nic nie pokazuje i przepuszcza kliki — jej z-order nie ma znaczenia,
+    // więc jej NIE podnosimy. Za to pasek zadań potrafi wskoczyć NAD listwę (zmierzone sondą
+    // z-order: nakładka Wycinania po PrtScn + Alt+Tab robi to w 100% przypadków, także na
+    // v1.2.1) i bez reasercji listwa ginie pod nim na stałe. Podnosimy więc WYŁĄCZNIE listwę:
+    // sam setAlwaysOnTop, bez setBounds i bez drugiego okna w tej samej sekundzie — dwa
+    // podbicia naraz (nakładka+listwa) powodowały kiedyś widoczne mrugnięcie co 1 s.
+    if (tray && !tray.isDestroyed()) {
+      if (!tray.isVisible()) {
+        tray.showInactive()                        // samonaprawa: zwinięte = listwa MA być widoczna (okno opaque → show nie migocze)
+        tray.webContents.send('state', leanState())   // + świeży stan (ukryta nie dostawała broadcastów)
+      }
+      tray.setAlwaysOnTop(true, 'screen-saver', 1)
+    }
+    return
+  }
   applyWindowLevel()
 }
 
@@ -393,15 +409,13 @@ function setIgnore(v) {
 
 // Prostokąt zwiniętej listwy: NA pasku zadań (od jego górnej krawędzi w dół), przy prawej
 // krawędzi ekranu — dokładnie jak w pierwotnej wersji, która nachodziła na zegar.
-// Rezerwa przy prawej krawędzi = obszar zegara + zasobnika systemowego Windows. Listwa siada NA
-// pasku zadań, ale NIE zasłania zegara/ikon zasobnika, żeby dało się w nie kliknąć.
-const TRAY_TRAY_RESERVE = 200
+// Prostokąt zwiniętej listwy: NA pasku zadań, przy PRAWEJ krawędzi — CELOWO nachodzi na zegar
+// i zasobnik (podstawowe wymaganie: listwa zasłania zegar). NIE dodawać rezerwy z prawej.
 function trayBounds() {
   const { bounds, workArea } = screen.getPrimaryDisplay()
   const taskbarH = Math.max(36, bounds.height - workArea.height - workArea.y)
-  const w = Math.max(300, Math.round(bounds.width * 0.24))
-  const x = bounds.x + bounds.width - TRAY_TRAY_RESERVE - w
-  return { x: Math.max(bounds.x, x), y: workArea.y + workArea.height, width: w, height: taskbarH }
+  const w = Math.max(340, Math.round(bounds.width * 0.28))
+  return { x: bounds.x + bounds.width - w, y: workArea.y + workArea.height, width: w, height: taskbarH }
 }
 // Pokaż/ukryj okno-listwę zgodnie z trybem. Nieprzezroczyste okno → pokaż/ukryj nie migocze.
 function syncTray() {
@@ -410,6 +424,9 @@ function syncTray() {
     tray.setBounds(trayBounds())                 // odśwież pozycję (np. po zmianie rozdzielczości)
     tray.setAlwaysOnTop(true, 'screen-saver', 1)
     if (!tray.isVisible()) tray.showInactive()
+    // Ukryta listwa NIE dostaje broadcastów (patrz broadcast) — po pokazaniu natychmiast
+    // wyślij świeży stan, inaczej do najbliższego ticku/cmd renderowałaby nieaktualne dane.
+    tray.webContents.send('state', leanState())
   } else if (tray.isVisible()) {
     tray.hide()
   }
@@ -418,8 +435,12 @@ function syncTray() {
 // Tryby wyświetlania = TYLKO zmiana flag stanu + poziomu okna + pokaż/ukryj listwę. Widok
 // dużego okna przełącza renderer (broadcast → render w overlay.html); duże okno NIGDY nie
 // zmienia rozmiaru ani się nie chowa, więc nic nie miga.
+// UWAGA: shrinkOverlay NIE rusza collapsedMode — „powrót do widgetu" z kurtyn dotyczy okna
+// rozwiniętego (collapsedMode=false i tak), a akcje z Managera/listwy (saveTasks, startTaskNow,
+// nextTask) przy zwiniętej listwie NIE mogą jej chować (bug: „dodaję zadanie → listwa znika").
+// Kurtyny nadal rozwijają przez expandOverlay (tam zdjęcie zwinięcia jest celowe).
 function expandOverlay() { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // wejście w kurtynę (przerwa/start pracy)
-function shrinkOverlay() { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // powrót do widgetu
+function shrinkOverlay() { applyWindowLevel(); syncTray() }                            // powrót do widgetu / odświeżenie listwy
 function doCollapse()    { S.collapsedMode = true;  applyWindowLevel(); syncTray() }   // zwiń → listwa na pasku zadań
 function doExpand()      { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // rozwiń → widget
 
@@ -439,6 +460,13 @@ function tick() {
       S.isRunning = false
       S.askDone   = true
       exitFocusIfOn()   // pokaż panel „Ukończone?" w widgetcie zamiast czarnego ekranu
+      // Panel „Ukończone?" żyje TYLKO w widgetcie dużego okna i musi być WIDOCZNY:
+      // niezamknięty ekran PRACA zasłoniłby pytanie (renderer rysuje kurtynę zamiast widgetu),
+      // a listwa nie mieści trzech wyborów — przy zwiniętej rozwiń widget (droga jak ▴/AltGr+M).
+      // Powrót do zwiniętej: użytkownik, jak po każdej kurtynie (spójne z resztą przepływów).
+      S.workStartExpanded = false
+      if (S.collapsedMode) doExpand()
+      else applyWindowLevel()   // poziom okna wraca z 'floating' (kurtyna) na 'screen-saver' od razu, nie po 1 s strażnika
     } else {
       nextPhase()   // prosty pomodoro bez zadania / przerwa → klasyczne przejście
     }
@@ -631,6 +659,9 @@ function createTray() {
   win.setAlwaysOnTop(true, 'screen-saver', 1)
   if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   win.loadFile(path.join(__dirname, 'overlay.html'))
+  // Start w trybie zwiniętym: pokaż listwę dokładnie w chwili, gdy renderer ma co malować
+  // (bez tego pierwszy raz pokazałby ją dopiero strażnik topmost, do ~1 s po starcie).
+  win.once('ready-to-show', () => { if (S.collapsedMode) syncTray() })
   return win
 }
 
@@ -781,8 +812,11 @@ function handleCmd(cmd, data) {
       break
 
     // Ukończ zadanie, nie zatrzymując timera — usuwa z listy, skacze do kolejnego
+    // ✓ ukończ bieżące zadanie (widżet/listwa/focus/AltGr+D). Działa TAKŻE w przerwie —
+    // listwa jest od startu-zwiniętego głównym widokiem; przerwa biegnie wtedy dalej,
+    // a po niej ekran PRACA pokaże już następne zadanie.
     case 'doneKeepTimer':
-      if (S.tasks.length > 0 && S.phase === 'work') {
+      if (S.currentIdx < S.tasks.length && S.phase !== 'idle' && S.phase !== 'done') {
         logTaskCompletion(S.tasks[S.currentIdx], 'completed')
         S.tasks.splice(S.currentIdx, 1)
         S.taskSpent = 0; S.pomsDone = 0

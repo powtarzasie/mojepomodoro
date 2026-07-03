@@ -91,6 +91,18 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
   padding:5px 9px; border-radius:6px; border:1px solid rgba(255,255,255,0.14);
   box-shadow:0 6px 18px rgba(0,0,0,0.55); z-index:9999; pointer-events:none;
 }
+/* Okno listwy (tray) ma dokładnie wysokość paska zadań — dymek NAD przyciskiem wypada poza
+   obrys okna i Windows go ucina. Rysuj dymek WEWNĄTRZ listwy: wyśrodkowany w pionie, z boku
+   przycisku — z LEWEJ dla przycisków przy prawej krawędzi (▶/▴/✕), z PRAWEJ dla ⏭/✓ przy
+   lewej krawędzi (inaczej ucinałby je lewy brzeg okna). */
+body.role-tray [data-tip]:hover::after {
+  bottom:auto; left:auto; top:50%; right:calc(100% + 8px);
+  transform:translateY(-50%);
+}
+body.role-tray #tb-skip:hover::after,
+body.role-tray #tb-done:hover::after {
+  right:auto; left:calc(100% + 8px);
+}
 
 /* ══ PANEL WYBORU po wcześniejszym ukończeniu ════════════ */
 .done-panel { display:none; margin-bottom:var(--gap-task); }
@@ -415,13 +427,14 @@ body { font-family: -apple-system,'Segoe UI',sans-serif; background: transparent
 </div>
 
 <!-- ═══ MINI TASKBAR (zwinięty) ═══════════════════════════════ -->
+<!-- Przyciski ⏭/✓ po LEWEJ stronie nazwy zadania (spójnie z widgetem: ✗/✓ przed nazwą) -->
 <div id="taskbar-view" class="clickzone">
   <span class="tb-emoji" id="tb-badge">🍅</span>
   <div class="tb-sep"></div>
-  <div class="tb-task"  id="tb-task">Brak zadań</div>
-  <div class="tb-timer" id="tb-timer">--:--</div>
   <button class="tb-btn"         id="tb-skip"   title="Pomiń fazę">⏭</button>
   <button class="tb-btn tb-done" id="tb-done"   title="Ukończ zadanie">✓</button>
+  <div class="tb-task"  id="tb-task">Brak zadań</div>
+  <div class="tb-timer" id="tb-timer">--:--</div>
   <button class="tb-btn tb-play" id="tb-play"   title="Start/Pauza">▶</button>
   <button class="tb-btn"         id="tb-expand" title="Rozwiń">▴</button>
   <button class="tb-btn tb-quit" id="tb-quit"   title="Zamknij aplikację">✕</button>
@@ -433,6 +446,8 @@ const api = window.bridge
 // Rola okna: 'tray' = małe okno zwiniętej listwy (rysuje TYLKO mini-pasek na całe okno);
 // 'overlay' (domyślnie) = duże okno (widget + kurtyna). Patrz main.js / preload.
 const ROLE = (api && api.role) || 'overlay'
+// Klasa roli na <body> — CSS listwy (np. położenie dymków) różni się od dużego okna.
+if (ROLE === 'tray') document.body.classList.add('role-tray')
 
 // Cache referencji DOM — unikamy dziesiątek getElementById na każdy render.
 const _cache = {}
@@ -673,15 +688,16 @@ function renderBreakScreen(s) {
 // ── Render: mini taskbar ────────────────────────────────────────
 function renderTaskbar(s) {
   const task   = s.tasks[s.currentIdx]
-  const isWork = s.phase === 'work'
   setText(el('tb-badge'), PHASE_EMOJI[s.phase] || '◉')
   const taskEl = el('tb-task')
   setText(taskEl, task ? task.name : (s.phase === 'done' ? '✓ Ukończono!' : 'Brak zadań'))
   taskEl.style.opacity = task ? '1' : '0.45'
   setText(el('tb-timer'), s.phaseLeft > 0 ? fmt(s.phaseLeft) : '--:--')
-  // ⏭ pomiń — gdy faza jest aktywna; ✓→ ukończ — tylko podczas pracy z zadaniem
-  el('tb-skip').style.display = (s.phase !== 'idle' && s.phase !== 'done') ? '' : 'none'
-  el('tb-done').style.display = (isWork && !!task) ? '' : 'none'
+  // ⏭ pomiń — gdy faza jest aktywna; ✓ ukończ — ZAWSZE gdy jest aktywne zadanie (także w
+  // przerwie/pauzie). Listwa to od startu-zwiniętego główny widok — ✓ nie może zależeć od fazy.
+  const active = s.phase !== 'idle' && s.phase !== 'done'
+  el('tb-skip').style.display = active ? '' : 'none'
+  el('tb-done').style.display = (active && !!task) ? '' : 'none'
   const play = el('tb-play')
   setText(play, s.isRunning ? '⏸' : '▶')
   play.className = 'tb-btn tb-play' + (s.isRunning ? ' paused' : '')

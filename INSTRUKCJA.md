@@ -59,8 +59,10 @@ Przy **pierwszym** uruchomieniu pojawi się jednorazowy ekran **„Warunki korzy
 i kliknij **„Akceptuję i kontynuuję"**. Bez akceptacji aplikacja się nie uruchomi;
 ekran nie pojawi się ponownie (chyba że warunki się zmienią).
 
-Po akceptacji w rogu ekranu pojawi się półprzezroczysty widżet z licznikiem. To wszystko, czego
-potrzebujesz, by zacząć — kliknij **▶**, aby ruszyć z pierwszą sesją pracy.
+Po akceptacji aplikacja pojawi się **zwinięta** — jako wąska mini-listwa na pasku zadań,
+przy prawej krawędzi ekranu (celowo zasłania systemowy zegar: zamiast godziny widzisz
+swój licznik). Kliknij **▶** na listwie, aby ruszyć z pierwszą sesją pracy, albo **▴**
+(lub `AltGr+M`), aby rozwinąć pełny widżet.
 
 Bez listy zadań program działa jak zwykły licznik Pomodoro. Gdy dodasz zadania
 (patrz [okno Manager](#6-okno-manager--zadania-i-ustawienia)), licznik poprowadzi
@@ -75,6 +77,7 @@ Cię przez nie po kolei.
 | Ikona | Działanie |
 |-------|-----------|
 | ⚙ | Otwiera okno **Manager** (zadania i ustawienia) |
+| ⛶ | **Tryb skupienia** — pełnoekranowa czerń z nazwą zadania (widoczny tylko podczas pracy; patrz [rozdział 4](#4-tryby-pełnoekranowe)) |
 | S / M / L | Rozmiar widżetu — klikaj, by przełączać mały / średni / duży |
 | ◐ | Suwak przezroczystości widżetu |
 | ▾ | Zwija widżet do wąskiego [mini-paska](#5-mini-pasek) |
@@ -88,11 +91,21 @@ Cię przez nie po kolei.
 | Duża cyfra `25:00` | Czas do końca bieżącej fazy (w ostatniej minucie robi się czerwona) |
 | ▶ / ⏸ | Start / pauza licznika |
 | ⏭ | Pomiń bieżącą fazę (np. od razu zacznij przerwę albo wróć do pracy) |
-| ✓→ | Oznacz zadanie jako ukończone, **bez zatrzymywania** timera — przeskok do następnego zadania |
-| ✓ | „Skończyłem to zadanie wcześniej" — pojawia się wybór **☕ Przerwa** albo **▶ Następne** |
+| ✓ | **Ukończ zadanie** — pojawia się wybór **☕ Przerwa** albo **▶ Następne** |
+| ✗ | **Rezygnacja / pomiń** — odkłada bieżące zadanie (zapis jako „pominięte") i przechodzi do następnego |
 
 Pasek na dole widżetu pokazuje, ile minut już poświęciłeś na bieżące zadanie
 względem planu.
+
+### Pytanie „Ukończone?" po upływie bloku pracy
+
+Gdy skończy się blok pracy (np. 25 min), a masz aktywne zadanie, licznik zatrzyma się
+i zapyta: **czy zadanie jest ukończone?** Do wyboru: **☕ Przerwa** (ukończone →
+odpoczynek), **▶ Następne** (ukończone → od razu kolejne zadanie) albo
+**↻ Jeszcze pracuję** (zadanie trwa dalej — bierzesz zaplanowaną przerwę i wracasz
+do niego). Dzięki temu jedno zadanie może spokojnie zająć kilka „pomidorów".
+Jeśli pracujesz przy zwiniętej mini-listwie, widżet rozwinie się automatycznie,
+żeby pokazać pytanie (z powrotem zwiniesz go przyciskiem **▾** lub `AltGr+M`).
 
 ---
 
@@ -111,16 +124,23 @@ względem planu.
 - ☕ **Przerwa** — gdy zaczyna się przerwa, widżet rozwija się na cały ekran z dużym
   licznikiem (przypomnienie, by odpocząć). Tło nadal przepuszcza kliknięcia —
   możesz korzystać z pulpitu; klikalne są tylko **„Pomiń przerwę"** i **„Zmniejsz"**.
-- 🍅 **Powrót do pracy** — po przerwie pokazuje się ekran „PRACA". Kliknij
-  **„Zaczynam!"** lub **„Zmniejsz"**, aby wrócić do małego widżetu.
+- 🍅 **Powrót do pracy** — po przerwie pokazuje się ekran „PRACA" z dużą nazwą
+  bieżącego zadania i czasem pozostałym na to zadanie. Kliknij **„Zaczynam!"**
+  lub **„Zmniejsz"**, aby wrócić do małego widżetu.
+- ⛶ **Tryb skupienia** — podczas pracy przycisk ⛶ w nagłówku widżetu (lub `AltGr+F`)
+  zaciemnia cały ekran: zostaje tylko nazwa zadania, a w prawym dolnym rogu dyskretny
+  minutnik „do przerwy" i pasek budżetu zadania. Wyjście: `Esc`, ikona w rogu albo
+  ponownie `AltGr+F`; `Enter`/`Spacja` = start/pauza. Po końcu bloku pracy tryb
+  wyłącza się sam.
 
 ---
 
 ## 5. Mini-pasek
 
-Po kliknięciu **▾** widżet zwija się do wąskiego paska tuż nad paskiem zadań.
-Zawiera: emoji fazy, nazwę zadania, czas, **⏭** pomiń, **✓→** ukończ, start/pauzę,
-**▴** (rozwiń z powrotem) oraz **✕** (zamknij aplikację).
+**Tak uruchamia się aplikacja** — zwinięta do wąskiego paska na pasku zadań, przy
+prawej krawędzi (na miejscu zegara). Wrócisz do niego z widżetu przyciskiem **▾**.
+Pasek zawiera: emoji fazy, **⏭** pomiń, **✓** ukończ, nazwę zadania, czas, start/pauzę,
+**▴** (rozwiń do widżetu) oraz **✕** (zamknij aplikację).
 
 ---
 
@@ -135,8 +155,10 @@ się w liczniku.
 | ⠿ (uchwyt) | Przeciągnij, aby zmienić kolejność zadań |
 | ✕ | Usuwa dane zadanie z listy |
 | ⏱ **Pomodoro** | Długość pracy, krótkiej i długiej przerwy oraz co ile sesji wypada długa przerwa |
+| ▶ **Zacznij teraz** | Przycisk przy każdym zadaniu — ustawia je jako bieżące od razu. Jeśli coś już trwa, aplikacja zapyta, co zrobić z przerwanym zadaniem (wróci do kolejki czy zostanie pominięte) |
 | ⏻ **Autostart z Windows** | Uruchamia aplikację po starcie systemu. Timer **nie rusza sam** — po starcie czeka w pauzie na pierwszym niedokończonym zadaniu, aż klikniesz **▶** |
-| 💾 **Zapisz i zastosuj** | Zapisuje zmiany. Sama zmiana nazw nie kasuje bieżącego postępu; zmiana liczby lub kolejności zadań startuje plan od nowa |
+| ✓ **Autozapis** | Zmiany na liście stosują się same (nie ma przycisku „Zapisz"). Dopisanie zadania na koniec, zmiana nazw albo kolejności **nie kasuje** postępu bieżącego zadania; plan startuje od nowa tylko, gdy zmienisz długość lub usuniesz zadanie, które właśnie robisz |
+| ↩ **Cofnij** | Po dodaniu lub usunięciu zadania na dole pojawia się na chwilę przycisk „Cofnij" |
 | 🔄 **Resetuj timer** | Wraca do pierwszego zadania i zeruje postęp |
 
 ---
@@ -153,8 +175,8 @@ Przycisk **📥 Importuj CSV** wczytuje listę zadań z pliku **.csv**, **.tsv**
   - **czas** w kolumnie typu *minuty / min / czas / time / duration / estimate*.
 - Jeśli plik **nie ma nagłówków**, brana jest **1. kolumna jako nazwa**, a **2. jako minuty**.
 - Gdy minut brak — zadanie dostaje domyślne **25 min** (dozwolony zakres 1–480).
-- Zaimportowane zadania **dopisują się** do listy (niczego nie kasują). To dopiero
-  podgląd — możesz je poprawić, a następnie kliknij **💾 Zapisz i zastosuj**.
+- Zaimportowane zadania **dopisują się** do listy (niczego nie kasują) — możesz je
+  od razu poprawić; zmiany zapisują się automatycznie.
 
 **Przykładowy plik CSV:**
 
@@ -211,7 +233,12 @@ Działają **w całym systemie** (nawet gdy okno aplikacji nie jest aktywne):
 |-------|-----------|
 | `Ctrl+Alt+P` | Start / pauza |
 | `Ctrl+Alt+K` | Pomiń bieżącą fazę |
-| `Ctrl+Alt+M` | Zwiń / rozwiń widżet (działa też prawy `AltGr+M`) |
+| `Ctrl+Alt+M` | Zwiń / rozwiń widżet |
+| `Ctrl+Alt+F` | Tryb skupienia — wejście / wyjście |
+| `Ctrl+Alt+D` | Ukończ bieżące zadanie |
+| `Ctrl+Alt+T` | Otwórz Manager zadań |
+
+Zamiast `Ctrl+Alt` możesz użyć prawego `AltGr` (np. `AltGr+M`) — to ta sama kombinacja.
 
 > Jeśli inny program zajmuje już dany skrót, może on u nas nie zadziałać — to
 > normalne ograniczenie systemu Windows.

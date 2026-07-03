@@ -771,7 +771,7 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
   </div>
 
   <div style="text-align:center; font-size:10px; color:rgba(255,255,255,0.10); margin-top:20px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.04); letter-spacing:.03em;">
-    Pomodoro Overlay v1.3.0 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
+    Pomodoro Overlay v1.3.1 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
   </div>
 
 </div>
@@ -1415,7 +1415,7 @@ document.getElementById('composer-start').addEventListener('click', commitCompos
 
 // ── Import zadań z CSV ────────────────────────────────────────────
 // Dołącza zaimportowane pozycje do listy (nie zastępuje). Trafiają do bufora
-// edycji jako podgląd — użytkownik może je poprawić i klika „Zapisz i zastosuj".
+// edycji i stosują się autozapisem (markDirty) — jak każda inna edycja listy.
 document.getElementById('import-csv-btn').addEventListener('click', async () => {
   let res
   try { res = await api.importTasks() } catch (e) { alert('Import nie powiódł się:\n' + e); return }
@@ -1433,7 +1433,7 @@ document.getElementById('import-csv-btn').addEventListener('click', async () => 
   renderTaskList()
   updateTotalTime()
   alert(`Zaimportowano ${imported.length} zadań z pliku „${res.file}".\n\n` +
-        `Sprawdź i ewentualnie popraw listę, a następnie kliknij „Zapisz i zastosuj".`)
+        `Sprawdź i ewentualnie popraw listę — zmiany zapisują się automatycznie.`)
 })
 
 // ── Eksport zadań do CSV ──────────────────────────────────────────

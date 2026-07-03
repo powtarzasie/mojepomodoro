@@ -73,11 +73,13 @@ kbd {
   </div>
 
   <div class="help-h">Czym jest ta aplikacja</div>
-  <p>Pomodoro Overlay to mały licznik czasu (nakładka), który „pływa" zawsze na wierzchu innych okien. Pomaga pracować <b>metodą Pomodoro</b>: bloki skupionej pracy przeplatane krótkimi przerwami. Okno <b>Manager</b> służy do zarządzania zadaniami i ustawieniami — sam licznik widać jako widżet w rogu ekranu.</p>
+  <p>Pomodoro Overlay to mały licznik czasu (nakładka), który „pływa" zawsze na wierzchu innych okien. Pomaga pracować <b>metodą Pomodoro</b>: bloki skupionej pracy przeplatane krótkimi przerwami. Okno <b>Manager</b> służy do zarządzania zadaniami i ustawieniami.</p>
+  <p>Aplikacja <b>uruchamia się zwinięta</b> — jako wąska mini-listwa na pasku zadań, przy prawej krawędzi (celowo zasłania systemowy zegar: zamiast godziny widzisz swój licznik). Do pełnego widżetu rozwiniesz ją przyciskiem <b>▴</b> na listwie albo skrótem <kbd>AltGr+M</kbd>.</p>
 
   <div class="help-h">Widżet — ikony w nagłówku</div>
   <ul>
     <li><span class="ic">⚙</span> Otwiera Manager zadań i ustawień.</li>
+    <li><span class="ic">⛶</span> <b>Tryb skupienia</b> — pełnoekranowa czerń z nazwą bieżącego zadania (przycisk widoczny tylko podczas pracy; patrz sekcja niżej).</li>
     <li><span class="ic">S/M/L</span> Zmienia rozmiar widżetu — klikaj, aby przełączać mały / średni / duży.</li>
     <li><span class="ic">◐</span> Suwak przezroczystości widżetu.</li>
     <li><span class="ic">▾</span> Zwija widżet do wąskiego mini-paska.</li>
@@ -96,7 +98,7 @@ kbd {
   <p>Pasek na dole widżetu pokazuje, ile minut już poświęciłeś na bieżące zadanie względem planu.</p>
 
   <div class="help-h">Pytanie „Ukończone?" po upływie bloku pracy</div>
-  <p>Gdy skończy się blok pracy (np. 25 min), a masz aktywne zadanie, licznik zatrzyma się i zapyta: <b>czy zadanie jest ukończone?</b> Do wyboru: <b>☕ Przerwa</b> (ukończone → odpoczynek), <b>▶ Następne</b> (ukończone → od razu kolejne zadanie) albo <b>↻ Jeszcze pracuję</b> (zadanie trwa dalej — bierzesz zaplanowaną przerwę i wracasz do niego). Dzięki temu jedno zadanie może spokojnie zająć kilka „pomidorów".</p>
+  <p>Gdy skończy się blok pracy (np. 25 min), a masz aktywne zadanie, licznik zatrzyma się i zapyta: <b>czy zadanie jest ukończone?</b> Do wyboru: <b>☕ Przerwa</b> (ukończone → odpoczynek), <b>▶ Następne</b> (ukończone → od razu kolejne zadanie) albo <b>↻ Jeszcze pracuję</b> (zadanie trwa dalej — bierzesz zaplanowaną przerwę i wracasz do niego). Dzięki temu jedno zadanie może spokojnie zająć kilka „pomidorów". Jeśli pracujesz przy zwiniętej mini-listwie, widżet rozwinie się automatycznie, żeby pokazać pytanie (z powrotem zwiniesz go przyciskiem <b>▾</b> albo <kbd>AltGr+M</kbd>).</p>
 
   <div class="help-h">Ekran pełnoekranowy „PRACA"</div>
   <p>Po przerwie pojawia się pulsujący ekran „PRACA" z <b>dużą nazwą bieżącego zadania</b> oraz informacją, <b>ile czasu zostało na to zadanie</b> (osobno od bloku 25 min — bo zadanie może być zaplanowane na dużo więcej lub mniej). Kliknij <b>Zaczynam!</b> albo <b>Zmniejsz</b>, aby wrócić do małego widżetu.</p>
@@ -113,8 +115,11 @@ kbd {
     <li><span class="ic">🍅</span> Po przerwie pokazuje się ekran „PRACA" — patrz wyżej.</li>
   </ul>
 
-  <div class="help-h">Mini-pasek (po zwinięciu ▾)</div>
-  <p>Widżet zwija się do wąskiego paska tuż nad paskiem zadań: emoji fazy, nazwa zadania, czas, ⏭ pomiń fazę, ✓ ukończ zadanie, start/pauza, <b>▴</b> (rozwiń z powrotem) oraz <b>✕</b> (zamknij aplikację).</p>
+  <div class="help-h">Tryb skupienia (pełny ekran)</div>
+  <p>Podczas pracy możesz wejść w <b>tryb skupienia</b>: cały ekran robi się czarny, na środku zostaje tylko nazwa bieżącego zadania, a w prawym dolnym rogu dyskretny minutnik „do przerwy" i pasek budżetu zadania. Wejście: przycisk <span class="ic">⛶</span> w nagłówku widżetu albo <kbd>AltGr+F</kbd>. Wyjście: <kbd>Esc</kbd>, ikona wyjścia w rogu albo ponownie <kbd>AltGr+F</kbd>; <kbd>Enter</kbd>/<kbd>Spacja</kbd> to start/pauza. Gdy blok pracy dobiegnie końca, tryb skupienia sam się wyłącza i wraca zwykły widok.</p>
+
+  <div class="help-h">Mini-pasek (tryb zwinięty — tak startuje aplikacja)</div>
+  <p>Wąski pasek siedzi na pasku zadań przy prawej krawędzi (na miejscu zegara): emoji fazy, ⏭ pomiń fazę, ✓ ukończ zadanie, nazwa zadania, czas, start/pauza, <b>▴</b> (rozwiń do widżetu) oraz <b>✕</b> (zamknij aplikację). Widżet zwiniesz z powrotem przyciskiem <b>▾</b> albo skrótem <kbd>AltGr+M</kbd>.</p>
 
   <div class="help-h">Manager — zadania i ustawienia</div>
   <ul>
@@ -123,7 +128,9 @@ kbd {
     <li><span class="ic">✕</span> Usuwa dane zadanie z listy.</li>
     <li><span class="ic">⏱</span> <b>Pomodoro</b> — ustaw długość pracy, krótkiej i długiej przerwy oraz co ile sesji wypada długa przerwa.</li>
     <li><span class="ic">⏻</span> <b>Autostart z Windows</b> — uruchamia aplikację po starcie systemu. Timer nie rusza sam — czeka w pauzie, aż klikniesz <b>▶</b>.</li>
-    <li><span class="ic">💾</span> <b>Zapisz i zastosuj</b> — zapisuje zmiany. Dopisanie zadania na koniec, zmiana nazw albo kolejności <b>nie kasuje</b> postępu bieżącego zadania. Plan startuje od nowa tylko, gdy zmienisz długość lub usuniesz zadanie, które właśnie robisz.</li>
+    <li><span class="ic">▶</span> <b>Zacznij teraz</b> — przycisk przy każdym zadaniu: ustawia je jako bieżące od razu. Jeśli coś już trwa, aplikacja zapyta, co zrobić z przerwanym zadaniem (wróci do kolejki czy zostanie pominięte).</li>
+    <li><span class="ic">✓</span> <b>Autozapis</b> — zmiany na liście stosują się same, nie ma przycisku „Zapisz". Dopisanie zadania na koniec, zmiana nazw albo kolejności <b>nie kasuje</b> postępu bieżącego zadania. Plan startuje od nowa tylko, gdy zmienisz długość lub usuniesz zadanie, które właśnie robisz.</li>
+    <li><span class="ic">↩</span> <b>Cofnij</b> — po dodaniu lub usunięciu zadania na dole pojawia się na chwilę przycisk „Cofnij".</li>
     <li><span class="ic">🔄</span> <b>Resetuj timer</b> — wraca do pierwszego zadania i zeruje postęp.</li>
   </ul>
   <p>Karta na górze Managera pokazuje <b>na żywo</b>, co dzieje się w liczniku.</p>
@@ -134,7 +141,7 @@ kbd {
     <li><span class="ic">📤</span> <b>Eksportuj CSV</b> — zapisuje bieżącą listę zadań do pliku <b>.csv</b> (format <i>nazwa;minuty</i>) — np. jako kopia zapasowa albo przeniesienie na inny komputer.</li>
     <li>Program <b>sam rozpoznaje kolumny</b>: nazwę szuka w kolumnie typu <i>nazwa / zadanie / task / name / title / todo</i>, a czas w <i>minuty / min / czas / time / duration / estimate</i>.</li>
     <li>Bez nagłówków: <b>1. kolumna = nazwa</b>, <b>2. = minuty</b>. Gdy minut brak — zadanie dostaje <b>25 min</b> (zakres 1–480).</li>
-    <li>Zaimportowane zadania <b>dopisują się</b> do listy. To podgląd — możesz je poprawić, a potem kliknij <b>💾 Zapisz i zastosuj</b>.</li>
+    <li>Zaimportowane zadania <b>dopisują się</b> do listy — możesz je od razu poprawić; zmiany zapisują się automatycznie.</li>
   </ul>
 
   <div class="help-h">Historia · plan vs. fakt (log CSV)</div>
@@ -149,8 +156,12 @@ kbd {
   <ul>
     <li><span class="ic"><kbd>Ctrl+Alt+P</kbd></span> Start / pauza.</li>
     <li><span class="ic"><kbd>Ctrl+Alt+K</kbd></span> Pomiń bieżącą fazę.</li>
-    <li><span class="ic"><kbd>Ctrl+Alt+M</kbd></span> Zwiń / rozwiń widżet (działa też prawy <kbd>AltGr+M</kbd>).</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+M</kbd></span> Zwiń / rozwiń widżet.</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+F</kbd></span> Tryb skupienia — wejście / wyjście.</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+D</kbd></span> Ukończ bieżące zadanie.</li>
+    <li><span class="ic"><kbd>Ctrl+Alt+T</kbd></span> Otwórz Manager zadań.</li>
   </ul>
+  <p style="font-size:12px;color:var(--text3)">Zamiast <kbd>Ctrl+Alt</kbd> możesz użyć prawego <kbd>AltGr</kbd> (np. <kbd>AltGr+M</kbd>) — to ta sama kombinacja.</p>
   <p style="font-size:12px;color:var(--text3)">Jeśli inny program zajmuje już dany skrót, może on u nas nie zadziałać (to normalne ograniczenie systemu).</p>
 
   <div class="help-h">Jak działa cykl Pomodoro</div>

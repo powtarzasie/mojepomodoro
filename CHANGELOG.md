@@ -1,5 +1,41 @@
 # Historia zmian — Pomodoro Overlay / MojePomodoro
 
+## v1.3.1 — 2026-07-03
+
+### Zmienione
+- **Start w trybie zwiniętym.** Aplikacja uruchamia się od razu jako mini-listwa nad paskiem zadań
+  (zasłania zegar) — bez rozwiniętego widgetu na środku ekranu. Rozwinięcie: `AltGr+M` lub przycisk ▴.
+- **⏭/✓ na mini-listwie przeniesione na lewą stronę nazwy zadania** — spójnie z widżetem,
+  gdzie ✗/✓ też stoją przed nazwą. Po prawej zostają start/pauza, ▴ (rozwiń) i ✕ (zamknij).
+
+### Naprawione
+- **Pytanie „Czas minął — ukończone?" nie ginie już przy zwiniętej listwie ani pod ekranem PRACA.**
+  Panel z wyborami (☕ Przerwa / ▶ Następne / ↻ Jeszcze pracuję) istnieje tylko w widżecie — gdy blok
+  pracy kończy się przy zwiniętej listwie, widżet rozwija się teraz automatycznie, żeby zadać pytanie;
+  a jeśli pulsujący ekran PRACA nie został zamknięty przez cały blok, jest chowany, żeby nie zasłonić
+  panelu. Z powrotem zwijasz widżet przyciskiem ▾ albo `AltGr+M`.
+- **Dymki podpowiedzi na mini-listwie nie są już ucinane.** Okno listwy ma dokładnie wysokość
+  paska zadań, a dymek rysował się nad przyciskiem — czyli poza obrysem okna, więc nie było go
+  widać. Teraz dymek pojawia się wewnątrz listwy, obok przycisku.
+- **„✓ Ukończ zadanie" na mini-listwie dostępny zawsze, gdy jest aktywne zadanie** — także podczas
+  przerwy i pauzy (wcześniej tylko w fazie pracy). Ukończenie w przerwie nie przerywa odpoczynku:
+  przerwa biegnie dalej, a po niej ekran PRACA pokazuje już następne zadanie.
+- **Edycja zadań przy zwiniętej listwie nie chowa już listwy.** Autozapis Managera rozwijał nakładkę
+  bez pytania — teraz tryb zwinięty jest zachowywany (kurtyny przerwy/pracy nadal rozwijają celowo).
+- **Ponownie pokazana listwa od razu dostaje świeży stan.** Ukryta listwa nie odbiera aktualizacji,
+  więc po pokazaniu mogła przez moment wyświetlać nieaktualną fazę lub czas.
+- **Zwinięta listwa znów zasłania zegar.** W v1.3.0 mini-listwa siadała obok zegara zamiast na nim
+  (regresja z „rezerwy" na zasobnik) — przywrócono pierwotne zachowanie: listwa nachodzi na zegar
+  przy prawej krawędzi.
+- **Zwinięta listwa nie znika już pod paskiem zadań — i nie migocze.** Pasek zadań Windows potrafi
+  wskoczyć ponad listwę (np. po zrzucie ekranu i Alt+Tab) i listwa ginęła pod nim na stałe — dotyczyło
+  to także wcześniejszych wersji, w tym v1.2.1. Teraz przy zwinięciu strażnik „zawsze na wierzchu"
+  utrzymuje samą listwę (zamiast pustej, przezroczystej nakładki), więc listwa wraca najpóźniej po
+  sekundzie. Wcześniejsze migotanie brało się z podbijania dwóch okien naraz — to usunięte: podbijane
+  jest jedno, nieprzezroczyste okno, bez zmiany rozmiaru, co nie powoduje przemalowań.
+
+---
+
 ## v1.3.0 — 2026-07-02
 
 ### Nowe funkcje
