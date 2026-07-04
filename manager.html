@@ -667,7 +667,10 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
       <div class="app-title">🍅 Pomodoro Manager</div>
       <div class="app-subtitle">Zadania i ustawienia timera</div>
     </div>
-    <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji"><span class="ico" data-ico="help"></span>Jak to działa</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="help-btn" id="onboarding-btn" title="Pokaż samouczek pierwszego uruchomienia (ekrany wprowadzające)">🎓 Samouczek</button>
+      <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji"><span class="ico" data-ico="help"></span>Jak to działa</button>
+    </div>
   </div>
 
   <!-- Status aktywnego timera -->
@@ -771,7 +774,7 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
   </div>
 
   <div style="text-align:center; font-size:10px; color:rgba(255,255,255,0.10); margin-top:20px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.04); letter-spacing:.03em;">
-    Pomodoro Overlay v1.3.1 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
+    Pomodoro Overlay v1.3.2 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
   </div>
 
 </div>
@@ -1293,6 +1296,8 @@ document.getElementById('s-autostart').addEventListener('change', e => {
 
 // ── Pomoc / instrukcja — otwiera osobne okno (help.html), by widzieć panel i instrukcję naraz
 document.getElementById('help-btn').addEventListener('click', () => api.cmd('openHelp'))
+// ── Samouczek — otwiera okno onboardingu w trybie „na żądanie" (aplikacja działa dalej, bez restartu)
+document.getElementById('onboarding-btn').addEventListener('click', () => api.cmd('openOnboarding'))
 
 // ── Live updates ──────────────────────────────────────────────────
 function tasksSignature(arr) {

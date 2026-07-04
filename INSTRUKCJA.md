@@ -160,6 +160,7 @@ się w liczniku.
 | ✓ **Autozapis** | Zmiany na liście stosują się same (nie ma przycisku „Zapisz"). Dopisanie zadania na koniec, zmiana nazw albo kolejności **nie kasuje** postępu bieżącego zadania; plan startuje od nowa tylko, gdy zmienisz długość lub usuniesz zadanie, które właśnie robisz |
 | ↩ **Cofnij** | Po dodaniu lub usunięciu zadania na dole pojawia się na chwilę przycisk „Cofnij" |
 | 🔄 **Resetuj timer** | Wraca do pierwszego zadania i zeruje postęp |
+| 🎓 **Samouczek** | Otwiera wprowadzenie krok po kroku (te same ekrany, co przy pierwszym uruchomieniu). Możesz wrócić do niego w każdej chwili; na ostatnim slajdzie włączysz „Pokazuj przy każdym starcie" |
 
 ---
 

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Pomodoro Overlay — Samouczek</title>
+<style>
+/* Styl 1:1 z terms.html / help.html — te same kolory i font, żeby okno samouczka
+   było spójne z resztą aplikacji (patrz FUNKCJONALNOSCI.md, sekcja „Onboarding"). */
+:root {
+  --bg: #0d1117; --surface: #161b27; --surface2: #1e2535;
+  --accent: #e05c34; --accent-hover: #c94e2a;
+  --text: rgba(255,255,255,0.88); --muted: rgba(255,255,255,0.52);
+  --line: rgba(255,255,255,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 14px; line-height: 1.55;
+  display: flex; flex-direction: column; height: 100vh; padding: 20px 24px 16px;
+  user-select: none; overflow: hidden;
+}
+h1 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sub { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+
+/* ── Scena slajdów ── */
+.stage { flex: 1; position: relative; overflow: hidden; }
+.slide {
+  position: absolute; inset: 0; display: none; flex-direction: column;
+  overflow-y: auto; padding-right: 4px;
+}
+.slide.active { display: flex; }
+.slide h2 { font-size: 16px; font-weight: 700; margin: 14px 0 6px; color: #fff; }
+.slide p  { font-size: 13.5px; color: rgba(255,255,255,0.72); margin-bottom: 8px; }
+.slide b  { color: rgba(255,255,255,0.92); }
+.kbd {
+  display: inline-block; font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700;
+  background: var(--surface2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 1px 7px; color: #fff; white-space: nowrap;
+}
+
+/* ── Zrzut ekranu (placeholder gdy pliku PNG jeszcze nie ma) ── */
+.shot-row { display: flex; gap: 10px; }
+.shot-row .shot { flex: 1; }
+.shot {
+  position: relative; width: 100%; min-height: 230px;
+  background: #0a0e15; border: 1px solid var(--line); border-radius: 10px;
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+}
+.shot img { display: block; width: 100%; height: auto; }
+.shot.noimg { border-style: dashed; min-height: 200px; }
+.shot.noimg::after {
+  content: attr(data-ph); position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 0 16px; font-size: 12.5px; color: var(--muted); font-style: italic;
+}
+.cap { font-size: 11.5px; color: var(--muted); margin: 6px 2px 0; }
+
+/* ── Tabela skrótów (ostatni slajd) ── */
+.keys { width: 100%; border-collapse: collapse; margin: 8px 0 4px; }
+.keys td { padding: 7px 8px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
+.keys tr:last-child td { border-bottom: none; }
+.keys td:first-child { width: 120px; }
+.again {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; margin: 10px 0; font-size: 13px; color: rgba(255,255,255,0.72);
+}
+.every {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 8px;
+  font-size: 13px; cursor: pointer;
+}
+.every input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+/* ── Stopka: kropki postępu + przyciski ── */
+.footer { margin-top: 12px; }
+.dots { display: flex; gap: 7px; justify-content: center; margin-bottom: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: background .15s, transform .15s; cursor: pointer; }
+.dot.on { background: var(--accent); transform: scale(1.25); }
+.btns { display: flex; gap: 10px; align-items: center; }
+.spacer { flex: 1; }
+.btn {
+  border: none; border-radius: 10px; padding: 11px 18px;
+  font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: background .15s, opacity .15s, color .15s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); font-weight: 600; }
+.btn-ghost:hover:not(:disabled) { background: var(--surface2); color: var(--text); }
+.btn-ghost:disabled { opacity: .3; cursor: default; }
+.btn-skip { background: transparent; color: var(--muted); font-weight: 600; }
+.btn-skip:hover { color: var(--text); }
+[hidden] { display: none !important; }
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<h1>🍅 Pomodoro Overlay — samouczek</h1>
+<div class="sub">Krótkie wprowadzenie w kilku krokach. Zawsze możesz je pominąć.</div>
+
+<div class="stage" id="stage">
+
+  <!-- 1. Listwa na miejscu zegara (nieodgadywalne #1) -->
+  <section class="slide">
+    <div class="shot" data-ph="Podgląd: mini-listwa nad zegarem na pasku zadań">
+      <img src="assets/onboarding/01-listwa.png" alt="Mini-listwa nad paskiem zadań, na miejscu zegara" onerror="imgFail(this)">
+    </div>
+    <div class="cap">Mini-listwa siada przy prawej krawędzi paska zadań.</div>
+    <h2>Twój licznik siedzi na zegarze</h2>
+    <p>Aplikacja startuje <b>zwinięta</b> — jako wąska mini-listwa nad paskiem zadań, przy prawej
+    krawędzi ekranu. <b>Celowo zasłania systemowy zegar</b>: w tym miejscu masz teraz swój licznik
+    Pomodoro z bieżącym zadaniem, zamiast godziny.</p>
+    <p>Żeby rozwinąć pełny widżet na środku, użyj skrótu <span class="kbd">AltGr + M</span> albo
+    przycisku <b>▴</b> na listwie. Tym samym skrótem zwiniesz go z powrotem.</p>
+  </section>
+
+  <!-- 2. Klikanie „na wskroś" (nieodgadywalne #2) -->
+  <section class="slide">
+    <div class="shot" data-ph="Podgląd: rozwinięty widżet timera na pulpicie">
+      <img src="assets/onboarding/02-widget.png" alt="Rozwinięty widżet timera" onerror="imgFail(this)">
+    </div>
+    <div class="cap">Rozwinięty widżet — nagłówek z ⚙ ⛶ S/M/L ◐ ▾ ✕.</div>
+    <h2>Nakładka przepuszcza kliknięcia</h2>
+    <p>Widżet leży na przezroczystej nakładce, która <b>domyślnie przepuszcza kliknięcia</b> do okien
+    pod spodem — możesz normalnie pracować w innych programach.</p>
+    <p><b>Najedź myszą</b> na widżet, żeby jego przyciski stały się aktywne. Żeby przesunąć widżet
+    w inne miejsce, po prostu <b>złap go i przeciągnij</b> — nowa pozycja zostaje zapamiętana.</p>
+  </section>
+
+  <!-- 3. Zadania i widżet -->
+  <section class="slide">
+    <div class="shot" data-ph="Podgląd: Manager — lista zadań i ustawienia">
+      <img src="assets/onboarding/06-manager.png" alt="Okno Managera z listą zadań" onerror="imgFail(this)">
+    </div>
+    <div class="cap">Manager: zadania, budżet minut, plan dnia i ustawienia.</div>
+    <h2>Zadania i budżet czasu</h2>
+    <p>Przyciskiem <b>⚙</b> na widżecie (lub skrótem <span class="kbd">AltGr + T</span>) otwierasz
+    <b>Managera</b> — tam dodajesz zadania i ustawiasz każdemu budżet minut. Zadania zapisują się
+    same, bez przycisku „Zapisz".</p>
+    <p>Na widżecie i na listwie <b>✓ (ukończ)</b> oraz <b>✗ (pomiń)</b> stoją przed nazwą zadania,
+    a pasek postępu pokazuje, ile z zaplanowanego czasu już zeszło (przekroczenie budżetu zmienia
+    go na czerwono).</p>
+  </section>
+
+  <!-- 4. Przerwy i ekran PRACA -->
+  <section class="slide">
+    <div class="shot-row">
+      <div class="shot" data-ph="Podgląd: pełnoekranowa kurtyna przerwy">
+        <img src="assets/onboarding/03-przerwa.png" alt="Pełnoekranowa kurtyna przerwy" onerror="imgFail(this)">
+      </div>
+      <div class="shot" data-ph="Podgląd: ekran PRACA po przerwie">
+        <img src="assets/onboarding/04-praca.png" alt="Ekran PRACA po przerwie" onerror="imgFail(this)">
+      </div>
+    </div>
+    <div class="cap">Po lewej: kurtyna przerwy. Po prawej: ekran „PRACA".</div>
+    <h2>Przerwy i powrót do pracy</h2>
+    <p>Gdy blok pracy się kończy, na cały ekran wysuwa się <b>kurtyna przerwy</b> — krótka jest
+    <b>zielona</b>, a długa (co kilka pomodoro) <b>niebieska</b>. To sygnał, żeby naprawdę odpocząć.</p>
+    <p>Po przerwie pojawia się ekran <b>„PRACA"</b> z następnym zadaniem i czasem, jaki na nie zostaje.
+    Kliknij <b>„Zaczynam!"</b> albo <b>„Zmniejsz"</b>, żeby wrócić do widżetu.</p>
+  </section>
+
+  <!-- 5. Tryb skupienia -->
+  <section class="slide">
+    <div class="shot" data-ph="Podgląd: tryb skupienia — czarny ekran z nazwą zadania">
+      <img src="assets/onboarding/05-skupienie.png" alt="Tryb skupienia — czarny pełny ekran" onerror="imgFail(this)">
+    </div>
+    <div class="cap">Tryb skupienia: tylko nazwa zadania i minutnik.</div>
+    <h2>Tryb skupienia</h2>
+    <p>Przyciskiem <b>⛶</b> na widżecie albo skrótem <span class="kbd">AltGr + F</span> wchodzisz
+    w <b>pełnoekranowy tryb skupienia</b>: czarny ekran z samą nazwą bieżącego zadania i minutnikiem
+    w rogu — nic nie rozprasza.</p>
+    <p>Wchodzisz w niego tylko w fazie pracy. Wychodzisz klawiszem <span class="kbd">Esc</span>;
+    <span class="kbd">Enter</span> lub <span class="kbd">Spacja</span> startuje i pauzuje odliczanie.</p>
+  </section>
+
+  <!-- 6. Skróty + gdzie wrócić + opcja „przy każdym starcie" -->
+  <section class="slide">
+    <h2>Skróty i powrót do samouczka</h2>
+    <p>Wszystkie działają globalnie (na Windows <b>AltGr</b> = Ctrl+Alt):</p>
+    <table class="keys">
+      <tr><td><span class="kbd">AltGr + P</span></td><td>start / pauza</td></tr>
+      <tr><td><span class="kbd">AltGr + K</span></td><td>pomiń fazę (praca ↔ przerwa)</td></tr>
+      <tr><td><span class="kbd">AltGr + M</span></td><td>zwiń / rozwiń widżet</td></tr>
+      <tr><td><span class="kbd">AltGr + F</span></td><td>tryb skupienia</td></tr>
+      <tr><td><span class="kbd">AltGr + D</span></td><td>ukończ bieżące zadanie</td></tr>
+      <tr><td><span class="kbd">AltGr + T</span></td><td>otwórz Managera</td></tr>
+    </table>
+    <div class="again">Ten samouczek odpalisz ponownie w każdej chwili: <b>Manager → 🎓 Samouczek</b>.</div>
+    <label class="every">
+      <input type="checkbox" id="every-start">
+      <span>Pokazuj ten samouczek <b>przy każdym starcie</b> aplikacji (domyślnie wyłączone).</span>
+    </label>
+  </section>
+
+</div>
+
+<div class="footer">
+  <div class="dots" id="dots"></div>
+  <div class="btns">
+    <button class="btn btn-ghost" id="btn-back" disabled>‹ Wstecz</button>
+    <button class="btn btn-skip"  id="btn-skip">Pomiń</button>
+    <span class="spacer"></span>
+    <button class="btn btn-primary" id="btn-next">Dalej ›</button>
+    <button class="btn btn-primary" id="btn-start" hidden>Zacznij ▶</button>
+  </div>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'))
+const LAST = slides.length - 1
+let idx = 0
+
+const dotsBox = document.getElementById('dots')
+const btnBack = document.getElementById('btn-back')
+const btnSkip = document.getElementById('btn-skip')
+const btnNext = document.getElementById('btn-next')
+const btnStart = document.getElementById('btn-start')
+const everyStart = document.getElementById('every-start')
+
+// Zrzut nie wczytany (brak pliku PNG) → pokaż elegancki placeholder z opisem.
+function imgFail(img) { img.remove(); img.closest('.shot').classList.add('noimg') }
+
+// Kropki postępu — klikalne (skok do slajdu)
+slides.forEach((_, i) => {
+  const d = document.createElement('div')
+  d.className = 'dot'
+  d.addEventListener('click', () => show(i))
+  dotsBox.appendChild(d)
+})
+const dots = Array.from(dotsBox.children)
+
+function show(i) {
+  idx = Math.max(0, Math.min(LAST, i))
+  slides.forEach((s, n) => s.classList.toggle('active', n === idx))
+  dots.forEach((d, n) => d.classList.toggle('on', n === idx))
+  btnBack.disabled = idx === 0
+  const last = idx === LAST
+  btnNext.hidden = last
+  btnStart.hidden = !last
+  btnSkip.hidden = last          // na ostatnim slajdzie zamiast „Pomiń" jest „Zacznij ▶"
+  slides[idx].scrollTop = 0
+}
+
+// „Zacznij"/„Pomiń" → jeden sygnał końca do main (main zapisze wersję + opcję i wystartuje apkę)
+let done = false
+function finish() {
+  if (done) return
+  done = true
+  window.bridge.onboardingFinished(everyStart.checked)
+}
+
+btnBack.addEventListener('click', () => show(idx - 1))
+btnNext.addEventListener('click', () => show(idx + 1))
+btnSkip.addEventListener('click', finish)
+btnStart.addEventListener('click', finish)
+
+// Nawigacja klawiaturą — strzałki i Enter
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') { if (idx < LAST) show(idx + 1) }
+  else if (e.key === 'ArrowLeft') { if (idx > 0) show(idx - 1) }
+  else if (e.key === 'Enter' && idx === LAST) { finish() }
+})
+
+show(0)
+</script>
+</body>
+</html>

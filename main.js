@@ -1,4 +1,4 @@
-// Pomodoro Overlay Timer v1.3.1
+// Pomodoro Overlay Timer v1.3.2
 // Copyright (c) 2026 Mariusz Świerguła <Mariusz.swiergula@gmail.com>
 // MIT License — https://opensource.org/licenses/MIT
 //
@@ -174,6 +174,9 @@ function snapshot() {
     // Postęp bieżącej sesji — pozwala wznowić ostatnie zadanie z odłożonym czasem.
     currentIdx: S.currentIdx, taskSpent: S.taskSpent, pomsDone: S.pomsDone,
     termsVersion: S.termsVersion,
+    // Samouczek: wersja widziana + opcja „przy każdym starcie" (osobne pola, NIE w settings —
+    // inaczej autozapis Managera wyzerowałby everyStart, patrz S.onboardingEveryStart).
+    onboardingVersion: S.onboardingVersion, onboardingEveryStart: S.onboardingEveryStart,
   }, null, 2)
 }
 function writeSaved() {
@@ -188,6 +191,10 @@ function flushSaved() {
 // Wersja warunków korzystania — podbij przy zmianie treści terms.html,
 // żeby wymusić ponowną akceptację przy następnym uruchomieniu.
 const TERMS_VERSION = 1
+
+// Wersja samouczka (onboarding). Podbicie = istniejący użytkownik zobaczy samouczek RAZ
+// jako „co nowego" przy najbliższym starcie (wariant „po aktualizacji"). 0 w zapisie = jeszcze nie widział.
+const ONBOARDING_VERSION = 1
 
 const DEFAULT_SETTINGS = { workMinutes: 25, shortBreakMinutes: 5, longBreakMinutes: 15, longBreakAfter: 4 }
 const SIZE_DIMS = { S: { w: 260, h: 130 }, M: { w: 330, h: 170 }, L: { w: 420, h: 210 } }
@@ -235,6 +242,8 @@ const S = {
   collapsedMode: true,    // start ZAWSZE jako zwinięta listwa nad paskiem zadań (zasłania zegar); AltGr+M / ▴ rozwija
   focusMode:     false,   // pełnoekranowy tryb skupienia (czarne tło, nazwa zadania, minutnik w rogu)
   termsVersion:  clampInt(saved?.termsVersion, 0, 9999, 0),   // 0 = warunki jeszcze niezaakceptowane
+  onboardingVersion:    clampInt(saved?.onboardingVersion, 0, 9999, 0),   // 0 = samouczka jeszcze nie widział
+  onboardingEveryStart: !!saved?.onboardingEveryStart,                    // opcja: pokazuj samouczek przy KAŻDYM starcie (dom. OFF)
 }
 
 // Przywrócenie postępu z poprzedniej sesji (po sanityzacji listy zadań).
@@ -264,6 +273,9 @@ const S = {
 //          NIE migocze (blank dotyczył tylko okien transparent).
 let overlay = null, manager = null, tray = null, focusWin = null
 let tickHandle = null, watchdogHandle = null, topmostHandle = null
+// Most do okna samouczka (onboarding): funkcja przypisywana WEWNĄTRZ bloku gotTheLock, więc musi być
+// zadeklarowana PRZED nim (blok wykonuje się wcześniej — inaczej TDZ dla `let`). Wołana z handleCmd.
+let openOnboarding = () => {}
 let ignoring = true
 let isQuitting = false   // true dopiero przy realnym zamykaniu aplikacji (patrz before-quit / 'quit')
 let movingUntil = 0   // rezerwa zgodności (drag widgetu obsługuje renderer)
@@ -510,7 +522,7 @@ if (gotTheLock) {
   // Bramka warunków: przy pierwszym uruchomieniu (lub po zmianie TERMS_VERSION)
   // pokaż ekran „Akceptuję warunki" ZANIM wystartuje timer i nakładka.
   app.whenReady().then(() => {
-    if (S.termsVersion === TERMS_VERSION) startApp()
+    if (S.termsVersion === TERMS_VERSION) maybeOnboardThenStart()
     else createTermsWindow()
   })
 
@@ -594,9 +606,69 @@ if (gotTheLock) {
     S.termsVersion = TERMS_VERSION
     flushSaved()
     if (termsWin && !termsWin.isDestroyed()) termsWin.close()
-    startApp()
+    maybeOnboardThenStart()
   })
   ipcMain.on('terms-declined', () => { app.exit(0) })
+
+  // ── Samouczek pierwszego uruchomienia (onboarding) ───────────────────
+  // Wpina się w łańcuch startu MIĘDZY warunki a startApp(). Trzy warianty:
+  //  (1) pierwsze uruchomienie: terms → onboarding → startApp
+  //  (2) po aktualizacji: onboardingVersion != ONBOARDING_VERSION → onboarding „co nowego" → startApp
+  //  (3) na żądanie: przycisk „Samouczek" w Managerze → okno {startup:false} (tylko się zamyka)
+  // Opcja onboardingEveryStart (dom. OFF) jest OSOBNYM polem S (nie w settings), żeby autozapis
+  // Managera (sanitizeSettings na danych bez tego pola) jej nie zerował — patrz FUNKCJONALNOSCI.md.
+  let onboardingWin = null
+  let startedApp = false            // strażnik: startApp() ma się wykonać DOKŁADNIE raz
+
+  function safeStartApp() {
+    if (startedApp) return
+    startedApp = true
+    startApp()
+  }
+
+  function maybeOnboardThenStart() {
+    const due = S.onboardingVersion !== ONBOARDING_VERSION || S.onboardingEveryStart
+    if (due) createOnboardingWindow({ startup: true })
+    else safeStartApp()
+  }
+
+  function createOnboardingWindow({ startup }) {
+    // Wariant „na żądanie" przy działającej aplikacji: nie twórz drugiego okna.
+    if (onboardingWin && !onboardingWin.isDestroyed()) { onboardingWin.show(); onboardingWin.focus(); return }
+    let finished = false            // rozróżnia „Zacznij/Pomiń" (finish) od zamknięcia krzyżykiem
+    onboardingWin = new BrowserWindow({
+      width: 640, height: 720, resizable: false, minimizable: false, maximizable: false,
+      title: '🍅 Pomodoro Overlay — Samouczek', backgroundColor: '#0d1117', show: false,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false },
+    })
+    onboardingWin.setMenuBarVisibility(false)
+    onboardingWin.loadFile(path.join(__dirname, 'onboarding.html'))
+    onboardingWin.once('ready-to-show', () => { onboardingWin.show(); onboardingWin.focus() })
+
+    // „Zacznij ▶" / „Pomiń" w rendererze → onboarding-finished { everyStart }.
+    const onFinished = (e, payload) => {
+      if (!onboardingWin || onboardingWin.isDestroyed()) return
+      if (e.sender !== onboardingWin.webContents) return   // ignoruj sygnał z innego webContents
+      finished = true
+      S.onboardingVersion    = ONBOARDING_VERSION
+      S.onboardingEveryStart = !!(payload && payload.everyStart)
+      flushSaved()
+      onboardingWin.close()
+      if (startup) safeStartApp()
+    }
+    ipcMain.on('onboarding-finished', onFinished)
+
+    onboardingWin.on('closed', () => {
+      ipcMain.removeListener('onboarding-finished', onFinished)
+      onboardingWin = null
+      // Zamknięcie krzyżykiem (bez „Zacznij"): samouczek jest OPCJONALNY — w trybie startowym
+      // i tak wystartuj nakładkę, ale NIE oznaczaj wersji jako widzianej (wróci następnym razem).
+      if (!finished && startup) safeStartApp()
+    })
+  }
+
+  // Most do top-level handleCmd (case 'openOnboarding') — wzorzec jak `manager`/`overlay`.
+  openOnboarding = () => createOnboardingWindow({ startup: false })
 }
 
 // Wymiary okna celowo o 1px większe niż monitor (góra + boki; dół WYRÓWNANY do dołu ekranu).
@@ -902,6 +974,8 @@ function handleCmd(cmd, data) {
     case 'openManager': manager.show(); manager.focus(); break
 
     case 'openHelp': openHelp(); break
+
+    case 'openOnboarding': openOnboarding(); break
 
     case 'saveTasks': {
       const newTasks    = Array.isArray(data?.tasks) ? data.tasks.map(sanitizeTask) : []

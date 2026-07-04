@@ -1,5 +1,17 @@
 # Historia zmian — Pomodoro Overlay / MojePomodoro
 
+## v1.3.2 — 2026-07-04
+
+### Nowe funkcje
+- **Samouczek pierwszego uruchomienia.** Po instalacji (oraz raz po tej aktualizacji) pojawia się
+  krótkie wprowadzenie w 6 krokach: mini-listwa na miejscu zegara, klikanie „na wskroś", zadania
+  i budżet czasu, przerwy i ekran PRACA, tryb skupienia oraz ściąga skrótów. Ekrany pokazują
+  prawdziwe zrzuty aplikacji. Samouczek można w każdej chwili odpalić ponownie z Managera przyciskiem
+  **🎓 Samouczek**, a na ostatnim slajdzie włączyć opcję „Pokazuj przy każdym starcie" (domyślnie
+  wyłączoną). Samouczek jest opcjonalny — można go pominąć, a zamknięcie okna nie blokuje startu aplikacji.
+
+---
+
 ## v1.3.1 — 2026-07-03
 
 ### Zmienione

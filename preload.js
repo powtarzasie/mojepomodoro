@@ -42,6 +42,9 @@ contextBridge.exposeInMainWorld('bridge', {
   termsAccept:  () => ipcRenderer.send('terms-accepted'),
   termsDecline: () => ipcRenderer.send('terms-declined'),
 
+  // Samouczek (onboarding): „Zacznij ▶"/„Pomiń" → sygnał końca + opcja „przy każdym starcie"
+  onboardingFinished: (everyStart) => ipcRenderer.send('onboarding-finished', { everyStart: !!everyStart }),
+
   // Hover-toggle: informuj main process o pozycji kursora względem widgetu
   mouseEnter: () => ipcRenderer.send('mouse-enter'),
   mouseLeave: () => ipcRenderer.send('mouse-leave'),

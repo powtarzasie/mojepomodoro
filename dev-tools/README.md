@@ -50,6 +50,25 @@ powershell -File dev-tools/probe.ps1 -Action monitor    # próbkowanie co 300 ms
 ```
 Kluczowy wskaźnik w wyniku: `trayNADpaskiem=True` (listwa ponad Shell_TrayWnd).
 
+## eval-in.js — eval JS w KONKRETNYM oknie (po fragmencie URL) przez CDP
+Uzupełnia `cdp-probe.js` (ten iteruje WSZYSTKIE okna). Tu celujemy w jedno okno, np. klikamy
+przycisk w `onboarding.html`. Kod można podać inline albo z **pliku** (`@ścieżka`) — plik omija
+znany problem PowerShell 5.1 z cudzysłowami w argumentach natywnych exe (psuje stringi w JS).
+```
+node dev-tools/eval-in.js list                        # URL-e wszystkich okien 'page'
+node dev-tools/eval-in.js onboarding "location.href"  # eval w oknie onboarding.html
+node dev-tools/eval-in.js manager @C:\tmp\klik.js      # kod z pliku (zalecane dla zlozonego JS)
+```
+
+## capture-onboarding.js — zrzuty 1:1 do slajdow onboardingu
+Steruje ŻYWĄ aplikacją przez CDP (ustawia przykladowe zadania i przelacza fazy) i robi
+`Page.captureScreenshot` okien tray/overlay/focus/manager → `assets/onboarding/*.png`. Dzieki temu
+ekrany samouczka sa pikselowo zgodne z produkcja i odswiezalne jednym przebiegiem po zmianie UI.
+Wymaga apki z portem 9222 i WYSTARTOWANEJ (po onboardingu). **MUTUJE stan — najpierw backup pliku!**
+```
+node dev-tools/capture-onboarding.js
+```
+
 ## Zasady testów
 - Przed testami mutującymi stan: backup `%APPDATA%\pomodoro-overlay\pomodoro.json`, po testach przywróć.
 - Dev i packaged dzielą userData i blokadę pojedynczej instancji — nie uruchamiaj obu naraz.

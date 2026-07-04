@@ -1,6 +1,6 @@
 {
   "name": "pomodoro-overlay",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "Pomodoro timer zawsze na wierzchu z listą zadań",
   "main": "main.js",
   "author": "Mariusz Świerguła <Mariusz.swiergula@gmail.com>",
@@ -44,6 +44,8 @@
       "manager.html",
       "terms.html",
       "help.html",
+      "onboarding.html",
+      "assets/onboarding/",
       "build/icon.ico",
       "build/icon.png",
       "LICENSE",
