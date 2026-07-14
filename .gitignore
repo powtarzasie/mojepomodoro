@@ -15,3 +15,4 @@ _preview_*.png
 # Systemowe
 .DS_Store
 Thumbs.db
+dev-docs/
