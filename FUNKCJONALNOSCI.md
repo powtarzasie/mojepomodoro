@@ -233,6 +233,13 @@ Bez `elementFromPoint` przy każdym ruchu myszy (koszt CPU).
   jako osobne pole `S` (jak `termsVersion`), dopisane do `snapshot()`.
 - Onboarding: samouczek „przy każdym starcie" domyślnie ON — odrzucone jako antywzorzec (przeszkoda
   między „odpaliłem" a „pracuję", wbrew filozofii „start zwinięty = nie przeszkadzać"). Domyślnie OFF.
+- Manager: `body{overflow-y:auto}` BEZ `overflow-x:hidden` → dymki (data-tip) przy prawej krawędzi wystają
+  poza okno, a że `overflow-y != visible` wymusza `overflow-x=auto` (reguła CSS), wskakuje poziomy pasek →
+  reflow → MIGANIE przy hoverze na przyciski konfiguracji (zgłoszone 2026-07-04, potwierdzone pomiarem:
+  6 dymków wystaje, „Dodaj i zacznij teraz" +74 px, Autostart +12 px). Fix: `body{overflow-x:hidden}`
+  (manager.html) — zabija scrollbar u źródła. Trade-off: najdłuższe dymki przy prawej krawędzi są teraz
+  PRZYCINANE zamiast migać. Pełne rozwiązanie (wyrównanie dymka do prawej krawędzi elementu — `right:0`,
+  rośnie w lewo — dla elementów w prawej strefie) ODŁOŻONE do v1.3.3. NIE cofać overflow-x:hidden bez zamiennika.
 
 ## 13. Build i wydanie (skrót — pełny proces: `C:\ClaudeSANDDBOX\RELEASE_PLAYBOOK_MojePomodoro.md`)
 

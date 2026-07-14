@@ -41,6 +41,10 @@ body {
   font-size: 14px;
   line-height: 1.5;
   overflow-y: auto;
+  /* Bez tego overflow-x liczy się jako `auto` (bo overflow-y != visible): dymek (data-tip) przy
+     prawej krawędzi wystaje poza okno → wskakuje poziomy pasek → reflow → miganie przy hoverze.
+     Jawny `hidden` ucina ewentualny naddatek zamiast migać (okno Managera nie przewija się w poziomie). */
+  overflow-x: hidden;
 }
 
 /* ── LAYOUT ───────────────────────────────────────────────── */
