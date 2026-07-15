@@ -1,5 +1,22 @@
 # Historia zmian — Pomodoro Overlay / MojePomodoro
 
+## v1.3.3 — 2026-07-15
+
+### Naprawione
+- **Siatka bezpieczeństwa na błędy.** Pojedynczy nieoczekiwany błąd w tle (np. w cyklicznym
+  odliczaniu) nie może już zamknąć aplikacji — jest tylko zapisywany do dziennika, a timer
+  i zapis postępu działają dalej. Chroni to m.in. zapis stanu przy zamykaniu.
+- **Mini-listwa przy autoukrywaniu paska zadań.** Gdy pasek zadań jest ustawiony na
+  „automatycznie ukrywaj", listwa potrafiła zniknąć poniżej dolnej krawędzi ekranu — teraz
+  jest przytrzymywana przy dolnej krawędzi i pozostaje widoczna.
+- **Dopracowanie dymków podpowiedzi w Managerze.** Dymki przycisków przy prawej krawędzi okna
+  (m.in. Eksportuj CSV, Folder logów, Resetuj timer, Autostart, usuń zadanie) wyrównują się
+  teraz do prawej krawędzi przycisku i rozwijają w lewo, zamiast być przycinane.
+- **Utwardzenie wczytywania stanu.** Ręcznie uszkodzony plik zapisu jest bezpieczniej sanityzowany:
+  odrzucane są liczby z „ogonem" (np. „42abc”), a zdublowane identyfikatory zadań są rozdzielane.
+
+---
+
 ## v1.3.2 — 2026-07-04
 
 ### Nowe funkcje

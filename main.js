@@ -1,4 +1,4 @@
-// Pomodoro Overlay Timer v1.3.2
+// Pomodoro Overlay Timer v1.3.3
 // Copyright (c) 2026 Mariusz Świerguła <Mariusz.swiergula@gmail.com>
 // MIT License — https://opensource.org/licenses/MIT
 //
@@ -6,6 +6,14 @@
 const { app, BrowserWindow, ipcMain, screen, globalShortcut, powerMonitor, shell, dialog } = require('electron')
 const path = require('path')
 const fs   = require('fs')
+
+// ── Siatka bezpieczeństwa na nieobsłużone wyjątki (rejestrowana NAJWCZEŚNIEJ) ──
+// Pojedynczy rzut w callbacku interwału (tick / reassertTopmost / watchdog) NIE może
+// ubić procesu — inaczej ginęłoby 'before-quit → flushSaved', czyli zapis postępu.
+// Handlery muszą stać PRZED tworzeniem okien i interwałów (te startują dopiero w startApp),
+// więc są aktywne, zanim cokolwiek zacznie tykać. Tylko log — bez zmiany logiki aplikacji.
+process.on('uncaughtException',  e => { try { console.error('uncaughtException', e) }  catch (_) {} })
+process.on('unhandledRejection', e => { try { console.error('unhandledRejection', e) } catch (_) {} })
 
 // UWAGA: NIE wyłączać akceleracji sprzętowej (app.disableHardwareAcceleration()).
 // Okno nakładki jest transparent:true — na Windows przezroczystość polega na
@@ -201,8 +209,13 @@ const SIZE_DIMS = { S: { w: 260, h: 130 }, M: { w: 330, h: 170 }, L: { w: 420, h
 
 // ── Sanityzacja wczytanych danych (plik można edytować ręcznie) ──
 function clampInt(v, min, max, dflt) {
-  const n = parseInt(v)
-  return isNaN(n) ? dflt : Math.max(min, Math.min(max, n))
+  // Utwardzone: Number()+Number.isFinite ODRZUCA ogon typu "42abc" (parseInt cicho brał 42).
+  // Zachowujemy dawną semantykę „braku wartości → dflt": Number(null)/Number('') === 0,
+  // więc null/undefined/pusty(whitespace) napis i typy inne niż liczba/napis dają dflt (jak parseInt→NaN).
+  if (v == null || (typeof v !== 'number' && typeof v !== 'string')) return dflt
+  if (typeof v === 'string' && v.trim() === '') return dflt
+  const n = Number(v)
+  return Number.isFinite(n) ? Math.max(min, Math.min(max, Math.trunc(n))) : dflt
 }
 function sanitizeTask(t) {
   return {
@@ -210,6 +223,17 @@ function sanitizeTask(t) {
     name: String((t && t.name) || '').slice(0, 200),   // spójny limit z importem CSV (bez nieograniczonego stanu)
     totalMinutes: clampInt(t && t.totalMinutes, 1, 480, 25),
   }
+}
+// Deduplikacja id (ręcznie zepsuty plik może mieć dwa zadania z tym samym id → mylą
+// reconcyliację/klucze rendererów). Kolizja = świeży id (Date.now()+random, jak sanitizeTask).
+// Format zadania BEZ zmian; while gwarantuje unikalność w obrębie tej listy.
+function dedupeIds(tasks) {
+  const seen = new Set()
+  for (const t of tasks) {
+    while (seen.has(t.id)) t.id = Date.now() + Math.floor(Math.random() * 1e6)
+    seen.add(t.id)
+  }
+  return tasks
 }
 function sanitizeSettings(raw) {
   const s = { ...DEFAULT_SETTINGS, ...(raw || {}) }
@@ -223,7 +247,7 @@ function sanitizeSettings(raw) {
 
 const saved = readSaved()
 const S = {
-  tasks:          Array.isArray(saved?.tasks) ? saved.tasks.map(sanitizeTask) : [],
+  tasks:          Array.isArray(saved?.tasks) ? dedupeIds(saved.tasks.map(sanitizeTask)) : [],
   settings:       sanitizeSettings(saved?.settings),
   size:           SIZE_DIMS[saved?.size] ? saved.size : 'M',
   opacity:        (typeof saved?.opacity === 'number') ? Math.max(0.2, Math.min(1, saved.opacity)) : 0.90,
@@ -322,6 +346,7 @@ function exitFocusIfOn() {
 // W trybie skupienia NIE podnosimy nakładki (wyszłaby nad fullscreenowe okno focus, co
 // przywróciłoby pasek zadań); zamiast tego utrzymujemy topmost samego okna focus.
 function reassertTopmost() {
+ try {
   if (Date.now() < movingUntil) return
   if (S.focusMode) {
     // Podnoś okno skupienia TYLKO gdy ma fokus — inaczej systemowe/inne okna (Menedżer zadań,
@@ -348,6 +373,10 @@ function reassertTopmost() {
     return
   }
   applyWindowLevel()
+ } catch (e) {
+  // Rzut tutaj NIE może przerwać strażnika z-order ani ubić procesu (patrz siatka A1).
+  try { console.error('reassertTopmost', e) } catch (_) {}
+ }
 }
 
 function workInterval() {
@@ -427,7 +456,12 @@ function trayBounds() {
   const { bounds, workArea } = screen.getPrimaryDisplay()
   const taskbarH = Math.max(36, bounds.height - workArea.height - workArea.y)
   const w = Math.max(340, Math.round(bounds.width * 0.28))
-  return { x: bounds.x + bounds.width - w, y: workArea.y + workArea.height, width: w, height: taskbarH }
+  // Autohide paska zadań: workArea == bounds, więc y = workArea.y+height wypada TUŻ POD ekranem
+  // (np. 1080 na ekranie 1080 px) i listwa znika. Clamp TYLKO dolnego y: dolna krawędź okna nie
+  // może zejść poniżej ekranu (y ≤ bounds.y + bounds.height − wysokość listwy). Tryb normalny bez
+  // zmian (tam workArea.y+height == bounds bottom − taskbarH, więc min() nic nie rusza).
+  const y = Math.min(workArea.y + workArea.height, bounds.y + bounds.height - taskbarH)
+  return { x: bounds.x + bounds.width - w, y, width: w, height: taskbarH }
 }
 // Pokaż/ukryj okno-listwę zgodnie z trybem. Nieprzezroczyste okno → pokaż/ukryj nie migocze.
 function syncTray() {
@@ -457,10 +491,12 @@ function doCollapse()    { S.collapsedMode = true;  applyWindowLevel(); syncTray
 function doExpand()      { S.collapsedMode = false; applyWindowLevel(); syncTray() }   // rozwiń → widget
 
 function tick() {
+ try {
   if (!S.isRunning || S.phase === 'idle' || S.phase === 'done') return
   const left = Math.max(0, Math.round((S.phaseEndsAt - Date.now()) / 1000))
   if (S.phase === 'work') {
-    S.taskSpent += Math.max(0, S.phaseLeft - left)  // realny przyrost (odporny na zawieszenie/sen)
+    // realny przyrost (odporny na zawieszenie/sen); clamp do 480 min (spójne z limitem przy wczytaniu)
+    S.taskSpent = Math.min(S.taskSpent + Math.max(0, S.phaseLeft - left), 480 * 60)
     const m = Math.floor(S.taskSpent / 60)
     if (m !== lastSavedSpentMin) { lastSavedSpentMin = m; writeSaved() }  // zapis postępu co pełną minutę
   }
@@ -484,6 +520,10 @@ function tick() {
     }
   }
   broadcast()
+ } catch (e) {
+  // Jeden rzut w ticku NIE może przerwać interwału ani ubić procesu (patrz siatka A1).
+  try { console.error('tick', e) } catch (_) {}
+ }
 }
 
 // Stan „lean" — wszystko poza listą zadań. Lista leci osobnym kanałem 'tasks' TYLKO przy zmianie

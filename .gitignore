@@ -16,3 +16,7 @@ _preview_*.png
 .DS_Store
 Thumbs.db
 dev-docs/
+
+# Sondy/skrypty diagnostyczne — tylko lokalnie, NIE do publikacji (decyzja v1.3.3)
+dev-tools/
+CLAUDE.md

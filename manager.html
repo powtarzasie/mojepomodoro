@@ -32,6 +32,10 @@
   padding: 5px 9px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.14);
   box-shadow: 0 6px 18px rgba(0,0,0,0.55); z-index: 9999; pointer-events: none;
 }
+/* Elementy przy PRAWEJ krawędzi okna: zamiast centrować (i być przycinanym przez overflow-x:hidden)
+   wyrównaj dymek do prawej krawędzi elementu i rośnij w LEWO — mieści się w oknie. Nadpisuje TYLKO
+   pozycję poziomą reguły wyżej (bottom / wygląd bez zmian). Wyższa swoistość ([data-tip].tip-end). */
+[data-tip].tip-end:hover::after { left: auto; right: 0; transform: none; }
 
 body {
   font-family: -apple-system, 'Segoe UI', sans-serif;
@@ -672,8 +676,8 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
       <div class="app-subtitle">Zadania i ustawienia timera</div>
     </div>
     <div style="display:flex; gap:8px; align-items:center;">
-      <button class="help-btn" id="onboarding-btn" title="Pokaż samouczek pierwszego uruchomienia (ekrany wprowadzające)">🎓 Samouczek</button>
-      <button class="help-btn" id="help-btn" title="Jak korzystać z aplikacji"><span class="ico" data-ico="help"></span>Jak to działa</button>
+      <button class="help-btn" id="onboarding-btn" title="Pokaż samouczek pierwszego uruchomienia">🎓 Samouczek</button>
+      <button class="help-btn tip-end" id="help-btn" title="Jak korzystać z aplikacji"><span class="ico" data-ico="help"></span>Jak to działa</button>
     </div>
   </div>
 
@@ -696,7 +700,7 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
       <span class="section-title">Lista zadań</span>
       <div class="header-actions">
         <button class="btn-add" id="import-csv-btn" title="Importuj zadania z pliku CSV (Excel / Todoist / Google → Zapisz jako CSV)"><span class="ico" data-ico="download"></span>Importuj CSV</button>
-        <button class="btn-add" id="export-csv-btn" title="Zapisz bieżącą listę zadań do pliku CSV (nazwa;minuty)"><span class="ico" data-ico="upload"></span>Eksportuj CSV</button>
+        <button class="btn-add tip-end" id="export-csv-btn" title="Zapisz bieżącą listę zadań do pliku CSV (nazwa;minuty)"><span class="ico" data-ico="upload"></span>Eksportuj CSV</button>
       </div>
     </div>
 
@@ -710,12 +714,12 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
       <input class="composer-input" id="composer-name" type="text" autocomplete="off" placeholder="Dodaj do kolejki i naciśnij Enter…">
       <input class="composer-dur" id="composer-dur" type="number" min="1" max="480" value="25" title="Czas na zadanie (minuty)">
       <span class="dur-unit">min</span>
-      <button class="composer-start" id="composer-start" title="Dodaj i zacznij teraz (zastąp trwające zadanie)"><span class="ico" data-ico="play"></span></button>
+      <button class="composer-start tip-end" id="composer-start" title="Dodaj i zacznij teraz (zastąp trwające zadanie)"><span class="ico" data-ico="play"></span></button>
     </div>
 
     <div class="queue-footer">
       <span class="autosave-note"><span class="ico" data-ico="check"></span>Zmiany zapisują się automatycznie</span>
-      <button class="reset-link" id="reset-link" title="Zresetuj timer do początku"><span class="ico" data-ico="reset"></span>Resetuj timer</button>
+      <button class="reset-link tip-end" id="reset-link" title="Zresetuj timer do początku"><span class="ico" data-ico="reset"></span>Resetuj timer</button>
     </div>
 
     <div class="total-time" id="total-time" style="display:none">
@@ -756,7 +760,7 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
 
         <span class="settings-label">Autostart z Windows</span>
         <div class="settings-input-wrap">
-          <label class="toggle" title="Uruchamiaj automatycznie po starcie systemu">
+          <label class="toggle tip-end" title="Uruchamiaj automatycznie po starcie systemu">
             <input type="checkbox" id="s-autostart">
             <span class="toggle-track"></span>
           </label>
@@ -771,14 +775,14 @@ body.dragging-active, body.dragging-active * { cursor: grabbing !important; user
       <span class="section-title">Historia · plan vs. fakt</span>
       <div class="header-actions">
         <button class="btn-add" id="refresh-log-btn" title="Odśwież historię z pliku CSV"><span class="ico" data-ico="refresh"></span>Odśwież</button>
-        <button class="btn-add" id="open-log-btn" title="Otwórz folder z plikiem pomodoro-log.csv"><span class="ico" data-ico="folder"></span>Folder logów</button>
+        <button class="btn-add tip-end" id="open-log-btn" title="Otwórz folder z plikiem pomodoro-log.csv"><span class="ico" data-ico="folder"></span>Folder logów</button>
       </div>
     </div>
     <div id="history-wrap"></div>
   </div>
 
   <div style="text-align:center; font-size:10px; color:rgba(255,255,255,0.10); margin-top:20px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.04); letter-spacing:.03em;">
-    Pomodoro Overlay v1.3.2 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
+    Pomodoro Overlay v1.3.3 &nbsp;·&nbsp; © 2026 Mariusz Świerguła &nbsp;·&nbsp; MIT License
   </div>
 
 </div>
@@ -1038,7 +1042,7 @@ function buildQueueRow(task, i, eta) {
     <input class="task-dur-input" type="number" value="${task.totalMinutes}" min="1" max="480" data-field="dur" data-idx="${i}">
     <span class="dur-unit">min</span>
     <button class="btn-now-start" data-act="start" data-tip="Zacznij teraz (zastąp trwające)" aria-label="Zacznij teraz">${svgIco('play')}</button>
-    <button class="btn-remove" data-idx="${i}" data-tip="Usuń zadanie" aria-label="Usuń zadanie">${svgIco('x')}</button>
+    <button class="btn-remove tip-end" data-idx="${i}" data-tip="Usuń zadanie" aria-label="Usuń zadanie">${svgIco('x')}</button>
   `
   bindRowCommon(row, i)
   const st = row.querySelector('[data-act="start"]')
