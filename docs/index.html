@@ -448,7 +448,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
           <span class="download-btn-inner">
             <b>Pobierz za darmo</b>
-            <small class="download-btn-sub">✦ Wersja v1.3.1 · open source (MIT) · weryfikowalny build</small>
+            <small class="download-btn-sub">✦ Wersja v1.3.3 · open source (MIT) · weryfikowalny build</small>
           </span>
         </button>
         <p class="download-stats" id="heroStats">Pobrań: —</p>
@@ -600,10 +600,10 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></div>
         <div>
           <p class="info-card-title">Suma kontrolna SHA-256</p>
-          <p class="info-card-desc">Po pobraniu porównaj <span class="mono">Get-FileHash</span> z wartością opublikowaną przy wydaniu (plik <span class="mono">SHA256SUMS.txt</span>). Pełny hash <span class="mono">v1.3.1</span>:</p>
+          <p class="info-card-desc">Po pobraniu porównaj <span class="mono">Get-FileHash</span> z wartością opublikowaną przy wydaniu (plik <span class="mono">SHA256SUMS.txt</span>). Pełny hash <span class="mono">v1.3.3</span>:</p>
           <div class="verify-block">
-            <code class="verify-hash" id="sha256full">abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b</code>
-            <button type="button" class="copy-btn" data-copy="abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b" data-done="Skopiowano" aria-label="Kopiuj sumę SHA-256 do schowka">
+            <code class="verify-hash" id="sha256full">8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849</code>
+            <button type="button" class="copy-btn" data-copy="8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849" data-done="Skopiowano" aria-label="Kopiuj sumę SHA-256 do schowka">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span data-label>Kopiuj SHA-256</span>
             </button>
@@ -631,7 +631,7 @@
         <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="3" y1="12" x2="21" y2="12"/></svg></div>
         <div>
           <p class="info-card-title">Niezależny skan VirusTotal</p>
-          <p class="info-card-desc">Plik ma <a href="https://www.virustotal.com/gui/file/abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b" target="_blank" rel="noopener noreferrer" style="color:var(--accent-soft);text-decoration:none">publiczny raport na VirusTotal</a> — zobacz aktualny wynik skanu kilkudziesięcioma silnikami antywirusowymi. Spakowane instalatory Electron/NSIS bywają czasem fałszywie flagowane; w razie wątpliwości porównaj SHA-256.</p>
+          <p class="info-card-desc">Plik ma <a href="https://www.virustotal.com/gui/file/8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849" target="_blank" rel="noopener noreferrer" style="color:var(--accent-soft);text-decoration:none">publiczny raport na VirusTotal</a> — zobacz aktualny wynik skanu kilkudziesięcioma silnikami antywirusowymi. Spakowane instalatory Electron/NSIS bywają czasem fałszywie flagowane; w razie wątpliwości porównaj SHA-256.</p>
         </div>
       </div>
 
@@ -646,8 +646,8 @@
           <li>Wklej polecenie:</li>
         </ol>
         <div class="verify-block">
-          <pre><code id="psVerifyCmd">Get-FileHash .\MojePomodoro_Setup_v1.3.1.exe -Algorithm SHA256</code></pre>
-          <button type="button" class="copy-btn" data-copy="Get-FileHash .\MojePomodoro_Setup_v1.3.1.exe -Algorithm SHA256" data-done="Skopiowano" aria-label="Kopiuj polecenie PowerShell do schowka">
+          <pre><code id="psVerifyCmd">Get-FileHash .\MojePomodoro_Setup_v1.3.3.exe -Algorithm SHA256</code></pre>
+          <button type="button" class="copy-btn" data-copy="Get-FileHash .\MojePomodoro_Setup_v1.3.3.exe -Algorithm SHA256" data-done="Skopiowano" aria-label="Kopiuj polecenie PowerShell do schowka">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span data-label>Kopiuj polecenie</span>
           </button>
@@ -662,14 +662,14 @@
       <summary>Jak sprawdzić plik .exe na VirusTotal (przed instalacją)?</summary>
       <div class="verify-steps">
         <ol>
-          <li>Wejdź na <a href="https://www.virustotal.com/gui/home/upload" target="_blank" rel="noopener noreferrer">virustotal.com</a> i przeciągnij pobrany plik <span class="mono">MojePomodoro_Setup_v1.3.1.exe</span> w pole skanowania.</li>
+          <li>Wejdź na <a href="https://www.virustotal.com/gui/home/upload" target="_blank" rel="noopener noreferrer">virustotal.com</a> i przeciągnij pobrany plik <span class="mono">MojePomodoro_Setup_v1.3.3.exe</span> w pole skanowania.</li>
           <li>Nie chcesz wgrywać pliku? W zakładce <strong>Search</strong> wklej jego SHA-256 (skopiuj przyciskiem wyżej) — VirusTotal pokaże istniejący raport bez przesyłania.</li>
           <li>Poczekaj na wynik skanu kilkudziesięcioma silnikami antywirusowymi i sprawdź, czy plik nie jest oznaczony jako złośliwy.</li>
           <li>Pojedyncze fałszywe alarmy przy instalatorach Electron/NSIS się zdarzają — liczy się ogólny obraz oraz zgodność SHA-256.</li>
         </ol>
-        <a class="copy-btn" style="text-decoration:none" href="https://www.virustotal.com/gui/file/abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b" target="_blank" rel="noopener noreferrer">
+        <a class="copy-btn" style="text-decoration:none" href="https://www.virustotal.com/gui/file/8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
-          Otwórz raport VirusTotal dla v1.3.1
+          Otwórz raport VirusTotal dla v1.3.3
         </a>
       </div>
     </details>
@@ -690,7 +690,7 @@
   <!-- ─────────── FOOTER ─────────── -->
   <footer class="foot">
     <div class="page" style="display:block; padding-top:0; padding-bottom:0;">
-      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b> <span style="color:var(--dim);font-weight:600;margin-left:6px">v1.3.1</span></p>
+      <p class="brand"><span class="tom">🍅</span>Moje<b>Pomodoro</b> <span style="color:var(--dim);font-weight:600;margin-left:6px">v1.3.3</span></p>
       <p class="a">Autor: Mariusz Świerguła — <a href="mailto:mariusz.swiergula@gmail.com">mariusz.swiergula@gmail.com</a></p>
       <p class="lic">© 2026 Mariusz Świerguła · Licencja MIT · Zbudowano w Electron · Wyłącznie na Windows 10/11 (komputer)</p>
       <p class="tm">„Pomodoro®" i „Pomodoro Technique®" to znaki towarowe Francesco Cirillo. Aplikacja nie jest z nim powiązana — nazwa użyta wyłącznie opisowo.</p>
@@ -728,8 +728,8 @@
         <div class="mpath">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
           <p class="mpath-t">Pobierz gotowy program</p>
-          <p class="mpath-d">MojePomodoro_Setup_v1.3.1.exe · ~73 MB · Windows 10/11. Dane robocze zapisuje lokalnie na Twoim komputerze.</p>
-          <a class="mpath-btn primary" id="dlBtn" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.3.1/MojePomodoro_Setup_v1.3.1.exe" download>
+          <p class="mpath-d">MojePomodoro_Setup_v1.3.3.exe · ~73 MB · Windows 10/11. Dane robocze zapisuje lokalnie na Twoim komputerze.</p>
+          <a class="mpath-btn primary" id="dlBtn" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.3.3/MojePomodoro_Setup_v1.3.3.exe" download>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
             Pobierz instalator
           </a>
@@ -737,27 +737,27 @@
         </div>
       </div>
 
-      <a class="mvt" href="https://www.virustotal.com/gui/file/abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b" target="_blank" rel="noopener noreferrer">
+      <a class="mvt" href="https://www.virustotal.com/gui/file/8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849" target="_blank" rel="noopener noreferrer">
         <svg class="lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
         <span>Publiczny raport VirusTotal — zobacz wynik</span>
         <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
       </a>
 
-      <p class="mtech">Dla technicznych: <a href="https://github.com/powtarzasie/mojepomodoro/actions" target="_blank" rel="noopener noreferrer">build w GitHub Actions</a>, suma kontrolna <b>SHA-256</b> i <b>dowód pochodzenia (provenance)</b> przy każdym wydaniu. SHA-256 v1.3.1: <span class="mono">abc258b9417ab27d31c9dec513d626dc93fb69c6dc1ec489e2035875a870fb2b</span></p>
+      <p class="mtech">Dla technicznych: <a href="https://github.com/powtarzasie/mojepomodoro/actions" target="_blank" rel="noopener noreferrer">build w GitHub Actions</a>, suma kontrolna <b>SHA-256</b> i <b>dowód pochodzenia (provenance)</b> przy każdym wydaniu. SHA-256 v1.3.3: <span class="mono">8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849</span></p>
 
       <!-- ── Archiwum: poprzednia wersja ── -->
       <div class="arc-divider">poprzednia wersja</div>
       <div class="arc-row">
         <div class="arc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>EXE</div>
         <div>
-          <p class="arc-name">MojePomodoro_Setup_v1.2.1.exe</p>
-          <p class="arc-meta">Windows 10/11 (64-bit) · opublikowano 24.06.2026</p>
+          <p class="arc-name">MojePomodoro_Setup_v1.3.2.exe</p>
+          <p class="arc-meta">Windows 10/11 (64-bit) · opublikowano 04.07.2026</p>
         </div>
-        <span class="arc-badge">v1.2.1</span>
+        <span class="arc-badge">v1.3.2</span>
       </div>
-      <a class="arc-btn" id="dlBtnPrev" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.2.1/MojePomodoro_Setup_v1.2.1.exe" download>
+      <a class="arc-btn" id="dlBtnPrev" href="https://github.com/powtarzasie/mojepomodoro/releases/download/v1.3.2/MojePomodoro_Setup_v1.3.2.exe" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
-        Pobierz v1.2.1 (.exe)
+        Pobierz v1.3.2 (.exe)
       </a>
       <p class="arc-stats" id="modalStatsPrev">Pobrań: —</p>
 
@@ -814,8 +814,8 @@
 
     /* ── Licznik pobrań — archiwum (poprzednia wersja) ── */
     (function(){
-      var API = 'https://api.github.com/repos/powtarzasie/mojepomodoro/releases/tags/v1.2.1';
-      var ASSET = 'MojePomodoro_Setup_v1.2.1.exe';
+      var API = 'https://api.github.com/repos/powtarzasie/mojepomodoro/releases/tags/v1.3.2';
+      var ASSET = 'MojePomodoro_Setup_v1.3.2.exe';
       var stats = document.getElementById('modalStatsPrev');
       var btn = document.getElementById('dlBtnPrev');
       function fmt(n){ return n.toLocaleString('pl-PL'); }

@@ -64,8 +64,8 @@ Do każdego instalatora dołączane są:
   gh attestation verify .\MojePomodoro_Setup_vX.Y.Z.exe --repo powtarzasie/mojepomodoro
   ```
 
-- **VirusTotal** — [publiczny raport skanu](https://www.virustotal.com/gui/file/b0aea7deb4c647ce272d107bf8457f17addd2d5dbc3b870ea4e1b0473b55101a)
-  dla v1.2.1; zobacz aktualny wynik. Uwaga: spakowane instalatory Electron/NSIS bywają
+- **VirusTotal** — [publiczny raport skanu](https://www.virustotal.com/gui/file/8462d4e9dca09635340eb2c2dc5964e4d89d11217895c46d6dea5d7e20860849)
+  dla v1.3.3; zobacz aktualny wynik. Uwaga: spakowane instalatory Electron/NSIS bywają
   czasem oznaczane **fałszywym alarmem** przez część silników — w razie wątpliwości
   porównaj SHA-256 i sprawdź log builda w Actions.
 
